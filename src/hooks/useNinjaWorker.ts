@@ -1,6 +1,6 @@
 import { RootState } from '@react-three/fiber';
 import * as React from 'react';
-import { IInputMovement, IScriptManagement } from 'utils';
+import { IInputMovement, IScriptManagement } from '../utils';
 import { NinjaEngineContext } from './useNinjaEngine';
 
 interface NWorkerProps {

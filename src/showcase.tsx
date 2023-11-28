@@ -1,8 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
-import { NinjaCanvas, NinjaGL } from "./hooks";
 import { Canvas } from '@react-three/fiber';
-import { NinjaCanvasItems } from './hooks/useNinjaEngine';
+import { NinjaCanvasItems, NinjaGL } from './hooks';
 
 function Showcase () {
   const [scene, setScene] = React.useState('samplecamera.njc');

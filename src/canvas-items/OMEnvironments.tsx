@@ -1,8 +1,7 @@
 import { Environment, Lightformer } from "@react-three/drei";
 import * as React from "react";
-import { IObjectManagement } from "../utils/NinjaProps";
 import { Vector3 } from "three";
-import { useNinjaEngine } from "../hooks/useNinjaEngine";
+import { useNinjaEngine } from "../hooks";
 
 /**
  * EnvironmentやLightformerなどの環境

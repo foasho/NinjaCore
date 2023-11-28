@@ -1,9 +1,9 @@
 import * as React from "react";
-import { IObjectManagement } from "../utils/NinjaProps";
+import { IObjectManagement } from "../utils";
 import { LUTCubeLoader } from "three-stdlib";
 import { Bloom, LUT, SSR, EffectComposer } from "@react-three/postprocessing";
 import { Texture } from "three";
-import { useNinjaEngine } from "../hooks/useNinjaEngine";
+import { useNinjaEngine } from "../hooks";
 
 export const OMEffects = () => {
 

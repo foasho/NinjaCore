@@ -1,8 +1,10 @@
 import * as React from "react";
-import { IObjectManagement } from "../utils/NinjaProps";
-import { Color, Object3D } from "three";
-import { Cloud, MeshReflectorMaterial, Sky, Text3D } from "@react-three/drei";
-import { useNinjaEngine } from "../hooks/useNinjaEngine";
+import { IObjectManagement } from "../utils";
+import { Color, Object3D, Group, Mesh } from "three";
+import { GLTF } from "three-stdlib";
+import { Cloud, MeshReflectorMaterial, Sky, Text3D, Text, useFont, useGLTF } from "@react-three/drei";
+import { useNinjaEngine } from "../hooks";
+import { ColliderTunnel, NonColliderTunnel } from "../utils";
 
 export const OMObjects = () => {
   const { oms } = useNinjaEngine();
@@ -25,9 +27,17 @@ export const OMObject = ({ om }: { om: IObjectManagement }) => {
     <>
       {/** 地形データ */}
       {om.type === "terrain" && (
-        <mesh renderOrder={0}>
-          <primitive object={om.object as Object3D} />
-        </mesh>
+        <>
+          {om.physics ?
+            <ColliderTunnel.In>
+              <Terrain om={om} />
+            </ColliderTunnel.In>
+            :
+            <NonColliderTunnel.In>
+              <Terrain om={om} />
+            </NonColliderTunnel.In>
+          }
+        </>
       )}
       {/** ライティング */}
       {om.type === "light" && (
@@ -35,7 +45,17 @@ export const OMObject = ({ om }: { om: IObjectManagement }) => {
       )}
       {/** Threeメッシュ */}
       {om.type === "three" && (
-        <ThreeObject om={om} />
+        <>
+          {om.physics ?
+            <ColliderTunnel.In>
+              <ThreeObject om={om} />
+            </ColliderTunnel.In>
+            :
+            <NonColliderTunnel.In>
+              <ThreeObject om={om} />
+            </NonColliderTunnel.In>
+          }
+        </>
       )}
       {/** Sky */}
       {om.type === "sky" && (
@@ -53,6 +73,48 @@ export const OMObject = ({ om }: { om: IObjectManagement }) => {
       {om.type === "text3d" && (
         <OMText3D om={om} />
       )}
+    </>
+  )
+}
+
+/**
+ * --------------------
+ * Terrainコンポネント
+ * --------------------
+ */
+const Terrain = ({ om }: { om: IObjectManagement }) => {
+  const ref = React.useRef<Group>(null);
+  const { scene } = useGLTF(om.args.url) as GLTF;
+
+  React.useEffect(() => {
+    if (ref.current) {
+      if (om.args.position) ref.current.position.copy(om.args.position);
+      if (om.args.rotation) ref.current.rotation.copy(om.args.rotation);
+      if (om.args.scale) ref.current.scale.copy(om.args.scale);
+    }
+  }, [scene]);
+
+  if (scene && om.args.castShadow){
+    scene.traverse((child) => {
+      if (child instanceof Mesh) {
+        child.castShadow = om.args.castShadow;
+      }
+    })
+  }
+
+  if (scene && om.args.receiveShadow){
+    scene.traverse((child) => {
+      if (child instanceof Mesh) {
+        child.receiveShadow = om.args.receiveShadow;
+      }
+    })
+  }
+
+  return (
+    <>
+      <group ref={ref}>
+        <primitive object={scene} />
+      </group>
     </>
   )
 }
@@ -256,8 +318,7 @@ const OMText = ({ om }) => {
   }, [])
   return (
     <>
-      {/** @ts-ignore */}
-      <Text font={""} ref={ref}>
+      <Text font="/fonts/MPLUS.ttf" ref={ref}>
         {om.args.content as string}
       </Text>
     </>
@@ -270,6 +331,7 @@ const OMText = ({ om }) => {
  * ------
  */
 const OMText3D = ({ om }) => {
+  const font = useFont("/fonts/MPLUS.json");
   const ref = React.useRef<any>();
   React.useEffect(() => {
     if (ref.current) {
@@ -286,8 +348,7 @@ const OMText3D = ({ om }) => {
   }, [])
   return (
     <>
-      {/** @ts-ignore */}
-      <Text3D font={""} ref={ref}>
+      <Text3D font={font.data} ref={ref}>
         {om.args.content}
       </Text3D>
     </>
@@ -323,8 +384,8 @@ const CloudComponent = ({ om:cloud }: { om: IObjectManagement }) => {
     <Cloud 
       opacity={cloud.args.opacity ? cloud.args.opacity : 0.5}
       speed={cloud.args.speed ? cloud.args.speed : 0.4}
-      width={cloud.args.width ? cloud.args.width : 10}
-      depth={cloud.args.depth ? cloud.args.depth : 1.5}
+      // width={cloud.args.width ? cloud.args.width : 10}
+      // depth={cloud.args.depth ? cloud.args.depth : 1.5}
       segments={cloud.args.segments ? cloud.args.segments : 20}
     />
   )

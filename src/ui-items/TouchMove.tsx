@@ -1,5 +1,4 @@
-import { useNinjaEngine } from "hooks/useNinjaEngine";
-import { initInput, manualKeyState, setManualInput } from "../hooks/useInputControl";
+import { setManualInput } from "../hooks/useInputControl";
 import * as React from "react";
 import { MdOutlineGames } from "react-icons/md";
 import { Vector2 } from "three";
@@ -7,8 +6,6 @@ import { Vector2 } from "three";
 export const TouchMove = () => {
   const [isOrientation, setOrientation] = React.useState<boolean>((window.innerHeight < window.innerWidth) ? true : false);
   let currentTouch: Vector2 = new Vector2(0, 0);
-  let currentTouchCamera: Vector2 = new Vector2(0, 0);
-  const engine = useNinjaEngine();
 
   const touchStart = (e) => {
     // initInput(engine.deviceType);
@@ -71,10 +68,10 @@ export const TouchMove = () => {
   const touchCameraStart = () => { }
   const touchCameraMove = () => { }
   const touchCameraEnd = () => {
-    currentTouchCamera = new Vector2(0, 0);
+    // currentTouchCamera = new Vector2(0, 0);
   }
   const touchCameraCancel = () => {
-    currentTouchCamera = new Vector2(0, 0);
+    // currentTouchCamera = new Vector2(0, 0);
   }
 
 

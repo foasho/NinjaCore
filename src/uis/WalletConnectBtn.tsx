@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useNinjaEngine } from 'hooks/useNinjaEngine';
+import { useNinjaEngine } from '../hooks';
 
 export const WalletConnectBtn = () => {
 

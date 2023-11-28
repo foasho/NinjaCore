@@ -9,9 +9,14 @@
 
 ### ShowCaseの実行
 ```
+npm i
 npm run showcase
 ```
 
+### Build & Publish
+```
+npm publish
+```
 
 ## オブジェクト種別(OM)
 

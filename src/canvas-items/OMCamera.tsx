@@ -1,10 +1,10 @@
 import * as React from "react";
 import { useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { IObjectManagement } from "../utils/NinjaProps";
+import { IObjectManagement } from "../utils";
 import { MoveableCamera } from "./MoveableCamera";
 import { Vector3 } from "three";
-import { useNinjaEngine } from "../hooks/useNinjaEngine";
+import { useNinjaEngine } from "../hooks";
 
 export const Cameras = () => {
   const { oms } = useNinjaEngine();

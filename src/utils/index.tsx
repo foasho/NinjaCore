@@ -18,3 +18,4 @@ export {
   InitDesktopConfipParams,
   InitScriptManagement,
 } from "./NinjaInit";
+export { NonColliderTunnel, ColliderTunnel } from "./tunnel";

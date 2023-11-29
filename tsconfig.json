@@ -11,8 +11,8 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "emitDeclarationOnly": false,
-    "declaration": false, // 型定義ファイルを出力しない
-    // "declarationDir": "./dist",
+    "declaration": true, // 型定義ファイルを出力しない
+    "declarationDir": "./dist",
     "noUnusedLocals": false,// 未使用エラーを出さない
     "noUnusedParameters": false,// 未使用エラーを出さない
     "noImplicitReturns": true,

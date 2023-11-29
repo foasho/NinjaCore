@@ -31,6 +31,7 @@ interface IPlayerControlProps {
   cameraOffset?: Vector3;
   firstPerson?: boolean;
   resetPosition?: Vector3;
+  resetPositionOffsetY?: number;
   desiredDistance?: number;
   touchDomId?: string | null;
   device: EDeviceType;
@@ -43,6 +44,7 @@ export const PlayerControl = ({
   cameraOffset = new Vector3(-0.25, 1, -5),
   firstPerson,
   resetPosition = new Vector3(0.0, 3, -30),
+  resetPositionOffsetY = 3.0,
   desiredDistance = 3.5,
   touchDomId = null,
   device,
@@ -168,7 +170,7 @@ export const PlayerControl = ({
   const reset = () => {
     if (player.current) {
       playerVelocity.current.set(0, 0, 0);
-      player.current.position.copy(resetPosition.clone());
+      player.current.position.copy(resetPosition.clone().add(new Vector3(0, resetPositionOffsetY, 0)));
       camera.position.sub(controls.current!.target);
       controls.current!.target.copy(player.current.position);
       camera.position.add(player.current.position);

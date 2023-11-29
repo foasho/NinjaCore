@@ -19,7 +19,7 @@ export const initThirdPersonTemplate = (): IObjectManagement[] => {
       args: {
         type: "avatar",
         url: "/models/ybot.glb",
-        position: new Vector3(0, 3, 0),
+        position: new Vector3(0, 0, 0),
         castShadow: true,
         animationLoop: true,
       },

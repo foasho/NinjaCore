@@ -1,7 +1,7 @@
 import React from "react";
 import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
-import { OrbitControls, RoundedBox } from "@react-three/drei";
+import { OrbitControls, RoundedBox, useAnimations } from "@react-three/drei";
 import { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { StaticGeometryGenerator, MeshBVH } from "three-mesh-bvh";
 import {
@@ -16,6 +16,7 @@ import {
   Raycaster,
   AnimationAction,
   AnimationMixer,
+  AnimationClip,
 } from "three";
 import { EDeviceType, useMultiInputControl } from "../../hooks";
 import { IInputMovement } from "../../utils";
@@ -25,8 +26,8 @@ import { IInputMovement } from "../../utils";
  */
 interface IPlayerControlProps {
   object: React.RefObject<Mesh | Object3D>;
-  actions?: { [x: string]: AnimationAction };
-  mixer?: AnimationMixer;
+  actions: { [key: string]: AnimationAction | null };
+  mixer: AnimationMixer | null;
   grp: React.RefObject<Group>;
   cameraOffset?: Vector3;
   firstPerson?: boolean;
@@ -38,8 +39,8 @@ interface IPlayerControlProps {
 }
 export const PlayerControl = ({
   object,
-  actions = {},
-  mixer = undefined,
+  actions,
+  mixer,
   grp,
   cameraOffset = new Vector3(-0.25, 1, -5),
   firstPerson,
@@ -194,7 +195,7 @@ export const PlayerControl = ({
       }
       // 現在再生中のアニメーションを停止する
       for (const key in actions) {
-        actions[key].stop();
+        if (actions[key]) actions[key]!.stop();
       }
     };
   }, [actions]);
@@ -214,7 +215,7 @@ export const PlayerControl = ({
         // Walkが以外を停止
         Object.keys(actions).forEach((key) => {
           if (key !== "Walk" && key !== "Jump" && actions[key]) {
-            actions[key].stop();
+            actions[key]!.stop();
           }
         });
         actions["Walk"].play();
@@ -222,7 +223,7 @@ export const PlayerControl = ({
         // ダッジュ以外を停止
         Object.keys(actions).forEach((key) => {
           if (key !== "Run" && key !== "Jump" && actions[key]) {
-            actions[key].stop();
+            actions[key]!.stop();
           }
         });
         // ダッシュの時はダッシュのアニメーションを再生
@@ -234,7 +235,7 @@ export const PlayerControl = ({
         actions["Idle"].play();
         Object.keys(actions).forEach((key) => {
           if (key !== "Idle" && key !== "Jump" && actions[key]) {
-            actions[key].stop();
+            actions[key]!.stop();
           }
         });
       }
@@ -247,7 +248,7 @@ export const PlayerControl = ({
       // Jump以外を停止
       Object.keys(actions).forEach((key) => {
         if (key !== "Jump" && actions[key]) {
-          actions[key].stop();
+          actions[key]!.stop();
         }
       });
       actions["Jump"].play()

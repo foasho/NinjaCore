@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { useRef, useEffect, useState } from "react";
 import { IObjectManagement } from "../../utils";
 import {
@@ -9,10 +9,12 @@ import {
   AnimationClip,
   Mesh,
   AnimationMixer,
+  Object3D,
 } from "three";
 import { EDeviceType, useNinjaEngine, detectDeviceType } from "../../hooks";
-import { useGLTF } from "@react-three/drei";
+import { useAnimations, useGLTF } from "@react-three/drei";
 import { PlayerControl } from "./PlayerControls";
+import { SkeletonUtils } from "three-stdlib";
 
 /**
  * Player表示
@@ -86,40 +88,66 @@ export const Player = ({
   const playerRef = useRef<Mesh>(null);
   const [device, setDevice] = useState<EDeviceType>(EDeviceType.Unknown);
   const { scene, animations } = useGLTF(objectURL) as any;
-  const [mixer, setMixer] = useState<AnimationMixer>();
-  const [myActions, setMyActions] = useState<{ [x: string]: AnimationAction }>(
-    {}
-  );
+  const [clone, setClone] = useState<Object3D>();
+  const [cloneMixer, setCloneMixer] = useState<AnimationMixer | null>(null);
+  const [cloneActions, setCloneActions] = useState<{
+    [key: string]: AnimationAction | null;
+  } | null>(null);
   const p = initPosition ? initPosition : new Vector3(0, 0, 0);
 
   useEffect(() => {
-    if (scene && animations) {
-      const _mixer = new AnimationMixer(scene);
-      setMixer(_mixer);
-      const _actions: { [x: string]: AnimationAction } = {};
-      animations.forEach((clip: AnimationClip) => {
-        _actions[clip.name] = _mixer.clipAction(clip);
-      });
-      setMyActions(_actions);
+    if (scene) {
+      // cloneを作成
+      const clone = SkeletonUtils.clone(scene);
+      // animationsもコピー
+      clone.animations = animations;
+      if (clone.animations) {
+        const mixer = new AnimationMixer(clone);
+        const actions: {
+          [key: string]: AnimationAction | null;
+        } = {};
+        clone.animations.forEach((clip: AnimationClip) => {
+          actions[clip.name] = mixer.clipAction(clip);
+        });
+        setCloneMixer(mixer);
+        setCloneActions(actions);
+      }
+      setClone(clone);
     }
     setDevice(detectDeviceType());
     // Storeに保持
     // setPlayerRef(playerRef);
   }, [scene, animations, objectURL]);
-  
+
   return (
-    <group renderOrder={1}>
-      <mesh
-        ref={playerRef}
-        scale={scale}
-        position={p}
-        rotation={initRotation ? initRotation : new Euler(0, 0, 0)}
-      >
-        <primitive object={scene} />
-      </mesh>
-      {device !== EDeviceType.Unknown && (
-        <PlayerControl object={playerRef} grp={grp} resetPosition={initPosition} resetPositionOffsetY={offsetY} actions={myActions} mixer={mixer} device={device} />
-      )}
-    </group>
+    <Suspense fallback={null}>
+      <group renderOrder={1}>
+        {clone && cloneMixer && cloneActions && (
+          <>
+            <mesh
+              ref={playerRef}
+              scale={scale}
+              position={p}
+              rotation={initRotation ? initRotation : new Euler(0, 0, 0)}
+            >
+              <primitive object={clone} />
+            </mesh>
+            <>
+              {device !== EDeviceType.Unknown && (
+                <PlayerControl
+                  object={playerRef}
+                  grp={grp}
+                  mixer={cloneMixer}
+                  actions={cloneActions}
+                  resetPosition={initPosition}
+                  resetPositionOffsetY={offsetY}
+                  device={device}
+                />
+              )}
+            </>
+          </>
+        )}
+      </group>
+    </Suspense>
   );
 };

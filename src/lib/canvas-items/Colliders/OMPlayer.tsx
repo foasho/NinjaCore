@@ -57,6 +57,7 @@ export const OMPlayer = ({ grp }: IOMPlayerProps) => {
           objectURL={player.args.url}
           initPosition={player.args.position}
           initRotation={player.args.rotation}
+          offsetY={player.args.offsetY}
         />
       )}
     </>
@@ -71,6 +72,7 @@ interface IPlayerProps {
   objectURL: string;
   initPosition?: Vector3;
   initRotation?: Euler;
+  offsetY?: number;
   scale?: number;
 }
 export const Player = ({
@@ -78,6 +80,7 @@ export const Player = ({
   objectURL,
   initPosition = new Vector3(0, 3, 0),
   initRotation = new Euler(0, 0, 0),
+  offsetY = 3.0,
   scale = 0.75,
 }: IPlayerProps) => {
   const playerRef = useRef<Mesh>(null);
@@ -115,7 +118,7 @@ export const Player = ({
         <primitive object={scene} />
       </mesh>
       {device !== EDeviceType.Unknown && (
-        <PlayerControl object={playerRef} grp={grp} resetPosition={initPosition} actions={myActions} mixer={mixer} device={device} />
+        <PlayerControl object={playerRef} grp={grp} resetPosition={initPosition} resetPositionOffsetY={offsetY} actions={myActions} mixer={mixer} device={device} />
       )}
     </group>
   );

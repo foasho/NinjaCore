@@ -13,7 +13,7 @@ export const ColliderField = () => {
   return (
     <InputControlProvider>
       <OMPlayer grp={grp} />
-      <group ref={grp}>
+      <group ref={grp} renderOrder={0}>
         <ColliderTunnel.Out />
       </group>
     </InputControlProvider>

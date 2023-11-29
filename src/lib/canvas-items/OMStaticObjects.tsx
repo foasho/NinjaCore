@@ -4,7 +4,6 @@ import { IObjectManagement, ColliderTunnel, NonColliderTunnel } from "../utils";
 import { useNinjaEngine } from "../hooks";
 import { useAnimations, useGLTF } from "@react-three/drei";
 import { GLTF, SkeletonUtils } from "three-stdlib";
-import { Loading3D } from "./Common/Loading3D";
 
 export interface IStaticObjectsProps {}
 
@@ -87,13 +86,9 @@ const StaticObject = ({ om }: { om: IObjectManagement }) => {
   }, [scene]);
 
   return (
-    <>
-      <React.Suspense fallback={<Loading3D />}>
-        <group ref={ref}>
-          {clone && <AnimationHelper id={om.id} object={clone} />}
-        </group>
-      </React.Suspense>
-    </>
+    <group ref={ref} renderOrder={0}>
+      {clone && <AnimationHelper id={om.id} object={clone} />}
+    </group>
   );
 };
 

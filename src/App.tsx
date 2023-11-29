@@ -22,6 +22,7 @@ export const initThirdPersonTemplate = (): IObjectManagement[] => {
         position: new Vector3(0, 0, 0),
         castShadow: true,
         animationLoop: true,
+        offsetY: 3.0,
       },
       physics: false,
       phyType: "capsule",

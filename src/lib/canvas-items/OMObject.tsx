@@ -108,11 +108,9 @@ const Terrain = ({ om }: { om: IObjectManagement }) => {
   }
 
   return (
-    <>
-      <group ref={ref}>
-        <primitive object={scene} />
-      </group>
-    </>
+    <group ref={ref} renderOrder={0}>
+      <primitive object={scene} />
+    </group>
   );
 };
 
@@ -263,7 +261,7 @@ const ThreeObject = ({ om }: { om: IObjectManagement }) => {
   return (
     <>
       {geometry && (
-        <mesh ref={ref} castShadow={castShadow} receiveShadow={receiveShadow}>
+        <mesh ref={ref}  renderOrder={0} castShadow={castShadow} receiveShadow={receiveShadow}>
           {geometry}
           {material}
         </mesh>

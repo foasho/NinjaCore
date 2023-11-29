@@ -43,7 +43,7 @@ export const PlayerControl = ({
   cameraOffset = new Vector3(-0.25, 1, -5),
   firstPerson,
   resetPosition = new Vector3(0.0, 3, -30),
-  desiredDistance = 4.5,
+  desiredDistance = 3.5,
   touchDomId = null,
   device,
 }: IPlayerControlProps) => {
@@ -72,7 +72,7 @@ export const PlayerControl = ({
   const deadZone = -25;
   const upVector = new Vector3(0, 1, 0);
   const height = 2.0;
-  const baseSpeed = 10; // 移動速度を調整できるように定数を追加
+  const baseSpeed = 5; // 移動速度を調整できるように定数を追加
   const physicsSteps = 5;
   const dashRatio = 2.1;
   const jumpPower = 10;
@@ -205,8 +205,16 @@ export const PlayerControl = ({
     ) {
       // 歩きの時は歩きのアニメーションを再生
       if (actions["Walk"] && !input.dash) {
+        // Idleが再生されていれば停止
+        if (actions["Idle"]) {
+          actions["Idle"].stop();
+        }
         actions["Walk"].play();
       } else if (actions["Run"] && input.dash) {
+        // Idleが再生されていれば停止
+        if (actions["Idle"]) {
+          actions["Idle"].stop();
+        }
         // ダッシュの時はダッシュのアニメーションを再生
         actions["Run"].play();
       }

@@ -13,7 +13,7 @@ import {
   NJCFile,
   loadNJCFileFromURL,
 } from "../utils";
-import { Group, Mesh, Object3D, Vector3 } from "three";
+import { Group, Mesh, Object3D } from "three";
 import { Canvas as NCanvas, useFrame as useNFrame } from "@react-three/fiber";
 import { useInputControl } from "./useInputControl";
 import { Loading3D } from "../loaders/Loading3D";

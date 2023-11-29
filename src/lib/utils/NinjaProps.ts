@@ -1,4 +1,4 @@
-import { Object3D, Mesh, Group, Vector2, AnimationClip, AnimationMixer, Audio, Vector3 } from "three";
+import { Object3D, Vector2, AnimationClip, AnimationMixer, Audio, Vector3 } from "three";
 
 /**
  * NinjaGLの基本パラメータ

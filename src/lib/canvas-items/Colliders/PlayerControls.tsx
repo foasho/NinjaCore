@@ -72,14 +72,15 @@ export const PlayerControl = ({
   const deadZone = -25;
   const upVector = new Vector3(0, 1, 0);
   const height = 2.0;
-  const baseSpeed = 5; // 移動速度を調整できるように定数を追加
+  const baseSpeed = 2.5; // 移動速度を調整できるように定数を追加
   const physicsSteps = 5;
   const dashRatio = 2.1;
+  const jumpTimer = useRef<number>(0);
   const jumpPower = 10;
+  const jumpLag = 0.5; //(秒) ジャンプのラグを調整するための定数
   // ---------------------------
   const { camera, gl } = useThree();
   const raycaster = new Raycaster();
-  // @ts-ignore
   raycaster.firstHitOnly = true;
   const [mergeGeometry, setMergeGeometry] = useState<BufferGeometry>();
 
@@ -197,6 +198,9 @@ export const PlayerControl = ({
   }, [actions]);
 
   const updateAnimation = (input: IInputMovement, delta: number) => {
+    /**
+     * 左右前後のアニメーション
+     */
     if (
       input.forward !== 0 ||
       input.backward !== 0 ||
@@ -205,16 +209,20 @@ export const PlayerControl = ({
     ) {
       // 歩きの時は歩きのアニメーションを再生
       if (actions["Walk"] && !input.dash) {
-        // Idleが再生されていれば停止
-        if (actions["Idle"]) {
-          actions["Idle"].stop();
-        }
+        // Walkが以外を停止
+        Object.keys(actions).forEach((key) => {
+          if (key !== "Walk" && key !== "Jump" && actions[key]) {
+            actions[key].stop();
+          }
+        });
         actions["Walk"].play();
       } else if (actions["Run"] && input.dash) {
-        // Idleが再生されていれば停止
-        if (actions["Idle"]) {
-          actions["Idle"].stop();
-        }
+        // ダッジュ以外を停止
+        Object.keys(actions).forEach((key) => {
+          if (key !== "Run" && key !== "Jump" && actions[key]) {
+            actions[key].stop();
+          }
+        });
         // ダッシュの時はダッシュのアニメーションを再生
         actions["Run"].play();
       }
@@ -223,18 +231,39 @@ export const PlayerControl = ({
       if (actions["Idle"]) {
         actions["Idle"].play();
         Object.keys(actions).forEach((key) => {
-          if (key !== "Idle" && actions[key]) {
+          if (key !== "Idle" && key !== "Jump" && actions[key]) {
             actions[key].stop();
           }
         });
       }
     }
-    // ジャンプのアニメーション
+
+    /**
+     * ジャンプのアニメーション
+     */
     if (actions["Jump"] && !playerIsOnGround.current) {
-      actions["Jump"].play();
-    } else if (actions["Jump"] && playerIsOnGround.current) {
-      actions["Jump"].stop();
+      // Jump以外を停止
+      Object.keys(actions).forEach((key) => {
+        if (key !== "Jump" && actions[key]) {
+          actions[key].stop();
+        }
+      });
+      actions["Jump"].play()
+      if (mixer && jumpTimer.current == 0){
+        mixer.setTime(jumpLag)
+      }
+      jumpTimer.current += delta;
     }
+    else {
+      if (actions["Jump"]){
+        actions["Jump"].stop();
+      }
+      jumpTimer.current = 0;
+    }
+
+    /**
+     * アニメーションの更新
+     */
     if (mixer) mixer.update(delta);
   };
 
@@ -385,11 +414,10 @@ export const PlayerControl = ({
       const intersects = raycaster.intersectObject(collider.current!, true); // 全てのオブジェクトを対象にRaycast
       if (intersects.length > 0) {
         // 複数のオブジェクトに衝突した場合、distanceが最も近いオブジェクトを選択
-        // const target = intersects.reduce((prev, current) => {
-        //   return prev.distance < current.distance ? prev : current
-        // })
-        // この処理が完璧でないため、コメントアウト
-        // camera.position.copy(target.point)
+        const target = intersects.reduce((prev, current) => {
+          return prev.distance < current.distance ? prev : current
+        })
+        camera.position.copy(target.point)
       } else if (forwardAmount !== 0 || rightAmount !== 0) {
         // 障害物との交差がない場合はプレイヤーから一定の距離を保つ
         const directionFromPlayerToCamera = camera.position

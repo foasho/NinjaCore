@@ -10,7 +10,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,
-    "emitDeclarationOnly": false,
+    "emitDeclarationOnly": true,
     "declaration": true, // 型定義ファイルを出力しない
     "declarationDir": "./dist",
     "noUnusedLocals": false,// 未使用エラーを出さない

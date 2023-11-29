@@ -62,6 +62,9 @@ const MyEffect = ({ om }: { om: IObjectManagement }) => {
     } else if (om.args.type === "lut" && texture) {
       return <LUT lut={texture as Texture} />;
     }
+    else {
+      return <></>;
+    }
   }, [om, texture]);
 
   return <>{effect}</>;

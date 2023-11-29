@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import { IObjectManagement } from "../utils";
 import { LUTCubeLoader } from "three-stdlib";
 import { Bloom, LUT, SSR, EffectComposer } from "@react-three/postprocessing";
@@ -6,7 +6,6 @@ import { Texture } from "three";
 import { useNinjaEngine } from "../hooks";
 
 export const OMEffects = () => {
-
   const { oms } = useNinjaEngine();
   const effects = React.useMemo(() => {
     return oms.filter((om) => om.type === "effect");
@@ -14,18 +13,16 @@ export const OMEffects = () => {
 
   return (
     <>
-      {effects.length > 0 &&
+      {effects.length > 0 && (
         <EffectComposer disableNormalPass>
           {effects.map((om: IObjectManagement) => {
-            return <MyEffect om={om} key={om.id} />
+            return <MyEffect om={om} key={om.id} />;
           })}
         </EffectComposer>
-      }
+      )}
     </>
-  )
-}
-
-
+  );
+};
 
 /**
  * -------
@@ -59,7 +56,7 @@ const MyEffect = ({ om }) => {
     } else if (om.args.type === "ssr") {
       return (
         <SSR
-          // ... All SSR props
+        // ... All SSR props
         />
       );
     } else if (om.args.type === "lut" && texture) {

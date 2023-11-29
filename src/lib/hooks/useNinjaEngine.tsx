@@ -1,13 +1,31 @@
-import * as React from 'react';
-import { IConfigParams, IInputMovement, IObjectManagement, IScriptManagement, ITextureManagement, IUIManagement } from '../utils';
-import { InitMobileConfipParams, NonColliderTunnel, NJCFile, loadNJCFileFromURL } from '../utils';
-import { Group, Mesh, Object3D, Vector3 } from 'three';
-import { Canvas as NCanvas, useFrame as useNFrame } from '@react-three/fiber';
-import { useInputControl } from './useInputControl';
-import { Loading3D } from '../loaders/Loading3D';
-import { Loading2D } from '../loaders/Loading2D';
-import { OMEffects, OMObjects, Cameras, ColliderField, OMEnvirments } from '../canvas-items';
-import { NWorkerProp, useNinjaWorker } from './useNinjaWorker';
+import React from "react";
+import {
+  IConfigParams,
+  IInputMovement,
+  IObjectManagement,
+  IScriptManagement,
+  ITextureManagement,
+  IUIManagement,
+} from "../utils";
+import {
+  InitMobileConfipParams,
+  NonColliderTunnel,
+  NJCFile,
+  loadNJCFileFromURL,
+} from "../utils";
+import { Group, Mesh, Object3D, Vector3 } from "three";
+import { Canvas as NCanvas, useFrame as useNFrame } from "@react-three/fiber";
+import { useInputControl } from "./useInputControl";
+import { Loading3D } from "../loaders/Loading3D";
+import { Loading2D } from "../loaders/Loading2D";
+import {
+  OMEffects,
+  OMObjects,
+  Cameras,
+  ColliderField,
+  OMEnvirments,
+} from "../canvas-items";
+import { NWorkerProp, useNinjaWorker } from "./useNinjaWorker";
 
 export enum EDeviceType {
   Unknown = 0,
@@ -22,30 +40,30 @@ export enum ENinjaStatus {
 }
 
 type NinjaEngineProp = {
-  status: ENinjaStatus,
-  isPhysics: boolean,
-  player: React.MutableRefObject<Mesh|null>,
-  colGrp: Group|null,
-  scriptWorker: NWorkerProp,
-  input: IInputMovement,
-  oms: IObjectManagement[],
-  sms: IScriptManagement[],
-  ums: IUIManagement[],
-  tms: ITextureManagement[],
-  setOMObjectById: (id: string, obj: Object3D) => void,
-  getOMById: (id: string) => IObjectManagement|null,
-  getOMByName: (name: string) => IObjectManagement|null,
-  getSMById: (id: string) => IScriptManagement|null,
-}
+  status: ENinjaStatus;
+  isPhysics: boolean;
+  player: React.MutableRefObject<Mesh | null>;
+  colGrp: Group | null;
+  scriptWorker: NWorkerProp;
+  input: IInputMovement;
+  oms: IObjectManagement[];
+  sms: IScriptManagement[];
+  ums: IUIManagement[];
+  tms: ITextureManagement[];
+  setOMObjectById: (id: string, obj: Object3D) => void;
+  getOMById: (id: string) => IObjectManagement | null;
+  getOMByName: (name: string) => IObjectManagement | null;
+  getSMById: (id: string) => IScriptManagement | null;
+};
 export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
   status: ENinjaStatus.Pause,
   isPhysics: true,
   player: React.createRef<Mesh>(),
   colGrp: null,
   scriptWorker: {
-    loadUserScript: async () => { },
-    runFrameLoop: () => { },
-    runInitialize: () => { },
+    loadUserScript: async () => {},
+    runFrameLoop: () => {},
+    runInitialize: () => {},
   },
   input: {
     forward: 0,
@@ -65,7 +83,7 @@ export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
   sms: [],
   ums: [],
   tms: [],
-  setOMObjectById: () => { },
+  setOMObjectById: () => {},
   getOMById: () => null,
   getOMByName: () => null,
   getSMById: () => null,
@@ -74,59 +92,62 @@ export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
 export const useNinjaEngine = () => React.useContext(NinjaEngineContext);
 
 export const detectDeviceType = (): EDeviceType => {
- if (typeof window !== 'undefined') {  // check if window is defined (we are on client side)
-   const ua = navigator.userAgent;
-   if (ua.indexOf('iPhone') > 0 || ua.indexOf('iPod') > 0 || (ua.indexOf('Android') > 0 && ua.indexOf('Mobile') > 0)) {
-     return EDeviceType.Mobile;
-   } 
-   else if (ua.indexOf('iPad') > 0 || ua.indexOf('Android') > 0) {
-     return EDeviceType.Tablet;
-   }
-   else if (
-     navigator.maxTouchPoints &&
-     navigator.maxTouchPoints > 2 &&
-     /MacIntel/.test(navigator.platform)
-   ) {
-     return EDeviceType.Tablet;
-   }
-   else {
-     return EDeviceType.Desktop;
-   }
- } else {
-   return EDeviceType.Unknown;  // as a default, return "desktop" when window is not defined (we are on server side)
- }
+  if (typeof window !== "undefined") {
+    // check if window is defined (we are on client side)
+    const ua = navigator.userAgent;
+    if (
+      ua.indexOf("iPhone") > 0 ||
+      ua.indexOf("iPod") > 0 ||
+      (ua.indexOf("Android") > 0 && ua.indexOf("Mobile") > 0)
+    ) {
+      return EDeviceType.Mobile;
+    } else if (ua.indexOf("iPad") > 0 || ua.indexOf("Android") > 0) {
+      return EDeviceType.Tablet;
+    } else if (
+      navigator.maxTouchPoints &&
+      navigator.maxTouchPoints > 2 &&
+      /MacIntel/.test(navigator.platform)
+    ) {
+      return EDeviceType.Tablet;
+    } else {
+      return EDeviceType.Desktop;
+    }
+  } else {
+    return EDeviceType.Unknown; // as a default, return "desktop" when window is not defined (we are on server side)
+  }
 };
 
 /**
  * Canvas(@react-three/fiber)内部に設置するProvider
- * ex): 
+ * ex):
  * <Canvas>
  *  <NinjaEngineProvider/>
  * </Canvas>
  */
 interface INinjaEngineProvider {
-  njc?: NJCFile|null;
+  njc?: NJCFile | null;
   njcPath?: string;
   noCanvas?: boolean;
   children?: React.ReactNode;
 }
-export const ThreeJSVer = '0.154.0';
-export const NinjaGL = ({ 
+export const ThreeJSVer = "0.154.0";
+export const NinjaGL = ({
   njc,
   njcPath,
   noCanvas = false,
   children,
-}: INinjaEngineProvider
-) => {
+}: INinjaEngineProvider) => {
   const [init, setInit] = React.useState(false);
   const [status, setStatus] = React.useState<ENinjaStatus>(ENinjaStatus.Pause);
   // coreファイル
-  const [njcFile, setNjcFile] = React.useState<NJCFile|null>(null);
+  const [njcFile, setNjcFile] = React.useState<NJCFile | null>(null);
   // Loading周り
   const loadingPercentage = React.useRef<number>(0);
   const cameraLayer = React.useRef<number>(1);
   // ユーザー設定
-  const [config, setConfig] = React.useState<IConfigParams>(InitMobileConfipParams);
+  const [config, setConfig] = React.useState<IConfigParams>(
+    InitMobileConfipParams
+  );
   const [device, setDevice] = React.useState<EDeviceType>(EDeviceType.Unknown);
   // コンテンツ管理
   const [oms, setOMs] = React.useState<IObjectManagement[]>([]);
@@ -147,16 +168,16 @@ export const NinjaGL = ({
 
   React.useEffect(() => {
     // njcが指定されていればそのままセット
-    if (njc && !njcFile){
+    if (njc && !njcFile) {
       setNjcFile(njc);
     }
     // njcPathが指定されていれば読み込み
-    if (njcPath && !njcFile){
+    if (njcPath && !njcFile) {
       console.log(njcPath);
       loadNJCFile(njcPath);
     }
     // njcFileが設定済みなら初期設定を行う
-    if (njcFile){
+    if (njcFile) {
       // 1. 接続デバイスを判定する
       setDevice(detectDeviceType());
       // 3. Coreファイルを読み込む
@@ -164,7 +185,7 @@ export const NinjaGL = ({
       setUMs(njcFile.ums);
       setTMs(njcFile.tms);
       setSMs(njcFile.sms);
-      if (njcFile.config){
+      if (njcFile.config) {
         setConfig(njcFile.config);
       }
       setInit(true);
@@ -172,7 +193,7 @@ export const NinjaGL = ({
   }, [njcFile, njc, njcPath]);
 
   React.useEffect(() => {
-    if (init){
+    if (init) {
       // 1. 初期設定完了後にPhyWold/ScriptWorkerの設置アップ
       scriptWorker.loadUserScript(sms);
     }
@@ -188,7 +209,7 @@ export const NinjaGL = ({
     console.info(`<< LoadedTime: ${endTime - startTime}ms >>`);
     setNjcFile(data);
     console.log(data);
-  }
+  };
 
   /**
    * ----------------------------------------
@@ -196,92 +217,98 @@ export const NinjaGL = ({
    * ----------------------------------------
    */
   // IDからOMを取得する
-  const getOMById = (id: string): IObjectManagement|null => {
+  const getOMById = (id: string): IObjectManagement | null => {
     const om = oms.find((om) => om.id === id);
-    if (om){
+    if (om) {
       return om;
     }
     return null;
-  }
+  };
   // 名前からOMを取得する
-  const getOMByName = (name: string): IObjectManagement|null => {
+  const getOMByName = (name: string): IObjectManagement | null => {
     const om = oms.find((om) => om.name === name);
-    if (om){
+    if (om) {
       return om;
     }
     return null;
-  }
+  };
   // 特定のOMにObject3Dを追加する
   const setOMObjectById = (id: string, obj: Object3D) => {
     const om = oms.find((om) => om.id === id);
-    if (om){
+    if (om) {
       om.object = obj;
     }
-  }
+  };
   // IDからSMを取得する
-  const getSMById = (id: string): IScriptManagement|null => {
+  const getSMById = (id: string): IScriptManagement | null => {
     const sm = sms.find((sm) => sm.id === id);
-    if (sm){
+    if (sm) {
       return sm;
     }
     return null;
-  }
+  };
 
-  
-  const updateVisibleObject = (playerPosition: Vector3, hiddenDistance: number) => {
-    // プレイヤーから一定距離内にあるOMをvisibleにする。また、一定距離外にあるOMをhiddenにする
-    // 調整中...
-  }
+  console.log("NinjaEngineProvider");
+  console.log("njcFile", njcFile);
+  console.log("init", init);
+  console.log("no canvas", noCanvas);
+  console.log("oms", oms);
 
   return (
-    <NinjaEngineContext.Provider value={{
-      status,
-      isPhysics: physics,
-      scriptWorker,
-      input,
-      player,
-      colGrp: colGrp.current,
-      oms,
-      sms,
-      ums,
-      tms,
-      setOMObjectById,
-      getOMById,
-      getOMByName,
-      getSMById,
-    }}>
-      {init && njcFile &&
+    <NinjaEngineContext.Provider
+      value={{
+        status,
+        isPhysics: physics,
+        scriptWorker,
+        input,
+        player,
+        colGrp: colGrp.current,
+        oms,
+        sms,
+        ums,
+        tms,
+        setOMObjectById,
+        getOMById,
+        getOMByName,
+        getSMById,
+      }}
+    >
+      {init && njcFile && (
         <>
-          {!noCanvas ?
+          {!noCanvas ? (
             <NCanvas>
-              <React.Suspense fallback={<Loading3D isLighting position={[0, 0, 3]} />}>
-                <NinjaCanvasItems/>
+              <React.Suspense
+                fallback={<Loading3D isLighting position={[0, 0, 3]} />}
+              >
+                <NinjaCanvasItems />
                 {children}
               </React.Suspense>
             </NCanvas>
-            :
-            <>
-              {children}
-            </>
-          }
+          ) : (
+            <>{children}</>
+          )}
           {/** UIレンダリング */}
-
         </>
-      }
-      {!init && !noCanvas &&
+      )}
+      {!init && !noCanvas && (
         <>
           {/** ローディング */}
           <Loading2D />
         </>
-      }
+      )}
     </NinjaEngineContext.Provider>
-  )
-}
+  );
+};
 
 /**
  * Canvasレンダリング
  */
-export const NinjaCanvas = ({ children }) => (<NCanvas>{children}</NCanvas>)
+type NinjaCanvasProp = {
+  children?: React.ReactNode;
+};
+export const NinjaCanvas = ({ children }: NinjaCanvasProp) => (
+  <NCanvas>{children}</NCanvas>
+);
 export const NinjaCanvasItems = () => {
   return (
     <>
@@ -296,49 +323,33 @@ export const NinjaCanvasItems = () => {
       {/** ColliderField & Player */}
       <ColliderField />
       {/** NonCollider */}
-      <NonColliderTunnel.Out/>
+      <NonColliderTunnel.Out />
       <group>
-        <SystemFrame/>
+        <SystemFrame />
       </group>
     </>
-  )
-}
-
+  );
+};
 
 /**
  * システムフレーム(時間をすすめる)
  */
 const SystemFrame = () => {
-
-  const { 
-    status,
-    scriptWorker,
-    input,
-    sms,
-  } = useNinjaEngine();
+  const { status, scriptWorker, input, sms } = useNinjaEngine();
 
   // フレームの更新
   useNFrame((state, delta) => {
-    if (status === ENinjaStatus.Pause){
+    if (status === ENinjaStatus.Pause) {
       return;
     }
 
     // 3. ユーザースクリプトの更新
-    if (scriptWorker){
+    if (scriptWorker) {
       sms.forEach((sm) => {
-        scriptWorker.runFrameLoop(
-          sm.id,
-          state,
-          delta,
-          input
-        );
+        scriptWorker.runFrameLoop(sm.id, state, delta, input);
       });
     }
   });
-  
 
-  return (
-    <>
-    </>
-  )
-}
+  return <></>;
+};

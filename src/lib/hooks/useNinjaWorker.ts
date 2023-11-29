@@ -1,7 +1,7 @@
-import { RootState } from '@react-three/fiber';
-import * as React from 'react';
-import { IInputMovement, IScriptManagement } from '../utils';
-import { NinjaEngineContext } from './useNinjaEngine';
+import { RootState } from "@react-three/fiber";
+import React from "react";
+import { IInputMovement, IScriptManagement } from "../utils";
+import { NinjaEngineContext } from "./useNinjaEngine";
 
 interface NWorkerProps {
   ThreeJSVer: string;
@@ -9,20 +9,24 @@ interface NWorkerProps {
 export interface NWorkerProp {
   loadUserScript: (sms: IScriptManagement[]) => Promise<void>;
   runInitialize: (id: string) => void;
-  runFrameLoop: (id: string, state: RootState, delta: number, input: IInputMovement) => void;
+  runFrameLoop: (
+    id: string,
+    state: RootState,
+    delta: number,
+    input: IInputMovement
+  ) => void;
 }
-export const useNinjaWorker = ({
-  ThreeJSVer,
-}: NWorkerProps): NWorkerProp => {
-
+export const useNinjaWorker = ({ ThreeJSVer }: NWorkerProps): NWorkerProp => {
   const engine = React.useContext(NinjaEngineContext);
-  const worker = React.useRef<Worker|null>(null);
+  const worker = React.useRef<Worker | null>(null);
 
   const loadUserScript = async (sms: IScriptManagement[]): Promise<void> => {
     if (worker.current) return; // 既にWorkerが存在する場合は処理を終了する
     // IDに紐づく関数を作成する
-    const importScriptsCode = sms.filter((sm) => sm.script).map(
-      (sm) => `
+    const importScriptsCode = sms
+      .filter((sm) => sm.script)
+      .map(
+        (sm) => `
         (function(id) {
           ${sm.script}
           self[id] = {
@@ -31,8 +35,8 @@ export const useNinjaWorker = ({
           };
         })('${sm.id}');
       `
-    )
-    .join('\n');
+      )
+      .join("\n");
     const threeCDN = `https://unpkg.com/three@${ThreeJSVer}/build/three.min.js`;
     const workerScript = `
       // Add ThreeJS
@@ -91,13 +95,12 @@ export const useNinjaWorker = ({
     const userScriptURL = URL.createObjectURL(userScriptBlob);
     worker.current = new Worker(userScriptURL);
     worker.current.addEventListener("message", handleWorkerMessage);
+  };
 
-  }
-
-    /**
+  /**
    * Engine側から、
    * 任意のIDスクリプトをもつユーザースクリプトのinitialize関数を実行する
-   * @param id 
+   * @param id
    */
   const runInitialize = (id: string): void => {
     if (worker.current) {
@@ -105,35 +108,38 @@ export const useNinjaWorker = ({
     } else {
       console.error("Worker is not initialized yet.");
     }
-  }
-  
+  };
+
   /**
    * Engine側から、
    * 任意のIDスクリプトをもつユーザースクリプトのframeLoop関数を実行する
-   * @param id 
-   * @param state 
-   * @param delta 
+   * @param id
+   * @param state
+   * @param delta
    * @param input
    */
   const runFrameLoop = (
-    id: string, 
-    state: RootState, 
+    id: string,
+    state: RootState,
     delta: number,
     input: IInputMovement
   ): void => {
     if (worker.current) {
-      const _state = { elapsedTime: state.clock.getElapsedTime(), mouse: state.mouse }
-      worker.current.postMessage({ 
-        type: "runFrameLoop", 
-        id: id, 
-        state: _state, 
+      const _state = {
+        elapsedTime: state.clock.getElapsedTime(),
+        mouse: state.mouse,
+      };
+      worker.current.postMessage({
+        type: "runFrameLoop",
+        id: id,
+        state: _state,
         delta: delta,
-        input: input
-        });
+        input: input,
+      });
     } else {
       console.error("Worker is not initialized yet.");
     }
-  }
+  };
 
   /**
    * WebWorkerメッセージを処理する
@@ -141,88 +147,123 @@ export const useNinjaWorker = ({
   const handleWorkerMessage = async (e: MessageEvent) => {
     if (!worker.current) return;
     const { type, data, messageId } = e.data;
-    if (type === "getPositionByName"){
+    if (type === "getPositionByName") {
       // 特定の名前のOMの位置を取得する
       const { name } = data as { name: string };
       const om = engine.getOMByName(name);
       if (om && om.object) {
-        worker.current.postMessage({ type: "response", data: om.object.position, messageId: messageId });
-      }
-      else {
+        worker.current.postMessage({
+          type: "response",
+          data: om.object.position,
+          messageId: messageId,
+        });
+      } else {
         console.error(`Name: ${name}, OM not found.`);
-        worker.current.postMessage({ type: "response", data: null, messageId: messageId });
+        worker.current.postMessage({
+          type: "response",
+          data: null,
+          messageId: messageId,
+        });
       }
-    }
-    else if (type === "getPositionByName"){
+    } else if (type === "getPositionByName") {
       // 特定の名前のOMの回転を取得する
       const { name } = data;
       const om = engine.getOMByName(name);
       if (om && om.object) {
-        worker.current.postMessage({ type: "response", data: om.object.rotation, messageId: messageId });
-      }
-      else {
+        worker.current.postMessage({
+          type: "response",
+          data: om.object.rotation,
+          messageId: messageId,
+        });
+      } else {
         console.error(`Name: ${name}, OM not found.`);
-        worker.current.postMessage({ type: "response", data: null, messageId: messageId });
+        worker.current.postMessage({
+          type: "response",
+          data: null,
+          messageId: messageId,
+        });
       }
-    }
-    else if (type == "getScaleByName"){
+    } else if (type == "getScaleByName") {
       // 特定の名前のOMのスケールを取得する
       const { name } = data;
       const om = engine.getOMByName(name);
       if (om && om.object) {
-        worker.current.postMessage({ type: "response", data: om.object.scale, messageId: messageId });
-      }
-      else {
+        worker.current.postMessage({
+          type: "response",
+          data: om.object.scale,
+          messageId: messageId,
+        });
+      } else {
         console.error(`Name: ${name}, OM not found.`);
-        worker.current.postMessage({ type: "response", data: null, messageId: messageId });
+        worker.current.postMessage({
+          type: "response",
+          data: null,
+          messageId: messageId,
+        });
       }
-    }
-    else if (type == "setPositionByName"){
+    } else if (type == "setPositionByName") {
       // 特定の名前のOMの位置を設定する
       const { name, position } = data;
       const om = engine.getOMByName(name);
       if (om && om.object) {
         om.object.position.copy(position);
-        worker.current.postMessage({ type: "response", data: null, messageId: messageId });
-      }
-      else {
+        worker.current.postMessage({
+          type: "response",
+          data: null,
+          messageId: messageId,
+        });
+      } else {
         console.error(`Name: ${name}, OM not found.`);
-        worker.current.postMessage({ type: "response", data: null, messageId: messageId });
+        worker.current.postMessage({
+          type: "response",
+          data: null,
+          messageId: messageId,
+        });
       }
-    }
-    else if (type == "setRotationByName"){
+    } else if (type == "setRotationByName") {
       // 特定の名前のOMの回転を設定する
       const { name, rotation } = data;
       const om = engine.getOMByName(name);
       if (om && om.object) {
         om.object.rotation.copy(rotation);
-        worker.current.postMessage({ type: "response", data: null, messageId: messageId });
-      }
-      else {
+        worker.current.postMessage({
+          type: "response",
+          data: null,
+          messageId: messageId,
+        });
+      } else {
         console.error(`Name: ${name}, OM not found.`);
-        worker.current.postMessage({ type: "response", data: null, messageId: messageId });
+        worker.current.postMessage({
+          type: "response",
+          data: null,
+          messageId: messageId,
+        });
       }
-    }
-    else if (type == "setScaleByName"){
+    } else if (type == "setScaleByName") {
       // 特定の名前のOMのスケールを設定する
       const { name, scale } = data;
       const om = engine.getOMByName(name);
       if (om && om.object) {
         om.object.scale.copy(scale);
-        worker.current.postMessage({ type: "response", data: null, messageId: messageId });
-      }
-      else {
+        worker.current.postMessage({
+          type: "response",
+          data: null,
+          messageId: messageId,
+        });
+      } else {
         console.error(`Name: ${name}, OM not found.`);
-        worker.current.postMessage({ type: "response", data: null, messageId: messageId });
+        worker.current.postMessage({
+          type: "response",
+          data: null,
+          messageId: messageId,
+        });
       }
     }
-  }
+  };
 
-  return (
-    {
-      loadUserScript,
-      runInitialize,
-      runFrameLoop,
-    }
-  )
-}
+  return {
+    loadUserScript,
+    runInitialize,
+    runFrameLoop,
+  };
+};

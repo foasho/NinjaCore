@@ -1,10 +1,7 @@
-import * as React from "react";
+import React from "react";
 
-export interface IOthersProps { }
+export interface IOthersProps {}
 
 export const Others = () => {
-  return (
-    <>
-    </>
-  )
-}
+  return <></>;
+};

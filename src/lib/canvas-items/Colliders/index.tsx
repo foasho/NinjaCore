@@ -1,18 +1,21 @@
-import * as React from 'react';
-import { Group } from 'three';
-import { OMPlayer } from './OMPlayer';
-import { ColliderTunnel } from '../../utils/tunnel';
+import React, { useRef } from "react";
+import { Group } from "three";
+import { OMPlayer } from "./OMPlayer";
+import { ColliderTunnel } from "../../utils/tunnel";
+import { useThree } from "@react-three/fiber";
+import { InputControlProvider } from "../../hooks";
 
 export const ColliderField = () => {
-
-  const grp = React.useRef<Group>(null);
+  const { raycaster } = useThree();
+  raycaster.firstHitOnly = true;
+  const grp = useRef<Group>(null);
 
   return (
-    <>
+    <InputControlProvider>
       <OMPlayer grp={grp} />
       <group ref={grp}>
-        <ColliderTunnel.Out/>
+        <ColliderTunnel.Out />
       </group>
-    </>
-  )
-}
+    </InputControlProvider>
+  );
+};

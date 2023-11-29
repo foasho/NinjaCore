@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import { useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { IObjectManagement } from "../utils";
@@ -16,25 +16,19 @@ export const Cameras = () => {
 
   return (
     <>
-      {camera &&
-        <CameraComponent {...camera} />
-      }
-      {!camera &&
-        <OrbitControls />
-      }
+      {camera && <CameraComponent {...camera} />}
     </>
-  )
-}
+  );
+};
 
 const CameraComponent = (om: IObjectManagement) => {
   const { setOMObjectById } = useNinjaEngine();
   let _camera: any;
   const { camera } = useThree();
-  if (om.args.type == "orbit"){
-    _camera = (<OrbitControls/>);
-  }
-  else if (om.args.type == "moveable"){
-    _camera = (<MoveableCamera/>);
+  if (om.args.type == "orbit") {
+    _camera = <OrbitControls />;
+  } else if (om.args.type == "moveable") {
+    _camera = <MoveableCamera />;
   }
   React.useEffect(() => {
     if (om.args.type == "fixed" && om.args.default == true) {
@@ -59,7 +53,8 @@ const CameraComponent = (om: IObjectManagement) => {
       if (om.args.aspect) {
         // camera.aspect = om.args.aspect;
       }
-      if (om.args.cameraDirection) {// CameraDirectionがあれば、そちらを向く
+      if (om.args.cameraDirection) {
+        // CameraDirectionがあれば、そちらを向く
         const vec3 = new Vector3().copy(om.args.cameraDirection);
         camera.lookAt(vec3);
       }
@@ -72,9 +67,5 @@ const CameraComponent = (om: IObjectManagement) => {
     }
   }, []);
 
-  return (
-    <>
-      {_camera}
-    </>
-  )
-}
+  return <>{_camera}</>;
+};

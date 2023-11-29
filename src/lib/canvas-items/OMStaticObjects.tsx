@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import { Group, Mesh, Object3D } from "three";
 import { IObjectManagement, ColliderTunnel, NonColliderTunnel } from "../utils";
 import { useNinjaEngine } from "../hooks";
@@ -6,51 +6,51 @@ import { useAnimations, useGLTF } from "@react-three/drei";
 import { GLTF, SkeletonUtils } from "three-stdlib";
 import { Loading3D } from "./Common/Loading3D";
 
-export interface IStaticObjectsProps { }
+export interface IStaticObjectsProps {}
 
 export const StaticObjects = () => {
   const engine = useNinjaEngine();
   const staticObjects = React.useMemo(() => {
     if (!engine) return [];
-    const staticObjects = engine.oms.filter((o: IObjectManagement) => o.type === "object");
-    return staticObjects? staticObjects : [];
+    const staticObjects = engine.oms.filter(
+      (o: IObjectManagement) => o.type === "object"
+    );
+    return staticObjects ? staticObjects : [];
   }, [engine]);
   return (
     <>
       {staticObjects.map((om, index) => {
         <>
-          {om.physics ?
+          {om.physics ? (
             <ColliderTunnel.In>
               <StaticObject om={om} key={index} />
             </ColliderTunnel.In>
-            :
+          ) : (
             <NonColliderTunnel.In>
               <StaticObject om={om} key={index} />
             </NonColliderTunnel.In>
-          }
-        </>
+          )}
+        </>;
       })}
     </>
-  )
-}
+  );
+};
 
 const StaticObject = ({ om }) => {
-
   const { scene, animations } = useGLTF(om.args.url) as GLTF;
   const [clone, setClone] = React.useState<Object3D>();
   const ref = React.useRef<Group>(null);
-  
 
   React.useEffect(() => {
     const init = () => {
       if (ref.current) {
-        if (om.args.position){
+        if (om.args.position) {
           ref.current.position.copy(om.args.position.clone());
         }
-        if (om.args.rotation){
+        if (om.args.rotation) {
           ref.current.rotation.copy(om.args.rotation.clone());
         }
-        if (om.args.scale){
+        if (om.args.scale) {
           ref.current.scale.copy(om.args.scale.clone());
         }
       }
@@ -90,18 +90,12 @@ const StaticObject = ({ om }) => {
     <>
       <React.Suspense fallback={<Loading3D />}>
         <group ref={ref}>
-          {clone && (
-            <AnimationHelper
-              id={om.id}
-              object={clone}
-            />
-          )}
+          {clone && <AnimationHelper id={om.id} object={clone} />}
         </group>
       </React.Suspense>
     </>
-  )
-}
-
+  );
+};
 
 type AnimationHelperProps = {
   id: string;
@@ -116,7 +110,8 @@ const AnimationHelper = ({
   const animations = object.animations;
   const { ref, actions } = useAnimations(animations);
   const { getOMById } = useNinjaEngine();
-  const [defaultAnimation, setDefaultAnimation] = React.useState<string>('Idle');
+  const [defaultAnimation, setDefaultAnimation] =
+    React.useState<string>("Idle");
   const [animationLoop, setAnimationLoop] = React.useState<boolean>(true);
 
   const animationStop = () => {
@@ -133,7 +128,7 @@ const AnimationHelper = ({
     }
   };
 
- React.useEffect(() => {
+  React.useEffect(() => {
     const init = () => {
       const _om = getOMById(id);
       if (_om) {
@@ -155,7 +150,7 @@ const AnimationHelper = ({
       animationAllStop();
       actions[defaultAnimation]!.play();
     }
-    if (!animationLoop){
+    if (!animationLoop) {
       animationStop();
     }
   }, [actions, defaultAnimation, animationLoop]);

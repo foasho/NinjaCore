@@ -1,7 +1,10 @@
-import * as React from "react";
+import React from "react";
 import { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { useThree } from "@react-three/fiber";
-import { PerspectiveCamera as DPerspectiveCamera, OrbitControls } from "@react-three/drei";
+import {
+  PerspectiveCamera as DPerspectiveCamera,
+  OrbitControls,
+} from "@react-three/drei";
 import { PerspectiveCamera, Vector3 } from "three";
 
 /**
@@ -20,7 +23,9 @@ export const MoveableCamera = (props: IMoveableCamera) => {
   const [isMounted, setIsMounted] = React.useState(false);
   const cameraFar = props.cameraFar ? props.cameraFar : 1000;
   const cameraSpeed = props.cameraSpeed ? props.cameraSpeed : 10;
-  const initCameraPosition = props.initCameraPosition ? props.initCameraPosition : new Vector3(-3, 5, -10);
+  const initCameraPosition = props.initCameraPosition
+    ? props.initCameraPosition
+    : new Vector3(-3, 5, -10);
 
   React.useLayoutEffect(() => {
     if (cameraRef && cameraRef.current) {
@@ -43,14 +48,14 @@ export const MoveableCamera = (props: IMoveableCamera) => {
     <>
       {/** @ts-ignore */}
       <DPerspectiveCamera makeDefault ref={cameraRef} />
-      {isMounted &&
+      {isMounted && (
         <OrbitControls
           ref={ref}
           args={[cameraRef.current!, gl.domElement]}
           camera={cameraRef.current!}
           makeDefault={true}
         />
-      }
+      )}
     </>
   );
 };

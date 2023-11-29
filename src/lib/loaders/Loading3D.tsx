@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import { useFrame } from "@react-three/fiber";
 import { Group, Mesh, Vector3 } from "three";
 
@@ -9,15 +9,12 @@ interface ILoading3D {
   isLighting?: boolean;
 }
 
-export const Loading3D = (
-  {
-    position,
-    scale = 0.2,
-    color = '#00FFFF',
-    isLighting = false,
-  }: ILoading3D
-) => {
-
+export const Loading3D = ({
+  position,
+  scale = 0.2,
+  color = "#00FFFF",
+  isLighting = false,
+}: ILoading3D) => {
   const ref = React.useRef<Group>(null);
 
   useFrame((state, delta) => {
@@ -28,7 +25,9 @@ export const Loading3D = (
         const child = children[i];
         if (child instanceof Mesh) {
           // i毎にScaleをずらしてWaveを表現する
-          child.scale.setScalar(Math.sin(state.clock.elapsedTime * 10 + i) * 0.1 + 0.9);
+          child.scale.setScalar(
+            Math.sin(state.clock.elapsedTime * 10 + i) * 0.1 + 0.9
+          );
         }
       }
     }
@@ -42,64 +41,29 @@ export const Loading3D = (
         rotation={[-Math.PI / 2, 0, 0]}
         scale={scale}
       >
-        <mesh
-          position={[-0.3, 0, 0]}
-        >
-          <cylinderGeometry
-            attach={'geometry'}
-            args={
-              [0.1, 0.1, 0.1, 32]
-            }
-          />
-          <meshStandardMaterial
-            attach={'material'}
-            color={color}
-          />
+        <mesh position={[-0.3, 0, 0]}>
+          <cylinderGeometry attach={"geometry"} args={[0.1, 0.1, 0.1, 32]} />
+          <meshStandardMaterial attach={"material"} color={color} />
         </mesh>
-        <mesh
-          position={[0, 0, 0]}
-        >
-          <cylinderGeometry
-            attach={'geometry'}
-            args={
-              [0.1, 0.1, 0.1, 32]
-            }
-          />
-          <meshStandardMaterial
-            attach={'material'}
-            color={color}
-          />
+        <mesh position={[0, 0, 0]}>
+          <cylinderGeometry attach={"geometry"} args={[0.1, 0.1, 0.1, 32]} />
+          <meshStandardMaterial attach={"material"} color={color} />
         </mesh>
-        <mesh
-          position={[0.3, 0, 0]}
-        >
-          <cylinderGeometry
-            attach={'geometry'}
-            args={
-              [0.1, 0.1, 0.1, 32]
-            }
-          />
-          <meshStandardMaterial
-            attach={'material'}
-            color={color}
-          />
+        <mesh position={[0.3, 0, 0]}>
+          <cylinderGeometry attach={"geometry"} args={[0.1, 0.1, 0.1, 32]} />
+          <meshStandardMaterial attach={"material"} color={color} />
         </mesh>
       </group>
       {isLighting && <CommonLight />}
     </>
-  )
-}
+  );
+};
 
 const CommonLight = () => {
-
   return (
     <>
-      <ambientLight
-        intensity={0.5}
-      />
-      <directionalLight
-        position={[0, 10, 0]}
-      />
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[0, 10, 0]} />
     </>
-  )
-}
+  );
+};

@@ -276,7 +276,7 @@ const ThreeObject = ({ om }: { om: IObjectManagement }) => {
  * Text
  * -----
  */
-const OMText = ({ om }) => {
+const OMText = ({ om }: { om: IObjectManagement }) => {
   const ref = React.useRef<any>();
   React.useEffect(() => {
     if (ref.current) {
@@ -305,7 +305,7 @@ const OMText = ({ om }) => {
  * Text3D
  * ------
  */
-const OMText3D = ({ om }) => {
+const OMText3D = ({ om }: { om: IObjectManagement }) => {
   const font = useFont("/fonts/MPLUS.json");
   const ref = React.useRef<any>();
   React.useEffect(() => {

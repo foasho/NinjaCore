@@ -29,7 +29,7 @@ export const OMEffects = () => {
  * Effect
  * -------
  */
-const MyEffect = ({ om }) => {
+const MyEffect = ({ om }: { om: IObjectManagement }) => {
   const [texture, setTexture] = React.useState<any>(null);
 
   React.useEffect(() => {

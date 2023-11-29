@@ -2,6 +2,7 @@ import { Environment, Lightformer } from "@react-three/drei";
 import React from "react";
 import { Vector3 } from "three";
 import { useNinjaEngine } from "../hooks";
+import { IObjectManagement } from "../utils";
 
 /**
  * EnvironmentやLightformerなどの環境
@@ -45,7 +46,7 @@ export const OMEnvirments = () => {
   );
 };
 
-const LightFormer = ({ om }) => {
+const LightFormer = ({ om }: { om: IObjectManagement }) => {
   return (
     // @ts-ignore
     <Lightformer

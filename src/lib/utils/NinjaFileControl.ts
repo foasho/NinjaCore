@@ -337,6 +337,10 @@ export const convertObjectToArrayBuffer = async (scene: Scene): Promise<ArrayBuf
         if (result instanceof ArrayBuffer) {
           return result;
         }
+        else {
+          const output = JSON.stringify(result, null, 2);
+          return saveString(output);
+        }
       },
       (error) => {
         console.log("error");

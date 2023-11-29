@@ -2,7 +2,7 @@ import { IConfigParams, IObjectManagement, IScriptManagement, ITextureManagement
 import { saveAs } from "file-saver";
 import { Euler, Vector3, Object3D, Mesh, Scene, LoadingManager, Quaternion } from "three";
 import { GLTFLoader, SkeletonUtils, DRACOLoader, KTX2Loader } from "three-stdlib";
-import * as JSZip from 'jszip';
+import JSZip from 'jszip';
 import { MeshoptDecoder } from "meshoptimizer";
 import { InitMobileConfipParams } from "./NinjaInit";
 import { GLTFExporter, GLTFExporterOptions } from "three/examples/jsm/exporters/GLTFExporter";

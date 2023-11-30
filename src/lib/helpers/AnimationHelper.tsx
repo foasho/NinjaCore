@@ -3,6 +3,7 @@ import React from "react";
 import { Object3D } from "three";
 import { useAnimations } from "@react-three/drei";
 import { useNinjaEngine } from "../hooks";
+import { useFrame } from "@react-three/fiber";
 
 export type AnimationHelperProps = {
   id: string;
@@ -20,7 +21,7 @@ export const AnimationHelper = ({
   const { ref, actions } = useAnimations(animations);
   const { getOMById } = useNinjaEngine();
   const [defaultAnimation, setDefaultAnimation] =
-    React.useState<string>(initSelectAnimation);
+    React.useState<string>("Idle");
   const [animationLoop, setAnimationLoop] = React.useState<boolean>(true);
 
   const animationStop = () => {
@@ -40,8 +41,11 @@ export const AnimationHelper = ({
   React.useEffect(() => {
     const init = () => {
       const _om = getOMById(id);
+      console.log("check1");
       if (_om) {
+        console.log("check2");
         if (_om.args.defaultAnimation) {
+          console.log("check3");
           setDefaultAnimation(_om.args.defaultAnimation);
         }
         setAnimationLoop(_om.args.animationLoop);
@@ -56,7 +60,8 @@ export const AnimationHelper = ({
 
   React.useEffect(() => {
     if (actions && actions[defaultAnimation]) {
-      animationAllStop();
+      console.log("check4 - all stop -");
+      // animationAllStop();
       actions[defaultAnimation]!.play();
     }
     if (!animationLoop) {

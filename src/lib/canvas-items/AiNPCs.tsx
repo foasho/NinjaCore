@@ -31,6 +31,7 @@ export const AiNPCs = () => {
           apiURL={ainpc.args.apiURL}
           position={ainpc.args.position}
           rotation={ainpc.args.rotation}
+          scale={ainpc.args.scale}
           trackingRotation={ainpc.args.trackingRotation}
           conversationDistance={ainpc.args.conversationDistance}
           talkSpeed={ainpc.args.talkSpeed}

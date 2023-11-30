@@ -1,5 +1,5 @@
 import React, { Suspense } from "react";
-import { Group, Mesh, Object3D } from "three";
+import { Group, MathUtils, Mesh, Object3D } from "three";
 import { IObjectManagement, ColliderTunnel, NonColliderTunnel } from "../utils";
 import { useNinjaEngine } from "../hooks";
 import { useGLTF } from "@react-three/drei";
@@ -93,9 +93,6 @@ const StaticObject = ({ om }: { om: IObjectManagement }) => {
       setClone(clone);
     }
   }, [scene]);
-
-  console.log("helper");
-
   return (
     <DisntanceVisible distance={om.args.distance}>
       <group ref={ref} renderOrder={0}>

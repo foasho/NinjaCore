@@ -15,6 +15,7 @@ import { EDeviceType, useNinjaEngine, detectDeviceType } from "../../hooks";
 import { useAnimations, useGLTF } from "@react-three/drei";
 import { PlayerControl } from "./PlayerControls";
 import { SkeletonUtils } from "three-stdlib";
+import { useFrame } from "@react-three/fiber";
 
 /**
  * Player表示
@@ -60,6 +61,8 @@ export const OMPlayer = ({ grp }: IOMPlayerProps) => {
           initPosition={player.args.position}
           initRotation={player.args.rotation}
           offsetY={player.args.offsetY}
+          castShadow={player.args.castShadow}
+          recieveShadow={player.args.recieveShadow}
         />
       )}
     </>
@@ -75,6 +78,8 @@ interface IPlayerProps {
   initPosition?: Vector3;
   initRotation?: Euler;
   offsetY?: number;
+  castShadow?: boolean;
+  recieveShadow?: boolean;
   scale?: number;
 }
 export const Player = ({
@@ -83,9 +88,12 @@ export const Player = ({
   initPosition = new Vector3(0, 3, 0),
   initRotation = new Euler(0, 0, 0),
   offsetY = 3.0,
+  castShadow = true,
+  recieveShadow = false,
   scale = 0.75,
 }: IPlayerProps) => {
   const playerRef = useRef<Mesh>(null);
+  const { updateCurPosition } = useNinjaEngine();
   const [device, setDevice] = useState<EDeviceType>(EDeviceType.Unknown);
   const { scene, animations } = useGLTF(objectURL) as any;
   const [clone, setClone] = useState<Object3D>();
@@ -109,6 +117,13 @@ export const Player = ({
         clone.animations.forEach((clip: AnimationClip) => {
           actions[clip.name] = mixer.clipAction(clip);
         });
+        // Shadowを適応
+        clone.traverse((child: any) => {
+          if (child.isMesh) {
+            child.castShadow = castShadow;
+            child.receiveShadow = recieveShadow;
+          }
+        });
         setCloneMixer(mixer);
         setCloneActions(actions);
       }
@@ -118,6 +133,12 @@ export const Player = ({
     // Storeに保持
     // setPlayerRef(playerRef);
   }, [scene, animations, objectURL]);
+
+  useFrame(() => {
+    if (playerRef.current) {
+      updateCurPosition(playerRef.current.position);
+    }
+  });
 
   return (
     <Suspense fallback={null}>

@@ -13,6 +13,7 @@ import {
 } from "@react-three/drei";
 import { useNinjaEngine } from "../hooks";
 import { ColliderTunnel, NonColliderTunnel } from "../utils";
+import { DisntanceVisible } from "../helpers";
 
 export const OMObjects = () => {
   const { oms } = useNinjaEngine();
@@ -108,9 +109,11 @@ const Terrain = ({ om }: { om: IObjectManagement }) => {
   }
 
   return (
-    <group ref={ref} renderOrder={0}>
-      <primitive object={scene} />
-    </group>
+    <DisntanceVisible distance={om.args.dinstance}>
+      <group ref={ref} renderOrder={0}>
+        <primitive object={scene} />
+      </group>
+    </DisntanceVisible>
   );
 };
 
@@ -184,7 +187,11 @@ const Light = ({ om }: { om: IObjectManagement }) => {
     }
   }, [light]);
 
-  return <>{light}</>;
+  return (
+    <DisntanceVisible distance={om.args.distance || 64}>
+      {light}
+    </DisntanceVisible>
+  );
 };
 
 /**
@@ -261,10 +268,17 @@ const ThreeObject = ({ om }: { om: IObjectManagement }) => {
   return (
     <>
       {geometry && (
-        <mesh ref={ref}  renderOrder={0} castShadow={castShadow} receiveShadow={receiveShadow}>
-          {geometry}
-          {material}
-        </mesh>
+        <DisntanceVisible distance={om.args.dinstance}>
+          <mesh
+            ref={ref}
+            renderOrder={0}
+            castShadow={castShadow}
+            receiveShadow={receiveShadow}
+          >
+            {geometry}
+            {material}
+          </mesh>
+        </DisntanceVisible>
       )}
     </>
   );
@@ -290,11 +304,11 @@ const OMText = ({ om }: { om: IObjectManagement }) => {
     }
   }, []);
   return (
-    <>
+    <DisntanceVisible distance={om.args.distance}>
       <Text font="/fonts/MPLUS.ttf" ref={ref}>
         {om.args.content as string}
       </Text>
-    </>
+    </DisntanceVisible>
   );
 };
 
@@ -319,12 +333,16 @@ const OMText3D = ({ om }: { om: IObjectManagement }) => {
       }
     }
   }, []);
+
+  const color = om.args.color ? om.args.color : "#43D9D9";
+
   return (
-    <>
+    <DisntanceVisible distance={om.args.distance}>
       <Text3D font={font.data} ref={ref}>
         {om.args.content}
+        <meshStandardMaterial color={color} />
       </Text3D>
-    </>
+    </DisntanceVisible>
   );
 };
 

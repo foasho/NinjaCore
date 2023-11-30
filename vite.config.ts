@@ -34,4 +34,9 @@ export default defineConfig({
       root: '/'                    // Directory for root imports
     }
   )],
+  server: {
+    proxy: {
+      '/api': 'http://localhost:5174'
+    }
+  }
 });

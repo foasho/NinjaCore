@@ -5,16 +5,9 @@ import { Object3D, Vector2, AnimationClip, AnimationMixer, Audio, Vector3 } from
  */
 export interface IConfigParams {
   physics: boolean; // 物理演算を有効にするか
-  autoScale: boolean; // 自動スケールさせるか
-  alpha: boolean; // 透過を有効にするか
-  logarithmicDepthBuffer: boolean; // ログデプスバッファを有効にするか
-  antialias: boolean; // アンチエイリアスを有効にするか
-  shadowResolution: 128 | 256 | 512 | 1024; // 影の解像度レベル(128 | 256 | 512 | 1024)
-  mapsize: number; // マップサイズ
-  layerGridNum: number; // レイヤーグリッド数
-  lodDistance: number; // LODの切り替えStep距離
   dpr: undefined | number | [number, number]; // デバイスピクセル比※undefinedの場合は(window.devicePixelRatio || 1)を利用
-  initCameraPosition?: Vector3; // カメラの初期位置
+  multi: boolean; // マルチモード
+  isApi: boolean; // APIモード ※NPCの会話やMultiに必要
   isDebug?: boolean; // デバッグモード
 }
 
@@ -42,8 +35,8 @@ export interface IInputMovement {
 export interface IObjectManagement {
   id: string;
   name?: string;
-  type: "three" | "object" | "lodobject" | "avatar" | "terrain" | "others" | "text" | "text3d"
-    | "sky" | "light" | "fog" | "camera" | "effect" | "cloud" | "environment" | "lightformer";
+  type: "three" | "object" | "lodobject" | "avatar" | "terrain" | "others" | "text" | "text3d" | "audio"
+    | "sky" | "light" | "fog" | "camera" | "effect" | "cloud" | "environment" | "lightformer" | "ai-npc";
   filePath?: string;
   visibleType: "auto" | "force";
   visible: boolean;

@@ -13,7 +13,7 @@ import {
   NJCFile,
   loadNJCFileFromURL,
 } from "../utils";
-import { Group, Mesh, Object3D } from "three";
+import { Group, Mesh, Object3D, Vector3 } from "three";
 import { Canvas as NCanvas, useFrame as useNFrame } from "@react-three/fiber";
 import { useInputControl } from "./useInputControl";
 import { Loading3D } from "../loaders/Loading3D";
@@ -24,8 +24,11 @@ import {
   Cameras,
   ColliderField,
   OMEnvirments,
+  StaticObjects,
 } from "../canvas-items";
 import { NWorkerProp, useNinjaWorker } from "./useNinjaWorker";
+import { OMAudios } from "../canvas-items/Audios/OMAudios";
+import { AiNPCs } from "../canvas-items/AiNPCs";
 
 export enum EDeviceType {
   Unknown = 0,
@@ -43,9 +46,15 @@ type NinjaEngineProp = {
   status: ENinjaStatus;
   isPhysics: boolean;
   player: React.MutableRefObject<Mesh | null>;
+  curPosition: React.MutableRefObject<Vector3>;
+  updateCurPosition: (pos: Vector3) => void;
+  curMessage: React.MutableRefObject<string>;
+  isSound: boolean;
+  setIsSound: (isSound: boolean) => void;
   colGrp: Group | null;
   scriptWorker: NWorkerProp;
   input: IInputMovement;
+  config: IConfigParams;
   oms: IObjectManagement[];
   sms: IScriptManagement[];
   ums: IUIManagement[];
@@ -59,6 +68,11 @@ export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
   status: ENinjaStatus.Pause,
   isPhysics: true,
   player: React.createRef<Mesh>(),
+  curPosition: React.createRef<Vector3>(),
+  updateCurPosition: (pos: Vector3) => {},
+  curMessage: React.createRef<string>(),
+  isSound: false,
+  setIsSound: (isSound: boolean) => {},
   colGrp: null,
   scriptWorker: {
     loadUserScript: async () => {},
@@ -79,6 +93,7 @@ export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
     pressedKeys: [],
     angleAxis: [0, 0],
   },
+  config: InitMobileConfipParams,
   oms: [],
   sms: [],
   ums: [],
@@ -139,23 +154,25 @@ export const NinjaGL = ({
 }: INinjaEngineProvider) => {
   const [init, setInit] = React.useState(false);
   const [status, setStatus] = React.useState<ENinjaStatus>(ENinjaStatus.Pause);
+  const [isSound, setIsSound] = React.useState<boolean>(false); // サウンドの有効/無効
   // coreファイル
   const [njcFile, setNjcFile] = React.useState<NJCFile | null>(null);
   // Loading周り
   const loadingPercentage = React.useRef<number>(0);
   const cameraLayer = React.useRef<number>(1);
-  // ユーザー設定
+  const [device, setDevice] = React.useState<EDeviceType>(EDeviceType.Unknown);
+  // コンテンツ管理
   const [config, setConfig] = React.useState<IConfigParams>(
     InitMobileConfipParams
   );
-  const [device, setDevice] = React.useState<EDeviceType>(EDeviceType.Unknown);
-  // コンテンツ管理
   const [oms, setOMs] = React.useState<IObjectManagement[]>([]);
   const [ums, setUMs] = React.useState<IUIManagement[]>([]);
   const [tms, setTMs] = React.useState<ITextureManagement[]>([]);
   const [sms, setSMs] = React.useState<IScriptManagement[]>([]);
-  // Playerメッシュ
+  // Player情報
   const player = React.useRef<Mesh>(null);
+  const curPosition = React.useRef<Vector3>(new Vector3(0, 0, 0));
+  const curMessage = React.useRef<string>("");
   // 物理世界
   const [physics, setPhysics] = React.useState<boolean>(true);
   const colGrp = React.useRef<Group>(null); // BVH用/Octree用コライダー
@@ -198,6 +215,21 @@ export const NinjaGL = ({
       scriptWorker.loadUserScript(sms);
     }
   }, [init]);
+
+  React.useEffect(() => {
+    const checkAudio = async () => {
+      // 音声をならせられるかどうかを設定する
+      try {
+        if (isSound) return;
+        const audio = new Audio("/audios/system.mp3");
+        await audio.play();
+        setIsSound(true);
+      } catch (e) {
+        setIsSound(false);
+      }
+    };
+    checkAudio();
+  });
 
   /**
    * njcPathからFileをロード
@@ -248,11 +280,9 @@ export const NinjaGL = ({
     return null;
   };
 
-  console.log("NinjaEngineProvider");
-  console.log("njcFile", njcFile);
-  console.log("init", init);
-  console.log("no canvas", noCanvas);
-  console.log("oms", oms);
+  const updateCurPosition = (pos: Vector3) => {
+    curPosition.current = pos;
+  };
 
   return (
     <NinjaEngineContext.Provider
@@ -262,7 +292,13 @@ export const NinjaGL = ({
         scriptWorker,
         input,
         player,
+        curPosition,
+        updateCurPosition,
+        curMessage,
+        isSound,
+        setIsSound,
         colGrp: colGrp.current,
+        config,
         oms,
         sms,
         ums,
@@ -314,6 +350,11 @@ export const NinjaCanvasItems = () => {
     <>
       {/** OMのID */}
       <OMObjects />
+      <StaticObjects />
+      {/** AINPC */}
+      <AiNPCs />
+      {/** Audio */}
+      <OMAudios />
       {/** エフェクト */}
       <OMEffects />
       {/** 環境 */}

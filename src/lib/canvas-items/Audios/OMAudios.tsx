@@ -69,6 +69,10 @@ export const OMAudio = ({
       if (d > distance) {
         ref.current.setVolume(0);
       } else {
+        if (distance === 0) {
+          ref.current.setVolume(maxVolume);
+          return;
+        }
         const v = maxVolume * (1 - d / distance);
         ref.current.setVolume(v);
       }

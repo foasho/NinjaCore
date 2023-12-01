@@ -33,7 +33,7 @@ export const AnimationHelper = ({
   const animationAllStop = () => {
     if (actions) {
       Object.keys(actions).forEach((key) => {
-        actions[key]!.stop();
+        if (defaultAnimation !== key) actions[key]!.stop();
       });
     }
   };
@@ -41,14 +41,13 @@ export const AnimationHelper = ({
   React.useEffect(() => {
     const init = () => {
       const _om = getOMById(id);
-      console.log("check1");
       if (_om) {
-        console.log("check2");
         if (_om.args.defaultAnimation) {
-          console.log("check3");
           setDefaultAnimation(_om.args.defaultAnimation);
         }
-        setAnimationLoop(_om.args.animationLoop);
+        if (_om.args.animationLoop !== undefined) {
+          setAnimationLoop(_om.args.animationLoop);
+        }
       }
     };
     init();
@@ -60,8 +59,7 @@ export const AnimationHelper = ({
 
   React.useEffect(() => {
     if (actions && actions[defaultAnimation]) {
-      console.log("check4 - all stop -");
-      // animationAllStop();
+      animationAllStop();
       actions[defaultAnimation]!.play();
     }
     if (!animationLoop) {

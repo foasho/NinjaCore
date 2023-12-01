@@ -29,6 +29,7 @@ import {
 import { NWorkerProp, useNinjaWorker } from "./useNinjaWorker";
 import { OMAudios } from "../canvas-items/Audios/OMAudios";
 import { AiNPCs } from "../canvas-items/AiNPCs";
+import { MemoSplashScreen } from "../commons";
 
 export enum EDeviceType {
   Unknown = 0,
@@ -143,6 +144,7 @@ interface INinjaEngineProvider {
   njc?: NJCFile | null;
   njcPath?: string;
   noCanvas?: boolean;
+  isSplashScreen?: boolean;
   children?: React.ReactNode;
 }
 export const ThreeJSVer = "0.154.0";
@@ -150,6 +152,7 @@ export const NinjaGL = ({
   njc,
   njcPath,
   noCanvas = false,
+  isSplashScreen = true,
   children,
 }: INinjaEngineProvider) => {
   const [init, setInit] = React.useState(false);
@@ -222,6 +225,8 @@ export const NinjaGL = ({
       try {
         if (isSound) return;
         const audio = new Audio("/audios/system.mp3");
+        // volumeを0にしておく
+        audio.volume = 0;
         await audio.play();
         setIsSound(true);
       } catch (e) {
@@ -309,6 +314,7 @@ export const NinjaGL = ({
         getSMById,
       }}
     >
+      <MemoSplashScreen />
       {init && njcFile && (
         <>
           {!noCanvas ? (

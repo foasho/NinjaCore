@@ -47,8 +47,6 @@ const StaticObject = ({ om }: { om: IObjectManagement }) => {
   const [clone, setClone] = React.useState<Object3D>();
   const ref = React.useRef<Group>(null);
 
-  console.log("scene; ", scene);
-
   React.useEffect(() => {
     const init = () => {
       if (ref.current) {

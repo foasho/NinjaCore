@@ -3,7 +3,6 @@ import React from "react";
 import { Object3D } from "three";
 import { useAnimations } from "@react-three/drei";
 import { useNinjaEngine } from "../hooks";
-import { useFrame } from "@react-three/fiber";
 
 export type AnimationHelperProps = {
   id: string;
@@ -21,7 +20,7 @@ export const AnimationHelper = ({
   const { ref, actions } = useAnimations(animations);
   const { getOMById } = useNinjaEngine();
   const [defaultAnimation, setDefaultAnimation] =
-    React.useState<string>("Idle");
+    React.useState<string>(initSelectAnimation);
   const [animationLoop, setAnimationLoop] = React.useState<boolean>(true);
 
   const animationStop = () => {

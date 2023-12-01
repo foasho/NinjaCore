@@ -5,7 +5,7 @@ import {
   IScriptManagement,
   IConfigParams,
   NJCFile,
-} from "../lib";
+} from "../utils";
 
 export const ExportNjcFile = (
   oms: IObjectManagement[],

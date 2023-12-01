@@ -1,4 +1,4 @@
-import { IObjectManagement } from "../../lib";
+import { IObjectManagement } from "../../utils";
 import { Euler, MathUtils, Vector3 } from "three";
 
 export const initTpOMs = (): IObjectManagement[] => {

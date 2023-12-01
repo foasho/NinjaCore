@@ -1,4 +1,4 @@
-import { IConfigParams } from "../../lib";
+import { IConfigParams } from "../../utils";
 
 export const initTpConfig = (): IConfigParams => {
   return {

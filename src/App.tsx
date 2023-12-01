@@ -1,6 +1,5 @@
 import React from "react";
-import { NJCFile, NinjaGL } from "./lib";
-import { ExportNjcFile, initTpOMs, initTpConfig } from "./settings";
+import { NJCFile, NinjaGL, ExportNjcFile, initTpOMs, initTpConfig } from "./lib";
 
 export const App = () => {
   const [ready, setReady] = React.useState(false);

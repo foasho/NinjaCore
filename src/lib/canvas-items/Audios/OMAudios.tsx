@@ -34,13 +34,13 @@ export const OMAudios = () => {
 export const OMAudio = ({
   url,
   position,
-  distance,
+  distance = 25,
   maxVolume = 0.75,
   load = undefined,
 }: {
   url: string;
   position: Vector3;
-  distance: number;
+  distance?: number;
   maxVolume?: number;
   load?: any;
 }) => {
@@ -90,6 +90,7 @@ export const OMAudio = ({
         distance={distance}
         loop={true}
         autoplay={true}
+        
       />
     </>
   );

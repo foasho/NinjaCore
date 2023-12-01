@@ -69,12 +69,14 @@ export const OMAudio = ({
       if (d > distance) {
         ref.current.setVolume(0);
       } else {
-        if (distance === 0) {
+        if (distance == d) {
           ref.current.setVolume(maxVolume);
           return;
         }
         const v = maxVolume * (1 - d / distance);
-        ref.current.setVolume(v);
+        if (isFinite(v) && v >= 0 && v <= 1) {
+          ref.current.setVolume(v);
+        }
       }
     }
   });

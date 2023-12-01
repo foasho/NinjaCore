@@ -11,6 +11,7 @@ import {
   NJCFile,
   loadNJCFileFromURL,
 } from "../utils";
+import { MdMusicNote, MdMusicOff } from "react-icons/md";
 import { Group, Mesh, Object3D, Vector3 } from "three";
 import { Canvas as NCanvas, useFrame as useNFrame } from "@react-three/fiber";
 import { useInputControl } from "./useInputControl";
@@ -217,21 +218,29 @@ export const NinjaGL = ({
   }, [init]);
 
   React.useEffect(() => {
+    console.log("isSound", isSound);
+
     const checkAudio = async () => {
       // 音声をならせられるかどうかを設定する
+      const audioContext = new AudioContext();
       try {
-        if (isSound) return;
-        const audio = new Audio("/audios/system.mp3");
-        // volumeを0にしておく
-        audio.volume = 0;
-        await audio.play();
-        setIsSound(true);
-      } catch (e) {
-        setIsSound(false);
+        audioContext
+          .resume()
+          .then(() => {
+            console.log("AudioContext successfully started");
+            setIsSound(true); // 成功時に isSound を true に設定
+          })
+          .catch((error) => {
+            console.error("Webセキュリティにより、音声を再生できません。");
+            setIsSound(false); // エラー時に isSound を false に設定
+          });
+      } catch (error) {
+        console.error("Webセキュリティにより、音声を再生できません。");
+        setIsSound(false); // エラー時に isSound を false に設定
       }
     };
     checkAudio();
-  });
+  }, []);
 
   /**
    * njcPathからFileをロード
@@ -329,12 +338,8 @@ export const NinjaGL = ({
           {/** UIレンダリング */}
         </>
       )}
-      {!init && !noCanvas && (
-        <>
-          {/** ローディング */}
-          <Loading2D />
-        </>
-      )}
+      {!init && !noCanvas && <Loading2D />}
+      <SystemSound />
     </NinjaEngineContext.Provider>
   );
 };
@@ -396,4 +401,32 @@ const SystemFrame = () => {
   });
 
   return <></>;
+};
+
+const SystemSound = () => {
+  const { isSound, setIsSound } = useNinjaEngine();
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: "1rem",
+        right: "1rem",
+        padding: ".5rem 1.5rem",
+        fontSize: "2rem",
+        color: "#fff",
+        background: "rgba(0,0,0,0.5)",
+        borderRadius: "5px",
+      }}
+      onClick={() => {
+        setIsSound(!isSound);
+      }}
+    >
+      {isSound && (
+        <MdMusicNote style={{ display: "inline", verticalAlign: "middle" }} />
+      )}
+      {!isSound && (
+        <MdMusicOff style={{ display: "inline", verticalAlign: "middle" }} />
+      )}
+    </div>
+  );
 };

@@ -46,6 +46,7 @@ export const OMAudio = ({
 }) => {
   const ref = useRef<PositionalAudioImpl | any>(null);
   const { curPosition, isSound } = useNinjaEngine();
+  // let isTime = 0;
 
   useEffect(() => {
     if (!ref.current) return;
@@ -62,20 +63,20 @@ export const OMAudio = ({
     }
   }, [isSound]);
 
-  useFrame(({ camera }) => {
-    // Distance範囲ないならVolumeを0にする
+  useFrame(() => {
+    if (!isSound) return;
     if (ref.current) {
       const d = position.distanceTo(curPosition.current);
       if (d > distance) {
         ref.current.setVolume(0);
       } else {
-        if (distance == d) {
+        if (distance == d || distance == 0) {
           ref.current.setVolume(maxVolume);
           return;
         }
         const v = maxVolume * (1 - d / distance);
-        if (isFinite(v) && v >= 0 && v <= 1) {
-          ref.current.setVolume(v);
+        if (v >= 0 && v <= 1) {
+          ref.current.setVolume(v >= 1 ? 1 : v);
         }
       }
     }
@@ -83,15 +84,16 @@ export const OMAudio = ({
 
   return (
     <>
-      <PositionalAudio
-        ref={ref}
-        url={url}
-        position={position}
-        distance={distance}
-        loop={true}
-        autoplay={true}
-        
-      />
+      {isSound && (
+        <PositionalAudio
+          ref={ref}
+          url={url}
+          position={position}
+          distance={distance}
+          loop={true}
+          autoplay={true}
+        />
+      )}
     </>
   );
 };

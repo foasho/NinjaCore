@@ -9,10 +9,10 @@ import {
   AnimationMixer,
   Object3D,
 } from "three";
-import { playTextToSpeech } from "../hooks/useTextToSpeech";
+import { playTextToSpeech } from "../hooks";
 import { useNinjaEngine } from "../hooks";
 import { SkeletonUtils } from "three-stdlib";
-import { AnimationHelper } from "../helpers/AnimationHelper";
+import { AnimationHelper } from "../helpers";
 import { IObjectManagement } from "../utils";
 import { DisntanceVisible } from "../helpers";
 

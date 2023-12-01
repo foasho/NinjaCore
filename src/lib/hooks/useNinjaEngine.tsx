@@ -6,8 +6,6 @@ import {
   IScriptManagement,
   ITextureManagement,
   IUIManagement,
-} from "../utils";
-import {
   InitMobileConfipParams,
   NonColliderTunnel,
   NJCFile,
@@ -16,8 +14,7 @@ import {
 import { Group, Mesh, Object3D, Vector3 } from "three";
 import { Canvas as NCanvas, useFrame as useNFrame } from "@react-three/fiber";
 import { useInputControl } from "./useInputControl";
-import { Loading3D } from "../loaders/Loading3D";
-import { Loading2D } from "../loaders/Loading2D";
+import { Loading3D, Loading2D } from "../loaders";
 import {
   OMEffects,
   OMObjects,
@@ -25,10 +22,10 @@ import {
   ColliderField,
   OMEnvirments,
   StaticObjects,
+  OMAudios,
+  AiNPCs,
 } from "../canvas-items";
 import { NWorkerProp, useNinjaWorker } from "./useNinjaWorker";
-import { OMAudios } from "../canvas-items/Audios/OMAudios";
-import { AiNPCs } from "../canvas-items/AiNPCs";
 import { MemoSplashScreen } from "../commons";
 
 export enum EDeviceType {

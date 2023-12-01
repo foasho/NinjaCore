@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import { Group } from "three";
 import { OMPlayer } from "./OMPlayer";
-import { ColliderTunnel } from "../../utils/tunnel";
+import { ColliderTunnel } from "../../utils";
 import { useThree } from "@react-three/fiber";
 import { InputControlProvider } from "../../hooks";
 

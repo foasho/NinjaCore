@@ -4,7 +4,7 @@ import { IObjectManagement, ColliderTunnel, NonColliderTunnel } from "../utils";
 import { useNinjaEngine } from "../hooks";
 import { useGLTF } from "@react-three/drei";
 import { GLTF, SkeletonUtils } from "three-stdlib";
-import { AnimationHelper } from "../helpers/AnimationHelper";
+import { AnimationHelper } from "../helpers";
 import { DisntanceVisible } from "../helpers";
 
 export interface IStaticObjectsProps {}

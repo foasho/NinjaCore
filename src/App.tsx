@@ -1,4 +1,5 @@
 import React from "react";
+import { HiEye, HiEyeSlash } from "react-icons/hi2";
 import { NJCFile, NinjaGL, ExportNjcFile, initTpOMs, initTpConfig } from "./lib";
 
 export const App = () => {
@@ -20,6 +21,20 @@ export const App = () => {
           {njcFile && <NinjaGL njc={njcFile}></NinjaGL>}
         </div>
       )}
+      <div 
+        style={{ 
+          position: "absolute", 
+          top: "10px", 
+          left: "10px",
+          fontSize: "30px",
+          cursor: "pointer",
+        }}
+        onClick={() => {
+          setReady(!ready);
+        }}
+       >
+        {ready ? <HiEye />:<HiEyeSlash />}
+      </div>
     </div>
   );
 };

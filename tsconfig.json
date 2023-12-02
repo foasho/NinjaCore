@@ -19,7 +19,7 @@
     "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
     /* GLSL */
-    "types": ["vite-plugin-glsl/ext"]
+    "types": ["vite-plugin-glsl/ext", "vitest/globals"]
   },
   "include": ["src/lib"]
 }

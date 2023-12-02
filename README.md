@@ -36,3 +36,8 @@ npm publish
 | 名前 | 種別名 | パラメーター | 型 | 説明 |  |
 | -- | -- | -- | -- | -- | -- |
 | 汎用オブジェクト | object | position<br>rotation<br>scale<br>castShadow<br>recieveShadow<br>MaterialData<br>dafaultAnimation<br>visible<br>||||
+
+## ライブラリメンテナ
+```
+pnpm vitest
+```

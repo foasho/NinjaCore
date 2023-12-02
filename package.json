@@ -28,6 +28,7 @@
     "webgl"
   ],
   "scripts": {
+    "test": "vitest",
     "prebuild": "rimraf dist && npm run typegen",
     "prepublishOnly": "npm run build && npm version patch",
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
@@ -64,6 +65,7 @@
   },
   "devDependencies": {
     "@ninjagl/api": "^1.0.2",
+    "@react-three/test-renderer": "^8.2.0",
     "@storybook/addon-essentials": "7.4.0",
     "@storybook/addon-interactions": "7.4.0",
     "@storybook/addon-links": "7.4.0",
@@ -72,6 +74,7 @@
     "@storybook/react": "7.4.0",
     "@storybook/react-vite": "7.4.0",
     "@storybook/testing-library": "0.2.0",
+    "@testing-library/react": "^14.1.2",
     "@types/file-saver": "^2.0.5",
     "@types/jest": "^27.5.2",
     "@types/lodash-es": "^4.17.3",
@@ -103,7 +106,8 @@
     "storybook-react-i18next": "^2.0.9",
     "typescript": "^5.0.4",
     "vite": "^4.4.5",
-    "vite-plugin-glsl": "^1.1.2"
+    "vite-plugin-glsl": "^1.1.2",
+    "vitest": "^0.34.6"
   },
   "peerDependencies": {
     "react": "^18.2.0",

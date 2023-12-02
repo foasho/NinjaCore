@@ -61,6 +61,7 @@ export const PlayerControl = ({
     radius: 0.5,
     segment: new Line3(new Vector3(), new Vector3(0, -1.0, 0.0)),
   };
+  const [grpMeshesNum, setGrpMeshesNum] = useState<number>(0);
   const collider: MutableRefObject<Mesh | null> = useRef<Mesh>(null);
   const controls = useRef<OrbitControlsImpl>(null);
   // --- ジャンプ/物理判定に関連する変数 ---
@@ -91,16 +92,19 @@ export const PlayerControl = ({
     if (player.current) {
       player.current.position.copy(resetPosition.clone());
     }
-    if (grp.current) {
+    if (grpMeshesNum > 0 && grp.current) {
       // grpをマージして衝突を行うオブジェクトを作成する
       const staticGenerator = new StaticGeometryGenerator(grp.current);
       staticGenerator.attributes = ["position"];
-      const mergedGeometry = staticGenerator.generate();
       // @ts-ignore
-      mergedGeometry.boundsTree = new MeshBVH(mergedGeometry);
-      setMergeGeometry(mergedGeometry);
+      if (staticGenerator.meshes && staticGenerator.meshes.length > 0) {
+        const mergedGeometry = staticGenerator.generate();
+        // @ts-ignore
+        mergedGeometry.boundsTree = new MeshBVH(mergedGeometry);
+        setMergeGeometry(mergedGeometry);
+      }
     }
-  }, [grp.current, firstPerson]);
+  }, [grpMeshesNum]);
 
   useEffect(() => {
     let domElement = touchDomId
@@ -171,7 +175,9 @@ export const PlayerControl = ({
   const reset = () => {
     if (player.current) {
       playerVelocity.current.set(0, 0, 0);
-      player.current.position.copy(resetPosition.clone().add(new Vector3(0, resetPositionOffsetY, 0)));
+      player.current.position.copy(
+        resetPosition.clone().add(new Vector3(0, resetPositionOffsetY, 0))
+      );
       camera.position.sub(controls.current!.target);
       controls.current!.target.copy(player.current.position);
       camera.position.add(player.current.position);
@@ -251,14 +257,13 @@ export const PlayerControl = ({
           actions[key]!.stop();
         }
       });
-      actions["Jump"].play()
-      if (mixer && jumpTimer.current == 0){
-        mixer.setTime(jumpLag)
+      actions["Jump"].play();
+      if (mixer && jumpTimer.current == 0) {
+        mixer.setTime(jumpLag);
       }
       jumpTimer.current += delta;
-    }
-    else {
-      if (actions["Jump"]){
+    } else {
+      if (actions["Jump"]) {
         actions["Jump"].stop();
       }
       jumpTimer.current = 0;
@@ -418,9 +423,9 @@ export const PlayerControl = ({
       if (intersects.length > 0) {
         // 複数のオブジェクトに衝突した場合、distanceが最も近いオブジェクトを選択
         const target = intersects.reduce((prev, current) => {
-          return prev.distance < current.distance ? prev : current
-        })
-        camera.position.copy(target.point)
+          return prev.distance < current.distance ? prev : current;
+        });
+        camera.position.copy(target.point);
       } else if (forwardAmount !== 0 || rightAmount !== 0) {
         // 障害物との交差がない場合はプレイヤーから一定の距離を保つ
         const directionFromPlayerToCamera = camera.position
@@ -445,6 +450,11 @@ export const PlayerControl = ({
 
   useFrame((_state, delta) => {
     const timeDelta = Math.min(delta, 0.1);
+    // grp.currentのchildrenの数を取得
+    const meshesNum = grp.current ? grp.current.children.length : 0;
+    if (meshesNum !== grpMeshesNum) {
+      setGrpMeshesNum(meshesNum);
+    }
     // OrbitTouchMoveが有効な場合は、OrbitControlsを無効にする
     if (orbitTouchMove.current.flag && controls.current) {
       controls.current.enabled = false;

@@ -7,7 +7,14 @@ interface ITextToSpeech {
   voiceName?: string; // 使用する音声の種類
 }
 
-let utterance = new SpeechSynthesisUtterance();
+let utterance: SpeechSynthesisUtterance;
+if (typeof SpeechSynthesisUtterance !== 'undefined') {
+  // SpeechSynthesisUtteranceを使用
+  utterance = new SpeechSynthesisUtterance();
+} else {
+  console.warn("SpeechSynthesisUtterance is not supported.");
+}
+
 const maxLen = 500;
 
 /**
@@ -15,6 +22,16 @@ const maxLen = 500;
  * @param props 
  */
 export const playTextToSpeech = (props: ITextToSpeech): Promise<void> => {
+  if (!utterance) {
+    try {
+      utterance = new SpeechSynthesisUtterance();
+    }
+    catch (e) {
+      console.log(e);
+      return Promise.resolve();
+    }
+    utterance = new SpeechSynthesisUtterance();
+  }
   return new Promise((resolve) => {
     utterance.text = props.text.length > maxLen ? props.text.substring(0, maxLen - 1) : props.text;
     if (props.lang == "Auto") {

@@ -63,24 +63,24 @@ export const OMAudio = ({
     }
   }, [isSound]);
 
-  useFrame(() => {
-    if (!isSound) return;
-    if (ref.current) {
-      const d = position.distanceTo(curPosition.current);
-      if (d > distance) {
-        ref.current.setVolume(0);
-      } else {
-        if (distance == d || distance == 0) {
-          ref.current.setVolume(maxVolume);
-          return;
-        }
-        const v = maxVolume * (1 - d / distance);
-        if (v >= 0 && v <= 1) {
-          ref.current.setVolume(v >= 1 ? 1 : v);
-        }
-      }
-    }
-  });
+  // useFrame(() => {
+  //   if (!isSound) return;
+  //   if (ref.current) {
+  //     const d = position.distanceTo(curPosition.current);
+  //     if (d > distance) {
+  //       ref.current.setVolume(0);
+  //     } else {
+  //       if (distance == d || distance == 0) {
+  //         ref.current.setVolume(maxVolume);
+  //         return;
+  //       }
+  //       const v = maxVolume * (1 - d / distance);
+  //       if (v >= 0 && v <= 1) {
+  //         ref.current.setVolume(v >= 1 ? 1 : v);
+  //       }
+  //     }
+  //   }
+  // });
 
   return (
     <>

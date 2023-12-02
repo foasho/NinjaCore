@@ -79,6 +79,8 @@ export const PlayerControl = ({
   const baseSpeed = 2.5; // 移動速度を調整できるように定数を追加
   const physicsSteps = 5;
   const dashRatio = 2.1;
+  const jumpInterval = 0.5; // (秒) ジャンプの連続入力を防ぐための定数
+  const jumpEnabled = useRef<boolean>(true);
   const jumpTimer = useRef<number>(0);
   const jumpPower = 10;
   const jumpLag = 0.5; //(秒) ジャンプのラグを調整するための定数
@@ -391,6 +393,7 @@ export const PlayerControl = ({
         );
       }
       if (!playerIsOnGround.current) {
+        // 
         deltaVector.normalize();
         playerVelocity.current.addScaledVector(
           deltaVector,
@@ -460,7 +463,11 @@ export const PlayerControl = ({
       controls.current.enabled = false;
     }
     // ジャンプの入力を受け付ける
-    if (input.jump && playerIsOnGround.current) {
+    if (input.jump && playerIsOnGround.current && jumpEnabled.current) {
+      jumpEnabled.current = false;
+      setTimeout(() => {
+        jumpEnabled.current = true;
+      }, jumpInterval * 1000);
       playerVelocity.current.setY(jumpPower);
       playerIsOnGround.current = false;
     }

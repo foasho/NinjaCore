@@ -1,3 +1,4 @@
+import "./index.css";
 export * from "./canvas-items";
 export * from "./commons";
 export * from "./helpers";

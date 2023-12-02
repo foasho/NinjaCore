@@ -170,6 +170,7 @@ interface IInputControl {
   margin?: number | [number, number];
   joyColor?: string;
   enabled?: boolean;
+  gamePadLatency?: number;
 }
 export const useInputControl = ({
   device = "auto",
@@ -178,6 +179,7 @@ export const useInputControl = ({
   margin = [48, 64], // 画面の端から何pxMarginをとるか
   joyColor = "rgba(255, 242, 189, 0.8)",
   enabled = true,
+  gamePadLatency = 50,
 }: IInputControl) => {
   const [_enabledFlag, setEnabledFlag] = useState<boolean>(enabled);
   const [setupCount, setSetupCount] = useState<number>(1);
@@ -646,7 +648,7 @@ export const useInputControl = ({
     // ゲームパッド対応
     const gamepadInterval = setInterval(() => {
       handleGamepadInput();
-    }, 100); // 100msごとにゲームパッドの入力をチェック
+    }, gamePadLatency);
 
     return () => {
       if (deviceType == "desktop") {

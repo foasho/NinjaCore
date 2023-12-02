@@ -107,7 +107,7 @@ devDependencies:
     specifier: ^18.2.7
     version: 18.2.17
   '@types/styled-components':
-    specifier: ^5.1.26
+    specifier: ^5.1.32
     version: 5.1.32
   '@types/three':
     specifier: ^0.156.0

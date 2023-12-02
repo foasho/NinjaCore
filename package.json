@@ -19,7 +19,6 @@
   "main": "./dist/index.umd.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "style": "./dist/style.css",
   "files": [
     "dist"
   ],
@@ -81,7 +80,7 @@
     "@types/node": "^16.18.23",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
-    "@types/styled-components": "^5.1.26",
+    "@types/styled-components": "^5.1.32",
     "@types/three": "^0.156.0",
     "@typescript-eslint/eslint-plugin": "^6.5.0",
     "@typescript-eslint/parser": "^6.0.0",

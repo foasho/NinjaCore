@@ -4,6 +4,7 @@ import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import { PositionalAudio as PositionalAudioImpl, Vector3 } from "three";
 import { useNinjaEngine } from "../../hooks";
+import { Loading3D } from "../Common/Loading3D";
 
 export const OMAudios = () => {
   const { oms } = useNinjaEngine();
@@ -83,7 +84,7 @@ export const OMAudio = ({
   // });
 
   return (
-    <>
+    <Suspense fallback={<Loading3D />}>
       {isSound && (
         <PositionalAudio
           ref={ref}
@@ -94,6 +95,6 @@ export const OMAudio = ({
           autoplay={true}
         />
       )}
-    </>
+    </Suspense>
   );
 };

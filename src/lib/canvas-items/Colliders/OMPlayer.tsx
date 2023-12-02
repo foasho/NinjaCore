@@ -28,7 +28,6 @@ interface IOMPlayerProps {
 export const OMPlayer = ({ grp }: IOMPlayerProps) => {
   const ref = React.useRef<any>();
   const engine = useNinjaEngine();
-  const [mounted, setMounted] = React.useState(false);
 
   const player = React.useMemo(() => {
     if (!engine) return null;

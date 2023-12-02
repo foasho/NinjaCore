@@ -32,7 +32,7 @@ export const OMAudios = () => {
   );
 };
 
-export const OMAudio = ({
+const OMAudio = ({
   url,
   position,
   distance = 25,
@@ -64,24 +64,30 @@ export const OMAudio = ({
     }
   }, [isSound]);
 
-  // useFrame(() => {
-  //   if (!isSound) return;
-  //   if (ref.current) {
-  //     const d = position.distanceTo(curPosition.current);
-  //     if (d > distance) {
-  //       ref.current.setVolume(0);
-  //     } else {
-  //       if (distance == d || distance == 0) {
-  //         ref.current.setVolume(maxVolume);
-  //         return;
-  //       }
-  //       const v = maxVolume * (1 - d / distance);
-  //       if (v >= 0 && v <= 1) {
-  //         ref.current.setVolume(v >= 1 ? 1 : v);
-  //       }
-  //     }
-  //   }
-  // });
+  useFrame(() => {
+    if (!isSound) return;
+    if (ref.current) {
+      const d = position.distanceTo(curPosition.current);
+      if (d > distance) {
+        ref.current.setVolume(0);
+        if (ref.current.isPlaying) {
+          ref.current.pause();
+        }
+      } else {
+        if (!ref.current.isPlaying) {
+          ref.current.play();
+        }
+        if (distance == d || distance == 0) {
+          ref.current.setVolume(maxVolume);
+          return;
+        }
+        const v = maxVolume * (1 - d / distance);
+        if (v >= 0 && v <= 1) {
+          ref.current.setVolume(v >= 1 ? 1 : v);
+        }
+      }
+    }
+  });
 
   return (
     <Suspense fallback={<Loading3D />}>
@@ -92,7 +98,6 @@ export const OMAudio = ({
           position={position}
           distance={distance}
           loop={true}
-          autoplay={true}
         />
       )}
     </Suspense>

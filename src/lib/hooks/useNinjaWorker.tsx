@@ -48,7 +48,7 @@ export const useNinjaWorker = (): NWorkerProp => useContext(NinjaWorkerContext);
 export const NinjaWorkerProvider = ({
   ThreeJSVer,
   children,
-}: NWorkerProviderProps): NWorkerProp => {
+}: NWorkerProviderProps) => {
   const engine = useNinjaEngine();
   const worker = React.useRef<Worker | null>(null);
   const bugScriptListIds = React.useRef<string[]>([]);

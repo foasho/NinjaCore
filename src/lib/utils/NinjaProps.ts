@@ -1,4 +1,11 @@
-import { Object3D, Vector2, AnimationClip, AnimationMixer, Audio, Vector3 } from "three";
+import {
+  Object3D,
+  Vector2,
+  AnimationClip,
+  AnimationMixer,
+  Audio,
+  Vector3,
+} from "three";
 
 /**
  * NinjaGLの基本パラメータ
@@ -35,8 +42,25 @@ export interface IInputMovement {
 export interface IObjectManagement {
   id: string;
   name?: string;
-  type: "three" | "object" | "lodobject" | "avatar" | "terrain" | "others" | "text" | "text3d" | "audio"
-    | "sky" | "light" | "fog" | "camera" | "effect" | "cloud" | "environment" | "lightformer" | "ai-npc";
+  type:
+    | "three"
+    | "object"
+    | "lodobject"
+    | "avatar"
+    | "terrain"
+    | "others"
+    | "text"
+    | "text3d"
+    | "audio"
+    | "sky"
+    | "light"
+    | "fog"
+    | "camera"
+    | "effect"
+    | "cloud"
+    | "environment"
+    | "lightformer"
+    | "ai-npc";
   filePath?: string;
   visibleType: "auto" | "force";
   visible: boolean;
@@ -44,7 +68,8 @@ export interface IObjectManagement {
   args: any;
   rules?: any;
   physics: boolean;
-  phyType: "box"| "sphere" | "capsule" | "along";
+  moveable?: boolean; //移動可能かどうか
+  phyType: "box" | "sphere" | "capsule";
   animations?: AnimationClip[];
   mixer?: AnimationMixer;
 }
@@ -59,7 +84,7 @@ export interface IUIManagement {
   position: {
     x: number;
     y: number;
-  }
+  };
   styles?: string;
   args?: any;
   visible: boolean;
@@ -87,15 +112,14 @@ export interface IShaderManagement {
   binary: Blob;
 }
 
-
 /**
  * スクリプトマネジメント
  */
 export interface IScriptManagement {
-  type: string;     // 種別: "script"今は一つだけ
-  id: string;       // ID: UUID
-  name: string;     // 名前
-  script: string;  // JSスクリプトデータ
+  type: string; // 種別: "script"今は一つだけ
+  id: string; // ID: UUID
+  name: string; // 名前
+  script: string; // JSスクリプトデータ
 }
 
 export interface ISoundProps {

@@ -20,4 +20,4 @@ export {
   InitScriptManagement,
   InitOM,
 } from "./NinjaInit";
-export { NonColliderTunnel, ColliderTunnel } from "./tunnel";
+export { NonColliderTunnel, ColliderTunnel, MoveableColliderTunnel } from "./tunnel";

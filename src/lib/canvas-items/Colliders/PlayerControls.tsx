@@ -18,7 +18,7 @@ import {
   AnimationMixer,
   AnimationClip,
 } from "three";
-import { EDeviceType, useMultiInputControl } from "../../hooks";
+import { EDeviceType, useMultiInputControl, useNinjaEngine } from "../../hooks";
 import { IInputMovement } from "../../utils";
 
 /**
@@ -50,6 +50,7 @@ export const PlayerControl = ({
   touchDomId = null,
   device,
 }: IPlayerControlProps) => {
+  const { boundsTree } = useNinjaEngine();
   const { input } = useMultiInputControl();
   const orbitTouchMove = useRef<{ flag: boolean; angleAxis: [number, number] }>(
     { flag: false, angleAxis: [0, 0] }
@@ -103,6 +104,7 @@ export const PlayerControl = ({
         const mergedGeometry = staticGenerator.generate();
         // @ts-ignore
         mergedGeometry.boundsTree = new MeshBVH(mergedGeometry);
+        boundsTree.current = mergedGeometry.boundsTree;
         setMergeGeometry(mergedGeometry);
       }
     }

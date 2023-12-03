@@ -10,9 +10,10 @@ import {
   NonColliderTunnel,
   NJCFile,
   loadNJCFileFromURL,
+  MoveableColliderTunnel,
 } from "../utils";
 import { MdMusicNote, MdMusicOff } from "react-icons/md";
-import { Group, Mesh, Object3D, Vector3 } from "three";
+import { Box3, Group, Mesh, Object3D, Sphere, Vector3 } from "three";
 import { Canvas as NCanvas, useFrame as useNFrame } from "@react-three/fiber";
 import { useInputControl } from "./useInputControl";
 import { Loading3D, Loading2D } from "../loaders";
@@ -28,6 +29,8 @@ import {
 } from "../canvas-items";
 import { NinjaWorkerProvider, useNinjaWorker } from "./useNinjaWorker";
 import { MemoSplashScreen } from "../commons";
+import { Moveable } from "../canvas-items/Moveables";
+import { MeshBVH } from "three-mesh-bvh";
 
 export enum EDeviceType {
   Unknown = 0,
@@ -50,7 +53,10 @@ type NinjaEngineProp = {
   curMessage: React.MutableRefObject<string>;
   isSound: boolean;
   setIsSound: (isSound: boolean) => void;
-  colGrp: Group | null;
+  bvhGrp: React.MutableRefObject<Group | null>;
+  moveGrp: React.MutableRefObject<Group | null>;
+  boundsTree: React.MutableRefObject<MeshBVH | null>;
+  updateCollisions: (daltaTime: number) => void;
   input: IInputMovement;
   config: IConfigParams;
   oms: IObjectManagement[];
@@ -76,7 +82,10 @@ export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
   curMessage: React.createRef<string>(),
   isSound: false,
   setIsSound: (isSound: boolean) => {},
-  colGrp: null,
+  bvhGrp: React.createRef<Group>(),
+  moveGrp: React.createRef<Group>(),
+  boundsTree: React.createRef<Object3D>(),
+  updateCollisions: (daltaTime: number) => {},
   input: {
     forward: 0,
     backward: 0,
@@ -162,9 +171,6 @@ export const NinjaGL = ({
   const [isSound, setIsSound] = React.useState<boolean>(false); // サウンドの有効/無効
   // coreファイル
   const [njcFile, setNjcFile] = React.useState<NJCFile | null>(null);
-  // Loading周り
-  const loadingPercentage = React.useRef<number>(0);
-  const cameraLayer = React.useRef<number>(1);
   const [device, setDevice] = React.useState<EDeviceType>(EDeviceType.Unknown);
   // コンテンツ管理
   const [config, setConfig] = React.useState<IConfigParams>(
@@ -179,8 +185,9 @@ export const NinjaGL = ({
   const curPosition = React.useRef<Vector3>(new Vector3(0, 0, 0));
   const curMessage = React.useRef<string>("");
   // 物理世界
-  const [physics, setPhysics] = React.useState<boolean>(true);
-  const colGrp = React.useRef<Group>(null); // BVH用/Octree用コライダー
+  const bvhGrp = React.useRef<Group>(null); // BVH用コライダー
+  const moveGrp = React.useRef<Group>(null); // 移動用コライダー
+  const boundsTree = React.useRef<MeshBVH>(null); // BVH-boundsTree
   // 汎用入力
   const { input, attachJumpBtn, attachRunBtn } = useInputControl({});
   // Debugツリー
@@ -353,11 +360,45 @@ export const NinjaGL = ({
     curPosition.current = pos;
   };
 
+  const gravity = -9.8;
+  const deadBoxY = -80;
+  const tempBox = new Box3();
+  const tempSphere = new Sphere();
+  const updateCollisions = (daltaTime: number) => {
+    if (!bvhGrp.current) return;
+    if (!moveGrp.current) return;
+    for (const object of moveGrp.current.children) {
+      // TODO: ここで、移動可能なオブジェクトの衝突判定を行う
+      const om = getOMById(object.userData.omId);
+      if (!om) return;
+      let collider;
+      // DeadBoxに入ったら、処理をスキップする
+      if (object.position.y < deadBoxY) {
+        continue;
+      }
+      if (om.phyType === "box") {
+        const position = object.position.clone();
+        const min = position.clone().sub(object.scale.clone().multiplyScalar(0.5));
+        const max = position.clone().add(object.scale.clone().multiplyScalar(0.5));
+        collider = new Box3(min, max);
+        tempBox.copy(collider);
+      } else if (om.phyType === "sphere") {
+        collider = new Sphere(
+          om.args.position || new Vector3(0, 0, 0),
+          om.args.radius || 1
+        );
+        tempSphere.copy(collider);
+      }
+      if (!collider) return;
+      // BVH-boundsTreeとの衝突判定
+    };
+  };
+
   return (
     <NinjaEngineContext.Provider
       value={{
         status,
-        isPhysics: physics,
+        isPhysics: config.physics,
         input,
         player,
         curPosition,
@@ -365,7 +406,10 @@ export const NinjaGL = ({
         curMessage,
         isSound,
         setIsSound,
-        colGrp: colGrp.current,
+        bvhGrp,
+        moveGrp,
+        boundsTree,
+        updateCollisions,
         config,
         oms,
         sms,
@@ -433,6 +477,8 @@ export const NinjaCanvasItems = () => {
       <Cameras />
       {/** ColliderField & Player */}
       <ColliderField />
+      {/** Moveable */}
+      <Moveable />
       {/** NonCollider */}
       <NonColliderTunnel.Out />
       <group>

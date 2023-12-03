@@ -40,6 +40,7 @@ export const initTpOMs = (): IObjectManagement[] => {
       phyType: "box",
       visibleType: "auto",
       visible: true,
+      moveable: true,
     },
     {
       id: MathUtils.generateUUID(),

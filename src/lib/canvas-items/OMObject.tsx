@@ -1,5 +1,5 @@
 import React from "react";
-import { IObjectManagement } from "../utils";
+import { IObjectManagement, MoveableColliderTunnel } from "../utils";
 import { Color, Object3D, Group, Mesh } from "three";
 import { GLTF } from "three-stdlib";
 import {
@@ -36,7 +36,7 @@ export const OMObject = ({ om }: { om: IObjectManagement }) => {
       {/** 地形データ */}
       {om.type === "terrain" && (
         <>
-          {om.physics ? (
+          {(om.physics && !om.moveable) ?(
             <ColliderTunnel.In>
               <Terrain om={om} />
             </ColliderTunnel.In>
@@ -52,7 +52,7 @@ export const OMObject = ({ om }: { om: IObjectManagement }) => {
       {/** Threeメッシュ */}
       {om.type === "three" && (
         <>
-          {om.physics ? (
+          {(om.physics && !om.moveable) ? (
             <ColliderTunnel.In>
               <ThreeObject om={om} />
             </ColliderTunnel.In>

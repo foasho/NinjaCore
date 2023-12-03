@@ -95,22 +95,25 @@ export const saveNJCBlob = async (njcFile: NJCFile): Promise<Blob> => {
 
   // GLBモデルをobjectsディレクトリに追加
   const exportOMs: IObjectManagement[] = [];
-  for (const om of njcFile.oms) {
-    if (om.object) {
-      let clone;
-      if (om.animations && om.animations.length > 0) {
-        clone = SkeletonUtils.clone(om.object);
-        clone.animations = om.animations? om.animations: [];
+  (async () => {
+    for (const om of njcFile.oms) {
+      if (om.args.url) {
+        let clone;
+        const scene = await loadGLTFFromData(om.args.url);
+        if (om.animations && om.animations.length > 0) {
+          clone = SkeletonUtils.clone(scene);
+          clone.animations = om.animations? om.animations: [];
+        }
+        else {
+          clone = scene.clone();
+        }
+        const glbData = await exportGLTF(clone);
+        objectsDir!.file(`${om.id}.glb`, glbData);
+        om.filePath = `objects/${om.id}.glb`;
       }
-      else {
-        clone = om.object.clone();
-      }
-      const glbData = await exportGLTF(clone);
-      objectsDir!.file(`${om.id}.glb`, glbData);
-      om.filePath = `objects/${om.id}.glb`;
+      exportOMs.push(om);
     }
-    exportOMs.push(om);
-  }
+  })();
 
   // JSONファイルを追加
   zip.file('config.json', JSON.stringify(njcFile.config));
@@ -167,14 +170,8 @@ export const loadNJCFile = async (
     for (const om of omsJson) {
       const glbFile = objectsDir.file(`${om.id}.glb`);
       if (glbFile) {
-        const glbData = await glbFile.async('arraybuffer');
-        const object = await loadGLTFFromData(
-          glbData, 
-          onProgress,
-          totalSize
-        );
-        om.object = object;
-        om.animations = object.animations || [];
+        // om.args.urlにGLBモデルのURLを設定
+        om.args.url = URL.createObjectURL(await glbFile.async('blob'));
       }
       // Position,Rotation,Scale同期
       if (om.args && om.args.position){

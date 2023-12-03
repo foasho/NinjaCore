@@ -1,5 +1,5 @@
-import { MathUtils } from "three";
-import { IConfigParams, IScriptManagement } from "./NinjaProps";
+import { MathUtils, Vector3, Euler } from "three";
+import { IConfigParams, IScriptManagement, IObjectManagement } from "./NinjaProps";
 
 export const InitMobileConfipParams: IConfigParams = {
   physics: true,
@@ -32,4 +32,28 @@ export const InitScriptManagement: IScriptManagement = {
   name: "nonname-script" + MathUtils.generateUUID().substring(0, 6),
   type: "script",
   script: "",
+};
+
+export const InitOM = (): IObjectManagement => {
+  return {
+    id: MathUtils.generateUUID(),
+    name: "box01",
+    type: "three",
+    args: {
+      type: "box",
+      position: new Vector3(0, 0, 0),
+      rotation: new Euler(0, 0, 0),
+      scale: new Vector3(1, 1, 1),
+      materialData: {
+        type: "standard",
+        value: "#4785FF",
+      },
+      castShadow: true,
+      receiveShadow: true,
+    },
+    physics: true,
+    phyType: "box",
+    visibleType: "auto",
+    visible: true,
+  }
 };

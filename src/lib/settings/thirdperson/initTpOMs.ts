@@ -23,7 +23,7 @@ export const initTpOMs = (): IObjectManagement[] => {
     },
     {
       id: MathUtils.generateUUID(),
-      name: "box01",
+      name: "movebox",
       type: "three",
       args: {
         type: "box",

@@ -1,11 +1,33 @@
 import { RootState } from "@react-three/fiber";
-import React from "react";
-import { IInputMovement, IScriptManagement } from "../utils";
-import { NinjaEngineContext } from "./useNinjaEngine";
+import React, { useContext, createContext } from "react";
+import {
+  ConvPos,
+  ConvRot,
+  ConvScale,
+  IInputMovement,
+  IScriptManagement,
+  IObjectManagement,
+  OMArgs2Obj,
+} from "../utils";
+import { useNinjaEngine } from "./useNinjaEngine";
+import { InitOM } from "../utils";
+import { Euler } from "three";
 
-interface NWorkerProps {
+// scriptで扱う送信データ
+const SCRIPTS_DATA = {
+  getOMByName: "getOMByName",
+  setPosition: "setPosition",
+  setRotation: "setRotation",
+  setScale: "setScale",
+  setArg: "setArg",
+  addOM: "addOM",
+};
+
+interface NWorkerProviderProps {
   ThreeJSVer: string;
+  children: React.ReactNode;
 }
+
 export interface NWorkerProp {
   loadUserScript: (sms: IScriptManagement[]) => Promise<void>;
   runInitialize: (id: string) => void;
@@ -16,9 +38,20 @@ export interface NWorkerProp {
     input: IInputMovement
   ) => void;
 }
-export const useNinjaWorker = ({ ThreeJSVer }: NWorkerProps): NWorkerProp => {
-  const engine = React.useContext(NinjaEngineContext);
+export const NinjaWorkerContext = createContext<NWorkerProp>({
+  loadUserScript: async () => {},
+  runInitialize: () => {},
+  runFrameLoop: () => {},
+});
+export const useNinjaWorker = (): NWorkerProp => useContext(NinjaWorkerContext);
+
+export const NinjaWorkerProvider = ({
+  ThreeJSVer,
+  children,
+}: NWorkerProviderProps): NWorkerProp => {
+  const engine = useNinjaEngine();
   const worker = React.useRef<Worker | null>(null);
+  const bugScriptListIds = React.useRef<string[]>([]);
 
   const loadUserScript = async (sms: IScriptManagement[]): Promise<void> => {
     if (worker.current) return; // 既にWorkerが存在する場合は処理を終了する
@@ -42,6 +75,17 @@ export const useNinjaWorker = ({ ThreeJSVer }: NWorkerProps): NWorkerProp => {
       // Add ThreeJS
       importScripts("${threeCDN}");
 
+      // SCRIPTS_DATAのプロパティに対応する関数を作成する
+      ${Object.keys(SCRIPTS_DATA)
+        .map(
+          (key) => `
+          const ${key} = async (data) => {
+            return await req('${key}', data);
+          }
+        `
+        )
+        .join("")}
+
       // Add UserScripts
       ${importScriptsCode}
 
@@ -49,6 +93,7 @@ export const useNinjaWorker = ({ ThreeJSVer }: NWorkerProps): NWorkerProp => {
       let UserData = {};
 
       self.addEventListener("message", (event) => {
+        // self.postMessage({ log: "Worker received message: " + event.data });
         const { type, id, state, delta, input, data, messageId } = event.data;
         if (type === "runInitialize") {
           if (self[id] && typeof self[id].initialize === "function") {
@@ -76,16 +121,18 @@ export const useNinjaWorker = ({ ThreeJSVer }: NWorkerProps): NWorkerProp => {
 
       // Count Request ID
       let messageIdCounter = 0;
+
       let responseHandlers = new Map();
 
       // Requset Message
-      async function Request(type, data) {
+      const req = async (type, data) => {
         return new Promise((resolve) => {
-          const messageId = this.messageIdCounter++;
+          const messageId = messageIdCounter++;
           responseHandlers.set(messageId, resolve);
           self.postMessage({ type, data, messageId });
         });
       }
+
     `;
 
     const userScriptBlob = new Blob([`${workerScript}`], {
@@ -95,6 +142,7 @@ export const useNinjaWorker = ({ ThreeJSVer }: NWorkerProps): NWorkerProp => {
     const userScriptURL = URL.createObjectURL(userScriptBlob);
     worker.current = new Worker(userScriptURL);
     worker.current.addEventListener("message", handleWorkerMessage);
+    console.info("Worker is initialized.");
   };
 
   /**
@@ -124,18 +172,28 @@ export const useNinjaWorker = ({ ThreeJSVer }: NWorkerProps): NWorkerProp => {
     delta: number,
     input: IInputMovement
   ): void => {
+    // bugScriptListIdsにidが含まれている場合は、処理を終了する
+    if (bugScriptListIds.current.includes(id)) {
+      return;
+    }
     if (worker.current) {
       const _state = {
         elapsedTime: state.clock.getElapsedTime(),
         mouse: state.mouse,
       };
-      worker.current.postMessage({
-        type: "runFrameLoop",
-        id: id,
-        state: _state,
-        delta: delta,
-        input: input,
-      });
+      try {
+        worker.current.postMessage({
+          type: "runFrameLoop",
+          id: id,
+          state: _state,
+          delta: delta,
+          input: input,
+        });
+      } catch (e) {
+        console.error(`Bugが出ました。id: ${id} , message: ${e}`);
+        bugScriptListIds.current.push(id);
+        return;
+      }
     } else {
       console.error("Worker is not initialized yet.");
     }
@@ -146,86 +204,73 @@ export const useNinjaWorker = ({ ThreeJSVer }: NWorkerProps): NWorkerProp => {
    */
   const handleWorkerMessage = async (e: MessageEvent) => {
     if (!worker.current) return;
-    const { type, data, messageId } = e.data;
-    if (type === "getPositionByName") {
-      // 特定の名前のOMの位置を取得する
+    // console.log("Worker received message: ", e.data);
+    const { type, data, messageId, log } = e.data;
+    if (log) {
+      console.log(log);
+    }
+    if (type === "getOMByName") {
+      // 特定の名前のOMを取得する
       const { name } = data as { name: string };
       const om = engine.getOMByName(name);
-      if (om && om.object) {
+      if (om) {
+        if (!om.args.position) {
+          om.args.position = { x: 0, y: 0, z: 0 };
+        }
+        if (!om.args.rotation) {
+          om.args.rotation = new Euler(0, 0, 0);
+        }
+        if (!om.args.scale) {
+          om.args.scale = { x: 1, y: 1, z: 1 };
+        }
         worker.current.postMessage({
           type: "response",
-          data: om.object.position,
+          data: OMArgs2Obj(om),
           messageId: messageId,
         });
       } else {
-        console.error(`Name: ${name}, OM not found.`);
+        // console.error(`Name: ${name}, OM not found.`);
         worker.current.postMessage({
           type: "response",
           data: null,
           messageId: messageId,
         });
       }
-    } else if (type === "getPositionByName") {
-      // 特定の名前のOMの回転を取得する
-      const { name } = data;
-      const om = engine.getOMByName(name);
-      if (om && om.object) {
-        worker.current.postMessage({
-          type: "response",
-          data: om.object.rotation,
-          messageId: messageId,
-        });
-      } else {
-        console.error(`Name: ${name}, OM not found.`);
-        worker.current.postMessage({
-          type: "response",
-          data: null,
-          messageId: messageId,
-        });
-      }
-    } else if (type == "getScaleByName") {
-      // 特定の名前のOMのスケールを取得する
-      const { name } = data;
-      const om = engine.getOMByName(name);
-      if (om && om.object) {
-        worker.current.postMessage({
-          type: "response",
-          data: om.object.scale,
-          messageId: messageId,
-        });
-      } else {
-        console.error(`Name: ${name}, OM not found.`);
-        worker.current.postMessage({
-          type: "response",
-          data: null,
-          messageId: messageId,
-        });
-      }
-    } else if (type == "setPositionByName") {
-      // 特定の名前のOMの位置を設定する
-      const { name, position } = data;
-      const om = engine.getOMByName(name);
-      if (om && om.object) {
-        om.object.position.copy(position);
+    } else if (type == "setPosition") {
+      // 特定のOMの位置を設定する
+      const { id, position } = data as {
+        id: string;
+        position:
+          | { x: number; y: number; z: number }
+          | [number, number, number];
+      };
+      const om = engine.getOMById(id);
+      if (om) {
+        engine.setArg(id, "position", ConvPos(position));
         worker.current.postMessage({
           type: "response",
           data: null,
           messageId: messageId,
         });
       } else {
-        console.error(`Name: ${name}, OM not found.`);
+        console.error(`od: ${id}, OM not found.`);
         worker.current.postMessage({
           type: "response",
           data: null,
           messageId: messageId,
         });
       }
-    } else if (type == "setRotationByName") {
-      // 特定の名前のOMの回転を設定する
-      const { name, rotation } = data;
-      const om = engine.getOMByName(name);
-      if (om && om.object) {
-        om.object.rotation.copy(rotation);
+    } else if (type == "setRotation") {
+      // 特定のOMの回転を設定する
+      const { id, rotation } = data as {
+        id: string;
+        rotation:
+          | { x: number; y: number; z: number }
+          | [number, number, number];
+      };
+      const om = engine.getOMById(id);
+      if (om) {
+        // engine.setArg(id, "rotation", ConvRot(rotation));
         worker.current.postMessage({
           type: "response",
           data: null,
@@ -239,12 +284,15 @@ export const useNinjaWorker = ({ ThreeJSVer }: NWorkerProps): NWorkerProp => {
           messageId: messageId,
         });
       }
-    } else if (type == "setScaleByName") {
-      // 特定の名前のOMのスケールを設定する
-      const { name, scale } = data;
-      const om = engine.getOMByName(name);
-      if (om && om.object) {
-        om.object.scale.copy(scale);
+    } else if (type == "setScale") {
+      // 特定のOMのスケールを設定する
+      const { id, scale } = data as {
+        id: string;
+        scale: { x: number; y: number; z: number } | [number, number, number];
+      };
+      const om = engine.getOMById(id);
+      if (om) {
+        // engine.setArg(id, "scale", ConvScale(scale));
         worker.current.postMessage({
           type: "response",
           data: null,
@@ -258,12 +306,55 @@ export const useNinjaWorker = ({ ThreeJSVer }: NWorkerProps): NWorkerProp => {
           messageId: messageId,
         });
       }
+    } else if (type == "setArg") {
+      // 特定のOMの属性を変更する
+      const { id, arg, value } = data as {
+        id: string;
+        arg: string;
+        value: any;
+      };
+      const om = engine.getOMById(id);
+      if (om) {
+        engine.setArg(id, arg, value);
+        worker.current.postMessage({
+          type: "response",
+          data: null,
+          messageId: messageId,
+        });
+      } else {
+        console.error(`Name: ${name}, OM not found.`);
+        worker.current.postMessage({
+          type: "response",
+          data: null,
+          messageId: messageId,
+        });
+      }
+    } else if (type == "addOM") {
+      // OMを追加する
+      const { om } = data as {
+        om: any;
+      };
+      const init = InitOM();
+      // initをベースとしてomをマージする
+      const _om = { ...init, ...om } as IObjectManagement;
+      engine.addOM(_om);
     }
   };
 
-  return {
-    loadUserScript,
-    runInitialize,
-    runFrameLoop,
-  };
+  // return {
+  //   loadUserScript,
+  //   runInitialize,
+  //   runFrameLoop,
+  // };
+  return (
+    <NinjaWorkerContext.Provider
+      value={{
+        loadUserScript,
+        runInitialize,
+        runFrameLoop,
+      }}
+    >
+      {children}
+    </NinjaWorkerContext.Provider>
+  );
 };

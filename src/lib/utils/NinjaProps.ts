@@ -43,7 +43,6 @@ export interface IObjectManagement {
   layerNum?: number;
   args: any;
   rules?: any;
-  object?: Object3D;
   physics: boolean;
   phyType: "box"| "sphere" | "capsule" | "along";
   animations?: AnimationClip[];

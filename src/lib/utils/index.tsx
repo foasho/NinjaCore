@@ -12,10 +12,12 @@ export {
   gltfLoader,
 } from "./NinjaFileControl";
 export * from "./NinjaProps";
+export { ConvPos, ConvRot, ConvScale, Pos2Obj, Rot2Obj, Scale2Obj, OMArgs2Obj } from "./ThreeConv";
 export {
   InitMobileConfipParams,
   InitTabletConfipParams,
   InitDesktopConfipParams,
   InitScriptManagement,
+  InitOM,
 } from "./NinjaInit";
 export { NonColliderTunnel, ColliderTunnel } from "./tunnel";

@@ -201,8 +201,7 @@ const Light = ({ om }: { om: IObjectManagement }) => {
  */
 const ThreeObject = ({ om }: { om: IObjectManagement }) => {
   const ref = React.useRef<any>();
-  const { setOMObjectById } = useNinjaEngine();
-  // const matRef = useRef<any>();
+  const { onOMIdChanged, offOMIdChanged } = useNinjaEngine();
   let geometry;
   let material;
   if (om.args.type == "plane") {
@@ -244,25 +243,31 @@ const ThreeObject = ({ om }: { om: IObjectManagement }) => {
   }
 
   React.useEffect(() => {
-    if (ref.current) {
-      setOMObjectById(om.id, ref.current as Object3D);
+    const update = () => {
       if (ref.current) {
-        if (om.args.position) {
-          ref.current.position.copy(om.args.position);
-        }
-        if (om.args.rotation) {
-          ref.current.rotation.copy(om.args.rotation);
-        }
-        if (om.args.scale) {
-          ref.current.scale.copy(om.args.scale);
-        }
-        if (om.args.materialData) {
-          if (om.args.materialData.type !== "shader") {
-            // @ts-ignore
+        if (ref.current) {
+          if (om.args.position) {
+            ref.current.position.copy(om.args.position);
+          }
+          if (om.args.rotation) {
+            ref.current.rotation.copy(om.args.rotation);
+          }
+          if (om.args.scale) {
+            ref.current.scale.copy(om.args.scale);
+          }
+          if (om.args.materialData) {
+            if (om.args.materialData.type !== "shader") {
+              // @ts-ignore
+            }
           }
         }
       }
-    }
+    };
+    update();
+    onOMIdChanged(om.id, update);
+    return () => {
+      offOMIdChanged(om.id, update);
+    };
   }, []);
 
   return (

@@ -22,7 +22,7 @@ export const Cameras = () => {
 };
 
 const CameraComponent = (om: IObjectManagement) => {
-  const { setOMObjectById } = useNinjaEngine();
+  const { } = useNinjaEngine();
   let _camera: any;
   const { camera } = useThree();
   if (om.args.type == "orbit") {
@@ -63,7 +63,6 @@ const CameraComponent = (om: IObjectManagement) => {
 
   React.useEffect(() => {
     if (om.args.type == "fixed" && om.args.default == true) {
-      setOMObjectById(om.id, camera);
     }
   }, []);
 

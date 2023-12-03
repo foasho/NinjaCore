@@ -1,12 +1,25 @@
 import React from "react";
 import { HiEye, HiEyeSlash } from "react-icons/hi2";
-import { NJCFile, NinjaGL, ExportNjcFile, initTpOMs, initTpConfig } from "./lib";
+import {
+  NJCFile,
+  NinjaGL,
+  ExportNjcFile,
+  initTpOMs,
+  initTpConfig,
+  initTpSMs,
+} from "./lib";
 
 export const App = () => {
   const [ready, setReady] = React.useState(false);
   const [njcFile, setNJCFile] = React.useState<NJCFile | null>(null);
   React.useEffect(() => {
-    const _njcFile = ExportNjcFile(initTpOMs(), [], [], [], initTpConfig());
+    const _njcFile = ExportNjcFile(
+      initTpOMs(),
+      [],
+      [],
+      initTpSMs(),
+      initTpConfig()
+    );
     setNJCFile(_njcFile);
     setReady(true);
     return () => {
@@ -21,10 +34,10 @@ export const App = () => {
           {njcFile && <NinjaGL njc={njcFile}></NinjaGL>}
         </div>
       )}
-      <div 
-        style={{ 
-          position: "absolute", 
-          top: "10px", 
+      <div
+        style={{
+          position: "absolute",
+          top: "10px",
           left: "10px",
           fontSize: "30px",
           cursor: "pointer",
@@ -32,8 +45,8 @@ export const App = () => {
         onClick={() => {
           setReady(!ready);
         }}
-       >
-        {ready ? <HiEye />:<HiEyeSlash />}
+      >
+        {ready ? <HiEye /> : <HiEyeSlash />}
       </div>
     </div>
   );

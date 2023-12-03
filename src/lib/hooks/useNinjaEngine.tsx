@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   IConfigParams,
   IInputMovement,
@@ -26,7 +26,7 @@ import {
   OMAudios,
   AiNPCs,
 } from "../canvas-items";
-import { NWorkerProp, useNinjaWorker } from "./useNinjaWorker";
+import { NinjaWorkerProvider, useNinjaWorker } from "./useNinjaWorker";
 import { MemoSplashScreen } from "../commons";
 
 export enum EDeviceType {
@@ -51,17 +51,21 @@ type NinjaEngineProp = {
   isSound: boolean;
   setIsSound: (isSound: boolean) => void;
   colGrp: Group | null;
-  scriptWorker: NWorkerProp;
   input: IInputMovement;
   config: IConfigParams;
   oms: IObjectManagement[];
   sms: IScriptManagement[];
   ums: IUIManagement[];
   tms: ITextureManagement[];
-  setOMObjectById: (id: string, obj: Object3D) => void;
   getOMById: (id: string) => IObjectManagement | null;
   getOMByName: (name: string) => IObjectManagement | null;
   getSMById: (id: string) => IScriptManagement | null;
+  setArg: (id: string, key: string, arg: any) => void;
+  addOM: (om: IObjectManagement) => void;
+  onOMIdChanged: (id: string, listener: () => void) => void;
+  offOMIdChanged: (id: string, listener: () => void) => void;
+  onOMsChanged: (listener: () => void) => void;
+  offOMsChanged: (listener: () => void) => void;
 };
 export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
   status: ENinjaStatus.Pause,
@@ -73,11 +77,6 @@ export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
   isSound: false,
   setIsSound: (isSound: boolean) => {},
   colGrp: null,
-  scriptWorker: {
-    loadUserScript: async () => {},
-    runFrameLoop: () => {},
-    runInitialize: () => {},
-  },
   input: {
     forward: 0,
     backward: 0,
@@ -97,10 +96,15 @@ export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
   sms: [],
   ums: [],
   tms: [],
-  setOMObjectById: () => {},
   getOMById: () => null,
   getOMByName: () => null,
   getSMById: () => null,
+  setArg: () => {},
+  addOM: () => {},
+  onOMIdChanged: () => {},
+  offOMIdChanged: () => {},
+  onOMsChanged: () => {},
+  offOMsChanged: () => {},
 } as NinjaEngineProp);
 
 export const useNinjaEngine = () => React.useContext(NinjaEngineContext);
@@ -145,7 +149,7 @@ interface INinjaEngineProvider {
   isSplashScreen?: boolean;
   children?: React.ReactNode;
 }
-export const ThreeJSVer = "0.154.0";
+export const ThreeJSVer = "0.157.0";
 export const NinjaGL = ({
   njc,
   njcPath,
@@ -181,8 +185,6 @@ export const NinjaGL = ({
   const { input, attachJumpBtn, attachRunBtn } = useInputControl({});
   // Debugツリー
   const debugTree = React.useRef<any>(null);
-  // スクリプトワーカー(NinjaWokrer)
-  const scriptWorker = useNinjaWorker({ ThreeJSVer });
 
   React.useEffect(() => {
     // njcが指定されていればそのままセット
@@ -213,7 +215,10 @@ export const NinjaGL = ({
   React.useEffect(() => {
     if (init) {
       // 1. 初期設定完了後にPhyWold/ScriptWorkerの設置アップ
-      scriptWorker.loadUserScript(sms);
+      // scriptWorker.loadUserScript(sms);
+      setTimeout(() => {
+        setStatus(ENinjaStatus.Play);
+      }, 3000);
     }
   }, [init]);
 
@@ -275,13 +280,6 @@ export const NinjaGL = ({
     }
     return null;
   };
-  // 特定のOMにObject3Dを追加する
-  const setOMObjectById = (id: string, obj: Object3D) => {
-    const om = oms.find((om) => om.id === id);
-    if (om) {
-      om.object = obj;
-    }
-  };
   // IDからSMを取得する
   const getSMById = (id: string): IScriptManagement | null => {
     const sm = sms.find((sm) => sm.id === id);
@@ -289,6 +287,66 @@ export const NinjaGL = ({
       return sm;
     }
     return null;
+  };
+  const setArg = (id: string, key: string, arg: any) => {
+    const om = oms.find((om) => om.id === id);
+    if (om) {
+      om.args[key] = arg;
+      notifyOMIdChanged(id);
+    }
+  };
+  const addOM = (om: IObjectManagement, multiShare = true) => {
+    setOMs([...oms, om]);
+    if (multiShare) {
+      // multiplayer利用時は、他のクライアントにもOMを追加する
+      // TODO: 他のクライアントにOMを追加する
+    }
+    notifyOMsChanged();
+  };
+
+  // Listenerを作成
+  /**
+   * 個別のOM変更リスナー
+   */
+  const objectManagementIdChangedListeners = useRef<{
+    [id: string]: (() => void)[];
+  }>({});
+  const onOMIdChanged = (id: string, listener: () => void) => {
+    if (!objectManagementIdChangedListeners.current[id]) {
+      objectManagementIdChangedListeners.current[id] = [];
+    }
+    objectManagementIdChangedListeners.current[id].push(listener);
+  };
+  const offOMIdChanged = (id: string, listener: () => void) => {
+    if (!objectManagementIdChangedListeners.current[id]) {
+      return;
+    }
+    objectManagementIdChangedListeners.current[id] =
+      objectManagementIdChangedListeners.current[id].filter(
+        (l) => l !== listener
+      );
+  };
+  // 特定のOM変更を通知する
+  const notifyOMIdChanged = (id: string) => {
+    if (!objectManagementIdChangedListeners.current[id]) {
+      return;
+    }
+    objectManagementIdChangedListeners.current[id].forEach((l) => l());
+  };
+  /**
+   * OMsの変更リスナー
+   */
+  const objectManagementChangedListeners = useRef<(() => void)[]>([]);
+  const onOMsChanged = (listener: () => void) => {
+    objectManagementChangedListeners.current.push(listener);
+  };
+  const offOMsChanged = (listener: () => void) => {
+    objectManagementChangedListeners.current =
+      objectManagementChangedListeners.current.filter((l) => l !== listener);
+  };
+  // OMsの変更を通知する
+  const notifyOMsChanged = () => {
+    objectManagementChangedListeners.current.forEach((l) => l());
   };
 
   const updateCurPosition = (pos: Vector3) => {
@@ -300,7 +358,6 @@ export const NinjaGL = ({
       value={{
         status,
         isPhysics: physics,
-        scriptWorker,
         input,
         player,
         curPosition,
@@ -314,13 +371,18 @@ export const NinjaGL = ({
         sms,
         ums,
         tms,
-        setOMObjectById,
         getOMById,
         getOMByName,
         getSMById,
+        setArg,
+        addOM,
+        onOMIdChanged,
+        offOMIdChanged,
+        onOMsChanged,
+        offOMsChanged,
       }}
     >
-      <MemoSplashScreen />
+      {/** スプラッシュスクリーン */ isSplashScreen && <MemoSplashScreen />}
       {init && njcFile && (
         <>
           {!noCanvas ? (
@@ -355,7 +417,7 @@ export const NinjaCanvas = ({ children }: NinjaCanvasProp) => (
 );
 export const NinjaCanvasItems = () => {
   return (
-    <>
+    <NinjaWorkerProvider ThreeJSVer={ThreeJSVer}>
       {/** OMのID */}
       <OMObjects />
       <StaticObjects />
@@ -376,7 +438,7 @@ export const NinjaCanvasItems = () => {
       <group>
         <SystemFrame />
       </group>
-    </>
+    </NinjaWorkerProvider>
   );
 };
 
@@ -384,7 +446,23 @@ export const NinjaCanvasItems = () => {
  * システムフレーム(時間をすすめる)
  */
 const SystemFrame = () => {
-  const { status, scriptWorker, input, sms } = useNinjaEngine();
+  const { status, input, sms } = useNinjaEngine();
+  const { runFrameLoop, runInitialize, loadUserScript } = useNinjaWorker();
+
+  useEffect(() => {
+    if (status === ENinjaStatus.Pause) {
+      return;
+    }
+    const startScript = async () => {
+      // 1. ユーザースクリプトの読み込み
+      await loadUserScript(sms);
+      // 2. ユーザースクリプトの初期化
+      sms.forEach((sm) => {
+        runInitialize(sm.id);
+      });
+    };
+    startScript();
+  }, [status, sms]);
 
   // フレームの更新
   useNFrame((state, delta) => {
@@ -393,11 +471,9 @@ const SystemFrame = () => {
     }
 
     // 3. ユーザースクリプトの更新
-    if (scriptWorker) {
-      sms.forEach((sm) => {
-        scriptWorker.runFrameLoop(sm.id, state, delta, input);
-      });
-    }
+    sms.forEach((sm) => {
+      runFrameLoop(sm.id, state, delta, input);
+    });
   });
 
   return <></>;
@@ -412,7 +488,7 @@ const SystemSound = () => {
         top: "1rem",
         right: "1rem",
         padding: ".5rem 1.5rem",
-        fontSize: "2rem",
+        fontSize: "1.5rem",
         color: "#fff",
         background: "rgba(0,0,0,0.5)",
         borderRadius: "5px",

@@ -48,7 +48,7 @@ export const ConvScale = (scale: any): Vector3 => {
   if (scale instanceof Vector3) return scale;
   if (Array.isArray(scale)) return new Vector3(scale[0], scale[1], scale[2]);
   if (typeof scale === "object") return new Vector3(scale.x, scale.y, scale.z);
-  return new Vector3();
+  return new Vector3(1, 1, 1);
 };
 export const Scale2Obj = (scale: any): any => {
   if (scale instanceof Vector3) return { x: scale.x, y: scale.y, z: scale.z };

@@ -214,15 +214,15 @@ export const NinjaWorkerProvider = ({
       const { name } = data as { name: string };
       const om = engine.getOMByName(name);
       if (om) {
-        if (!om.args.position) {
-          om.args.position = { x: 0, y: 0, z: 0 };
-        }
-        if (!om.args.rotation) {
-          om.args.rotation = new Euler(0, 0, 0);
-        }
-        if (!om.args.scale) {
-          om.args.scale = { x: 1, y: 1, z: 1 };
-        }
+        // if (!om.args.position) {
+        //   om.args.position = { x: 0, y: 0, z: 0 };
+        // }
+        // if (!om.args.rotation) {
+        //   om.args.rotation = new Euler(0, 0, 0);
+        // }
+        // if (!om.args.scale) {
+        //   om.args.scale = { x: 1, y: 1, z: 1 };
+        // }
         worker.current.postMessage({
           type: "response",
           data: OMArgs2Obj(om),
@@ -270,7 +270,7 @@ export const NinjaWorkerProvider = ({
       };
       const om = engine.getOMById(id);
       if (om) {
-        // engine.setArg(id, "rotation", ConvRot(rotation));
+        engine.setArg(id, "rotation", ConvRot(rotation));
         worker.current.postMessage({
           type: "response",
           data: null,
@@ -292,14 +292,14 @@ export const NinjaWorkerProvider = ({
       };
       const om = engine.getOMById(id);
       if (om) {
-        // engine.setArg(id, "scale", ConvScale(scale));
+        engine.setArg(id, "scale", ConvScale(scale));
         worker.current.postMessage({
           type: "response",
           data: null,
           messageId: messageId,
         });
       } else {
-        console.error(`Name: ${name}, OM not found.`);
+        console.error(`Id: ${id}, OM not found.`);
         worker.current.postMessage({
           type: "response",
           data: null,

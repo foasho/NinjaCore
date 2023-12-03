@@ -250,10 +250,19 @@ const ThreeObject = ({ om }: { om: IObjectManagement }) => {
             ref.current.position.copy(om.args.position);
           }
           if (om.args.rotation) {
-            ref.current.rotation.copy(om.args.rotation);
+            ref.current.rotation.set(
+              om.args.rotation.x,
+              om.args.rotation.y,
+              om.args.rotation.z
+            );
           }
           if (om.args.scale) {
-            ref.current.scale.copy(om.args.scale);
+            // console.log(om.args.scale);
+            ref.current.scale.set(
+              om.args.scale.x,
+              om.args.scale.y,
+              om.args.scale.z
+            )
           }
           if (om.args.materialData) {
             if (om.args.materialData.type !== "shader") {

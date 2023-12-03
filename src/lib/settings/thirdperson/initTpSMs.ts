@@ -13,9 +13,9 @@ export const initTpSMs = (): IScriptManagement[] => {
       
       async function frameLoop(state, delta, input) {
         const om = await getOMByName({name: "movebox"});
-        const { x, y, z } = om.args.position;
-        if (x + 0.01 < 10){
-          await setPosition({id: om.id, position: [x+0.01, y, z]});
+        const pos = om.args.position? om.args.position : {x: 0, y: 0, z: 0};
+        if (pos.x + 0.01 < 10){
+          await setPosition({id: om.id, position: [pos.x+0.01, pos.y, pos.z]});
         }
       }    
       `,
@@ -30,10 +30,10 @@ export const initTpSMs = (): IScriptManagement[] => {
       
       async function frameLoop(state, delta, input) {
         const om = await getOMByName({name: "movebox"});
-        const { x, y, z } = om.args.rotation;
+        const rot = om.args.rotation? om.args.rotation : {x: 0, y: 0, z: 0};
         const time = state.elapsedTime;
         // Y軸を時間で回転
-        await setRotation({id: om.id, rotation: [x, Math.sin(time)* 2 * Math.PI, z]});
+        await setRotation({id: om.id, rotation: [rot.x, Math.sin(time)* 2 * Math.PI, rot.z]});
       }
       `,
     },
@@ -46,12 +46,11 @@ export const initTpSMs = (): IScriptManagement[] => {
       }
       
       async function frameLoop(state, delta, input) {
-          const om = await getOMByName({name: "movebox"});
-        const { x, y, z } = om.args.scale;
+        const om = await getOMByName({name: "movebox"});
         const time = state.elapsedTime;
         // 0.5 ~ 1.5 倍の拡縮
         const s = 0.5 * Math.sin(time)
-        await setScale({id: om.id, rotation: [1 + s, 1 + s, 1 + s]});
+        await setScale({id: om.id, scale: [1 + s, 1 + s, 1 + s]});
       }
       `,
     },

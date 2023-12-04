@@ -29,6 +29,7 @@ interface NWorkerProviderProps {
 }
 
 export interface NWorkerProp {
+  worker: React.MutableRefObject<Worker | null>;
   loadUserScript: (sms: IScriptManagement[]) => Promise<void>;
   runInitialize: (id: string) => void;
   runFrameLoop: (
@@ -39,6 +40,7 @@ export interface NWorkerProp {
   ) => void;
 }
 export const NinjaWorkerContext = createContext<NWorkerProp>({
+  worker: { current: null },
   loadUserScript: async () => {},
   runInitialize: () => {},
   runFrameLoop: () => {},
@@ -92,6 +94,36 @@ export const NinjaWorkerProvider = ({
       // Avairable UserData
       let UserData = {};
 
+      // ClickEventListener
+      const clickEventListeners = {};
+      const useClickEvent = (id, callback) => {
+        if (clickEventListeners[id]) {
+          clickEventListeners[id].push(callback);
+        } else {
+          clickEventListeners[id] = [callback];
+        }
+      };
+
+      // DoubleClickEventListener
+      const dblclickEventListeners = {};
+      const useDblclickEvent = (id, callback) => {
+        if (dblclickEventListeners[id]) {
+          dblclickEventListeners[id].push(callback);
+        } else {
+          dblclickEventListeners[id] = [callback];
+        }
+      };
+
+      // HoverEventListener
+      const hoverEventListeners = {};
+      const useHoverEvent = (id, callback) => {
+        if (hoverEventListeners[id]) {
+          hoverEventListeners[id].push(callback);
+        } else {
+          hoverEventListeners[id] = [callback];
+        }
+      };
+
       self.addEventListener("message", (event) => {
         // self.postMessage({ log: "Worker received message: " + event.data });
         const { type, id, state, delta, input, data, messageId } = event.data;
@@ -106,6 +138,30 @@ export const NinjaWorkerProvider = ({
             self[id].frameLoop(state, delta, input);
           } else {
             console.error('FrameLoop function for id "" not found.');
+          }
+        }
+        else if (type === "click") {
+          const callbacks = clickEventListeners[id];
+          if (callbacks) {
+            callbacks.forEach((callback) => {
+              callback();
+            });
+          }
+        }
+        else if (type === "dblclick") {
+          const callbacks = dblclickEventListeners[id];
+          if (callbacks) {
+            callbacks.forEach((callback) => {
+              callback();
+            });
+          }
+        }
+        else if (type === "hover") {
+          const callbacks = hoverEventListeners[id];
+          if (callbacks) {
+            callbacks.forEach((callback) => {
+              callback();
+            });
           }
         }
         else {
@@ -214,15 +270,6 @@ export const NinjaWorkerProvider = ({
       const { name } = data as { name: string };
       const om = engine.getOMByName(name);
       if (om) {
-        // if (!om.args.position) {
-        //   om.args.position = { x: 0, y: 0, z: 0 };
-        // }
-        // if (!om.args.rotation) {
-        //   om.args.rotation = new Euler(0, 0, 0);
-        // }
-        // if (!om.args.scale) {
-        //   om.args.scale = { x: 1, y: 1, z: 1 };
-        // }
         worker.current.postMessage({
           type: "response",
           data: OMArgs2Obj(om),
@@ -308,14 +355,14 @@ export const NinjaWorkerProvider = ({
       }
     } else if (type == "setArg") {
       // 特定のOMの属性を変更する
-      const { id, arg, value } = data as {
+      const { id, key, value } = data as {
         id: string;
-        arg: string;
+        key: string;
         value: any;
       };
       const om = engine.getOMById(id);
       if (om) {
-        engine.setArg(id, arg, value);
+        engine.setArg(id, key, value);
         worker.current.postMessage({
           type: "response",
           data: null,
@@ -349,6 +396,7 @@ export const NinjaWorkerProvider = ({
   return (
     <NinjaWorkerContext.Provider
       value={{
+        worker,
         loadUserScript,
         runInitialize,
         runFrameLoop,

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { IObjectManagement, MoveableColliderTunnel } from "../utils";
 import { Color, Object3D, Group, Mesh } from "three";
 import { GLTF } from "three-stdlib";
@@ -14,6 +14,7 @@ import {
 import { useNinjaEngine } from "../hooks";
 import { ColliderTunnel, NonColliderTunnel } from "../utils";
 import { DisntanceVisible } from "../helpers";
+import { useNinjaWorker } from "../hooks/useNinjaWorker";
 
 export const OMObjects = () => {
   const { oms } = useNinjaEngine();
@@ -36,7 +37,7 @@ export const OMObject = ({ om }: { om: IObjectManagement }) => {
       {/** 地形データ */}
       {om.type === "terrain" && (
         <>
-          {(om.physics && !om.moveable) ?(
+          {om.physics && !om.moveable ? (
             <ColliderTunnel.In>
               <Terrain om={om} />
             </ColliderTunnel.In>
@@ -52,7 +53,7 @@ export const OMObject = ({ om }: { om: IObjectManagement }) => {
       {/** Threeメッシュ */}
       {om.type === "three" && (
         <>
-          {(om.physics && !om.moveable) ? (
+          {om.physics && !om.moveable ? (
             <ColliderTunnel.In>
               <ThreeObject om={om} />
             </ColliderTunnel.In>
@@ -202,8 +203,10 @@ const Light = ({ om }: { om: IObjectManagement }) => {
 const ThreeObject = ({ om }: { om: IObjectManagement }) => {
   const ref = React.useRef<any>();
   const { onOMIdChanged, offOMIdChanged } = useNinjaEngine();
+  const { worker } = useNinjaWorker();
   let geometry;
   let material;
+  const [materialData, setMaterialData] = React.useState(om.args.materialData);
   if (om.args.type == "plane") {
     geometry = <planeGeometry />;
   } else if (om.args.type == "sphere") {
@@ -216,23 +219,24 @@ const ThreeObject = ({ om }: { om: IObjectManagement }) => {
     geometry = <capsuleGeometry />;
   }
 
-  if (om.args.materialData) {
+  if (materialData) {
     const color =
-      om.args.materialData.type != "shader"
-        ? new Color(om.args.materialData.value)
+      materialData.type != "shader"
+        ? new Color(materialData.value)
         : new Color(0xffffff);
-    if (om.args.materialData.type == "standard") {
+    if (materialData.type == "standard") {
       material = <meshStandardMaterial color={color} />;
-    } else if (om.args.materialData.type == "phong") {
+    } else if (materialData.type == "phong") {
       material = <meshPhongMaterial color={color} />;
-    } else if (om.args.materialData.type == "toon") {
+    } else if (materialData.type == "toon") {
       material = <meshToonMaterial color={color} />;
-    } else if (om.args.materialData.type == "shader") {
+    } else if (materialData.type == "shader") {
       material = <shaderMaterial />;
-    } else if (om.args.materialData.type == "reflection") {
+    } else if (materialData.type == "reflection") {
       material = <MeshReflectorMaterial mirror={0} color={color} />;
     }
   }
+
   let castShadow = true;
   if (om.args.castShadow != undefined) {
     castShadow = om.args.castShadow;
@@ -257,17 +261,14 @@ const ThreeObject = ({ om }: { om: IObjectManagement }) => {
             );
           }
           if (om.args.scale) {
-            // console.log(om.args.scale);
             ref.current.scale.set(
               om.args.scale.x,
               om.args.scale.y,
               om.args.scale.z
-            )
+            );
           }
-          if (om.args.materialData) {
-            if (om.args.materialData.type !== "shader") {
-              // @ts-ignore
-            }
+          if (om.args.materialData !== materialData) {
+            setMaterialData(om.args.materialData);
           }
         }
       }
@@ -288,6 +289,16 @@ const ThreeObject = ({ om }: { om: IObjectManagement }) => {
             renderOrder={0}
             castShadow={castShadow}
             receiveShadow={receiveShadow}
+            onClick={() => {
+              if (worker.current) {
+                worker.current.postMessage({ id: om.id, type: "click" });
+              }
+            }}
+            onDoubleClick={() => {
+              if (worker.current) {
+                worker.current.postMessage({ id: om.id, type: "dblclick" });
+              }
+            }}
           >
             {geometry}
             {material}

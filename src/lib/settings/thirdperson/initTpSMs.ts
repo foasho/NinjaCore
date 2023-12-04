@@ -54,5 +54,39 @@ export const initTpSMs = (): IScriptManagement[] => {
       }
       `,
     },
+    {
+      id: MathUtils.generateUUID(),
+      name: "nonname-script" + MathUtils.generateUUID().substring(0, 6),
+      type: "script",
+      script: `
+      const onMyClick = (id) => {
+        setArg({ id: id, key: "materialData", value: { type: "standard", "value": "#F1D353" } })
+      }
+      async function initialize() {
+        const om = await getOMByName({name: "movebox"});
+        useClickEvent(om.id, () => onMyClick(om.id))
+      }
+      
+      async function frameLoop(state, delta, input) {
+      }
+      `,
+    },
+    {
+      id: MathUtils.generateUUID(),
+      name: "nonname-script" + MathUtils.generateUUID().substring(0, 6),
+      type: "script",
+      script: `
+        const onMyDblclick = (id) => {
+          setArg({ id: id, key: "materialData", value: { type: "reflection", "value": "#43D9D9" } })
+        }
+        async function initialize() {
+          const om = await getOMByName({name: "movebox"});
+          useDblclickEvent(om.id, () => onMyDblclick(om.id))
+        }
+        
+        async function frameLoop(state, delta, input) {
+        }
+      `,
+    },
   ];
 };

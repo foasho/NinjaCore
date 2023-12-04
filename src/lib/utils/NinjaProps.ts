@@ -70,15 +70,13 @@ export interface IObjectManagement {
   physics: boolean;
   moveable?: boolean; //移動可能かどうか
   phyType: "box" | "sphere" | "capsule";
-  animations?: AnimationClip[];
-  mixer?: AnimationMixer;
 }
 
 /**
  * 操作系UI上に表示されるもの
  */
 export interface IUIManagement {
-  type: "controller" | "radio" | "icon" | "vrbtn" | "walletbtn" | "rtc";
+  type: "controller" | "button" | "label" | "select" | "textinput";
   id: string;
   name?: string;
   position: {

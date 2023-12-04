@@ -298,8 +298,11 @@ export const NinjaGL = ({
   const setArg = (id: string, key: string, arg: any) => {
     const om = oms.find((om) => om.id === id);
     if (om) {
-      om.args[key] = arg;
-      notifyOMIdChanged(id);
+      // argsが異なれば、更新する
+      if (om.args[key] !== arg) {
+        om.args[key] = arg;
+        notifyOMIdChanged(id);
+      }
     }
   };
   const addOM = (om: IObjectManagement, multiShare = true) => {

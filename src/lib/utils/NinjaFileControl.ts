@@ -100,13 +100,7 @@ export const saveNJCBlob = async (njcFile: NJCFile): Promise<Blob> => {
       if (om.args.url) {
         let clone;
         const scene = await loadGLTFFromData(om.args.url);
-        if (om.animations && om.animations.length > 0) {
-          clone = SkeletonUtils.clone(scene);
-          clone.animations = om.animations? om.animations: [];
-        }
-        else {
-          clone = scene.clone();
-        }
+        clone = SkeletonUtils.clone(scene);
         const glbData = await exportGLTF(clone);
         objectsDir!.file(`${om.id}.glb`, glbData);
         om.filePath = `objects/${om.id}.glb`;

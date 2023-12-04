@@ -1,5 +1,4 @@
-
-import { add } from "./lib/utils/add"
+import { add } from "../../lib/utils/add"
 
 it('add', () => {
   expect(add()).toBe(0)

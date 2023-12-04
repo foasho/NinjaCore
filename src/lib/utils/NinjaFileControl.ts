@@ -99,7 +99,8 @@ export const saveNJCBlob = async (njcFile: NJCFile): Promise<Blob> => {
     for (const om of njcFile.oms) {
       if (om.args.url) {
         let clone;
-        const scene = await loadGLTFFromData(om.args.url);
+        // const scene = await loadGLTFFromData(om.args.url);
+        const scene = await loadGLTF(om.args.url);
         clone = SkeletonUtils.clone(scene);
         const glbData = await exportGLTF(clone);
         objectsDir!.file(`${om.id}.glb`, glbData);
@@ -278,6 +279,25 @@ async function loadGLTFFromData(
     );
   });
 }
+
+export const loadGLTF = async (url: string): Promise<Object3D> => {
+  return new Promise<Object3D>((resolve, reject) => {
+    gltfLoader.load(
+      url,
+      (gltf) => {
+        const scene = gltf.scene || gltf.scenes[0] as Object3D;
+        scene.animations = gltf.animations; // アニメーションをセット
+        resolve(scene);
+      },
+      (progress) => {
+        // console.log("progressing...");
+      },
+      (error) => {
+        reject(error);
+      }
+    );
+  });
+};
 
 export const exportGLTF = async (scene: Scene|Object3D): Promise<ArrayBuffer> => {
   return new Promise<ArrayBuffer>((resolve, reject) => {

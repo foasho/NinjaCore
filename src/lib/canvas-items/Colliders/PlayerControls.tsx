@@ -3,7 +3,7 @@ import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import { OrbitControls, RoundedBox, useAnimations } from "@react-three/drei";
 import { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import { StaticGeometryGenerator, MeshBVH } from "three-mesh-bvh";
+import { StaticGeometryGenerator, MeshBVH, ExtendedTriangle } from "three-mesh-bvh";
 import {
   Mesh,
   Vector3,
@@ -19,7 +19,13 @@ import {
   AnimationClip,
 } from "three";
 import { EDeviceType, useMultiInputControl, useNinjaEngine } from "../../hooks";
-import { IInputMovement } from "../../utils";
+import {
+  IInputMovement,
+  CapsuleInfoProps,
+  checkBoxCapsuleCollision,
+  checkSphereCapsuleIntersect,
+  getInitCollision,
+} from "../../utils";
 
 /**
  * プレイヤー操作
@@ -50,20 +56,25 @@ export const PlayerControl = ({
   touchDomId = null,
   device,
 }: IPlayerControlProps) => {
-  const { boundsTree } = useNinjaEngine();
+  const {
+    boundsTree,
+    bvhCollider: collider,
+    moveGrp,
+    getOMById,
+  } = useNinjaEngine();
   const { input } = useMultiInputControl();
   const orbitTouchMove = useRef<{ flag: boolean; angleAxis: [number, number] }>(
     { flag: false, angleAxis: [0, 0] }
   );
   const isInit = useRef(true);
   const player = useRef<Mesh>(null);
-  const capsuleInfo = useRef<{ radius: number; segment: Line3 }>();
+  const capsuleInfo = useRef<CapsuleInfoProps>();
   capsuleInfo.current = {
     radius: 0.5,
     segment: new Line3(new Vector3(), new Vector3(0, -1.0, 0.0)),
   };
   const [grpMeshesNum, setGrpMeshesNum] = useState<number>(0);
-  const collider: MutableRefObject<Mesh | null> = useRef<Mesh>(null);
+  // const collider: MutableRefObject<Mesh | null> = useRef<Mesh>(null);
   const controls = useRef<OrbitControlsImpl>(null);
   // --- ジャンプ/物理判定に関連する変数 ---
   const playerIsOnGround = useRef(false);
@@ -348,12 +359,12 @@ export const PlayerControl = ({
         tempBox.max.addScalar(capsuleInfo.current.radius);
 
         // 衝突を検出
-        // @ts-ignore
-        collider.current!.geometry!.boundsTree!.shapecast({
+        if (!collider.current.geometry.boundsTree) return;
+        collider.current.geometry.boundsTree.shapecast({
           intersectsBounds: (_box: Box3) => {
             return _box.intersectsBox(tempBox);
           },
-          intersectsTriangle: (tri: any) => {
+          intersectsTriangle: (tri: ExtendedTriangle) => {
             const triPoint = tempVector;
             const capsulePoint = tempVector2;
             const distance = tri.closestPointToSegment(
@@ -371,6 +382,31 @@ export const PlayerControl = ({
         });
       }
 
+      // moveGrpのケースも考えて衝突判定をする
+      let collided = getInitCollision();
+      if (moveGrp.current && capsuleInfo.current) {
+        // First Intersect Only
+        for (const object of moveGrp.current.children) {
+          const om = getOMById(object.userData.omId);
+          if (!om) continue;
+          if (om.phyType == "box") {
+            collided = checkBoxCapsuleCollision(
+              object as Mesh,
+              player.current,
+            );
+            if (collided.intersect) {
+              const scale = om.args.scale || new Vector3(1, 1, 1);
+              if (collided.distance < capsuleInfo.current!.radius * scale.x) {
+                const depth = capsuleInfo.current!.radius - collided.distance;
+                const moveDirection = collided.direction.clone().multiplyScalar(depth * scale.x);
+                tempSegment.start.add(moveDirection);
+                tempSegment.end.add(moveDirection);
+              }
+              break;
+            }
+          } 
+        }
+      }
       const newPosition = tempVector;
       newPosition
         .copy(tempSegment.start)
@@ -395,7 +431,7 @@ export const PlayerControl = ({
         );
       }
       if (!playerIsOnGround.current) {
-        // 
+        //
         deltaVector.normalize();
         playerVelocity.current.addScaledVector(
           deltaVector,
@@ -543,15 +579,12 @@ export const PlayerControl = ({
         }
       />
       {/** 以下は物理判定Playerの可視化用：強制的に非表示に設定 */}
-      <RoundedBox
+      <mesh
         ref={player}
         visible={false}
-        args={[1.0, height, 1.0]}
-        radius={0.5}
-        smoothness={2}
       >
-        <meshBasicMaterial color={0x00ff00} wireframe />
-      </RoundedBox>
+        <capsuleGeometry args={[capsuleInfo.current.radius, height, 1, 8]} />
+      </mesh>
       {mergeGeometry && (
         <mesh ref={collider} visible={false} name="collider">
           <primitive object={mergeGeometry} />

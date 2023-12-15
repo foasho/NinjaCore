@@ -21,23 +21,21 @@ export const StaticObjects = () => {
 
   return (
     <Suspense fallback={null}>
-      <>
-        {staticObjects.map((om, index) => {
-          return (
-            <>
-              {om.physics ? (
-                <ColliderTunnel.In>
-                  <StaticObject om={om} key={index} />
-                </ColliderTunnel.In>
-              ) : (
-                <NonColliderTunnel.In>
-                  <StaticObject om={om} key={index} />
-                </NonColliderTunnel.In>
-              )}
-            </>
-          );
-        })}
-      </>
+      {staticObjects.map((om, index) => {
+        return (
+          <>
+            {om.physics ? (
+              <ColliderTunnel.In key={om.id}>
+                <StaticObject om={om} key={index} />
+              </ColliderTunnel.In>
+            ) : (
+              <NonColliderTunnel.In key={om.id}>
+                <StaticObject om={om} key={index} />
+              </NonColliderTunnel.In>
+            )}
+          </>
+        );
+      })}
     </Suspense>
   );
 };

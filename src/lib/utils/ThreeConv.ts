@@ -19,7 +19,6 @@ export const Pos2Obj = (pos: any): any => {
   return { x: pos.x, y: pos.y, z: pos.z };
 };
 
-
 /**
  * { x, y, z }もしくは
  * [x, y, z]もしくは
@@ -60,8 +59,11 @@ export const Scale2Obj = (scale: any): any => {
  * OMをargsすべてクラスなしのObjectに変換する
  */
 export const OMArgs2Obj = (om: IObjectManagement): IObjectManagement => {
-  if (om.args.position) om.args.position = Pos2Obj(om.args.position);
-  if (om.args.rotation) om.args.rotation = Rot2Obj(om.args.rotation);
-  if (om.args.scale) om.args.scale = Scale2Obj(om.args.scale);
-  return om;
-}
+  const data = { ...om };
+  const args = { ...data.args };
+  if (args.position) args.position = Pos2Obj(args.position);
+  if (args.velocity) args.velocity = Pos2Obj(args.velocity);
+  if (args.rotation) args.rotation = Rot2Obj(args.rotation);
+  if (args.scale) args.scale = Scale2Obj(args.scale);
+  return data;
+};

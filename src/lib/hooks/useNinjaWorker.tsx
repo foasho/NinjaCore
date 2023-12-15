@@ -272,7 +272,7 @@ export const NinjaWorkerProvider = ({
       if (om) {
         worker.current.postMessage({
           type: "response",
-          data: OMArgs2Obj(om),
+          data: OMArgs2Obj({...om}),
           messageId: messageId,
         });
       } else {

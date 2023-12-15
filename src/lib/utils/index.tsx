@@ -1,4 +1,3 @@
-
 export {
   NJCFile,
   saveNJCFile,
@@ -12,7 +11,15 @@ export {
   gltfLoader,
 } from "./NinjaFileControl";
 export * from "./NinjaProps";
-export { ConvPos, ConvRot, ConvScale, Pos2Obj, Rot2Obj, Scale2Obj, OMArgs2Obj } from "./ThreeConv";
+export {
+  ConvPos,
+  ConvRot,
+  ConvScale,
+  Pos2Obj,
+  Rot2Obj,
+  Scale2Obj,
+  OMArgs2Obj,
+} from "./ThreeConv";
 export {
   InitMobileConfipParams,
   InitTabletConfipParams,
@@ -20,4 +27,14 @@ export {
   InitScriptManagement,
   InitOM,
 } from "./NinjaInit";
-export { NonColliderTunnel, ColliderTunnel, MoveableColliderTunnel } from "./tunnel";
+export {
+  checkBoxCapsuleCollision,
+  checkSphereCapsuleIntersect,
+  getInitCollision,
+} from "./Intersects";
+export type { CapsuleInfoProps } from "./Intersects";
+export {
+  NonColliderTunnel,
+  ColliderTunnel,
+  MoveableColliderTunnel,
+} from "./tunnel";

@@ -14,7 +14,7 @@ export const OMAudios = () => {
     return audios ? audios : [];
   }, [oms]);
   return (
-    <Suspense key="audio-oms">
+    <>
       {audios.map((om) => (
         <>
           {om.args.url && (
@@ -28,7 +28,7 @@ export const OMAudios = () => {
           )}
         </>
       ))}
-    </Suspense>
+    </>
   );
 };
 

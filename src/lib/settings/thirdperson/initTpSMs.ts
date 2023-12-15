@@ -20,23 +20,23 @@ export const initTpSMs = (): IScriptManagement[] => {
       }    
       `,
     },
-    {
-      id: MathUtils.generateUUID(),
-      name: "nonname-script" + MathUtils.generateUUID().substring(0, 6),
-      type: "script",
-      script: `
-      async function initialize() {
-      }
+    // {
+    //   id: MathUtils.generateUUID(),
+    //   name: "nonname-script" + MathUtils.generateUUID().substring(0, 6),
+    //   type: "script",
+    //   script: `
+    //   async function initialize() {
+    //   }
       
-      async function frameLoop(state, delta, input) {
-        const om = await getOMByName({name: "movebox"});
-        const rot = om.args.rotation? om.args.rotation : {x: 0, y: 0, z: 0};
-        const time = state.elapsedTime;
-        // Y軸を時間で回転
-        await setRotation({id: om.id, rotation: [rot.x, Math.sin(time)* 2 * Math.PI, rot.z]});
-      }
-      `,
-    },
+    //   async function frameLoop(state, delta, input) {
+    //     const om = await getOMByName({name: "movebox"});
+    //     const rot = om.args.rotation? om.args.rotation : {x: 0, y: 0, z: 0};
+    //     const time = state.elapsedTime;
+    //     // Y軸を時間で回転
+    //     await setRotation({id: om.id, rotation: [rot.x, Math.sin(time)* 2 * Math.PI, rot.z]});
+    //   }
+    //   `,
+    // },
     {
       id: MathUtils.generateUUID(),
       name: "nonname-script" + MathUtils.generateUUID().substring(0, 6),

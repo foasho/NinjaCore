@@ -27,7 +27,7 @@ export const initTpOMs = (): IObjectManagement[] => {
       type: "three",
       args: {
         type: "box",
-        position: new Vector3(-5, 0.5, 5),
+        position: new Vector3(0, 0.5, 3),
         scale: new Vector3(1, 1, 1),
         materialData: {
           type: "standard",

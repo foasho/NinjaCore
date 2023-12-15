@@ -11,9 +11,21 @@ import {
   NJCFile,
   loadNJCFileFromURL,
   MoveableColliderTunnel,
+  ConvPos,
 } from "../utils";
 import { MdMusicNote, MdMusicOff } from "react-icons/md";
-import { Box3, Group, Mesh, Object3D, Sphere, Vector3 } from "three";
+import {
+  Box3,
+  Group,
+  Line3,
+  Matrix4,
+  Mesh,
+  MeshBasicMaterial,
+  Object3D,
+  RingGeometry,
+  Sphere,
+  Vector3,
+} from "three";
 import { Canvas as NCanvas, useFrame as useNFrame } from "@react-three/fiber";
 import { useInputControl } from "./useInputControl";
 import { Loading3D, Loading2D } from "../loaders";
@@ -31,6 +43,7 @@ import { NinjaWorkerProvider, useNinjaWorker } from "./useNinjaWorker";
 import { MemoSplashScreen } from "../commons";
 import { Moveable } from "../canvas-items/Moveables";
 import { MeshBVH } from "three-mesh-bvh";
+import { Capsule } from "three-stdlib";
 
 export enum EDeviceType {
   Unknown = 0,
@@ -44,6 +57,34 @@ export enum ENinjaStatus {
   Pause = 1,
 }
 
+// function onCollide( object1: Object3D, object2: Object3D, point: Vector3, normal: any, velocity: number, gravity: number, offset = 0 ) {
+
+// 	if ( velocity < Math.max( Math.abs( 0.04 * gravity ), 5 ) ) {
+// 		return;
+// 	}
+
+// 	// Create an animation when objects collide
+// 	const effectScale = Math.max(
+// 		object2 ?
+// 			Math.max( object1.collider.radius, object2.collider.radius ) :
+// 			object1.collider.radius,
+// 		0.4
+// 	) * 2.0;
+// 	const plane = new Mesh(
+// 		new RingGeometry( 0, 1, 30 ),
+// 		new MeshBasicMaterial( { side: 2, transparent: true, depthWrite: false } )
+// 	);
+// 	plane.lifetime = 0;
+// 	plane.maxLifetime = 0.4;
+// 	plane.maxScale = effectScale * Math.max( Math.sin( Math.min( velocity / 200, 1 ) * Math.PI / 2 ), 0.35 );
+
+// 	plane.position.copy( point ).addScaledVector( normal, offset );
+// 	plane.quaternion.setFromUnitVectors( forwardVector, normal );
+// 	// scene.add( plane );
+// 	// hits.push( plane );
+
+// }
+
 type NinjaEngineProp = {
   status: ENinjaStatus;
   isPhysics: boolean;
@@ -54,6 +95,7 @@ type NinjaEngineProp = {
   isSound: boolean;
   setIsSound: (isSound: boolean) => void;
   bvhGrp: React.MutableRefObject<Group | null>;
+  bvhCollider: React.MutableRefObject<Mesh | null>;
   moveGrp: React.MutableRefObject<Group | null>;
   boundsTree: React.MutableRefObject<MeshBVH | null>;
   updateCollisions: (daltaTime: number) => void;
@@ -83,6 +125,7 @@ export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
   isSound: false,
   setIsSound: (isSound: boolean) => {},
   bvhGrp: React.createRef<Group>(),
+  bvhCollider: React.createRef<Mesh>(),
   moveGrp: React.createRef<Group>(),
   boundsTree: React.createRef<Object3D>(),
   updateCollisions: (daltaTime: number) => {},
@@ -186,6 +229,7 @@ export const NinjaGL = ({
   const curMessage = React.useRef<string>("");
   // 物理世界
   const bvhGrp = React.useRef<Group>(null); // BVH用コライダー
+  const bvhCollider = React.useRef<Mesh>(null); // BVH用コライダー
   const moveGrp = React.useRef<Group>(null); // 移動用コライダー
   const boundsTree = React.useRef<MeshBVH>(null); // BVH-boundsTree
   // 汎用入力
@@ -300,7 +344,11 @@ export const NinjaGL = ({
     if (om) {
       // argsが異なれば、更新する
       if (om.args[key] !== arg) {
-        om.args[key] = arg;
+        if (["position", "scale", "velocity"].includes(key)) {
+          om.args[key] = ConvPos(arg);
+        } else {
+          om.args[key] = arg;
+        }
         notifyOMIdChanged(id);
       }
     }
@@ -367,9 +415,19 @@ export const NinjaGL = ({
   const deadBoxY = -80;
   const tempBox = new Box3();
   const tempSphere = new Sphere();
-  const updateCollisions = (daltaTime: number) => {
-    if (!bvhGrp.current) return;
+  const tempCapsule = new Capsule();
+  const tempSegment = new Line3();
+  const tempVec = new Vector3();
+  const tempVector = new Vector3();
+  const tempVector2 = new Vector3();
+  const tempMat = new Matrix4();
+  const deltaVec = new Vector3();
+  const colliders = [];
+  const updateCollisions = (deltaTime: number) => {
+    if (!bvhCollider.current) return;
     if (!moveGrp.current) return;
+    if (!boundsTree.current) return;
+    // 衝突判定
     for (const object of moveGrp.current.children) {
       // TODO: ここで、移動可能なオブジェクトの衝突判定を行う
       const om = getOMById(object.userData.omId);
@@ -379,22 +437,167 @@ export const NinjaGL = ({
       if (object.position.y < deadBoxY) {
         continue;
       }
+      if (!om.args.velocity) {
+        om.args.velocity = new Vector3(0, 0, 0);
+      }
+      let radius = 0.5;
       if (om.phyType === "box") {
         const position = object.position.clone();
-        const min = position.clone().sub(object.scale.clone().multiplyScalar(0.5));
-        const max = position.clone().add(object.scale.clone().multiplyScalar(0.5));
+        const min = position
+          .clone()
+          .sub(object.scale.clone().multiplyScalar(0.5));
+        const max = position
+          .clone()
+          .add(object.scale.clone().multiplyScalar(0.5));
         collider = new Box3(min, max);
         tempBox.copy(collider);
+
+        om.args.velocity.y += gravity * deltaTime;
+        collider.min.addScaledVector(om.args.velocity, deltaTime);
       } else if (om.phyType === "sphere") {
         collider = new Sphere(
           om.args.position || new Vector3(0, 0, 0),
           om.args.radius || 1
         );
         tempSphere.copy(collider);
+        om.args.velocity.y += gravity * deltaTime;
+        collider.center.addScaledVector(om.args.velocity, deltaTime);
+      } else if (om.phyType === "capsule") {
+        tempBox.makeEmpty();
+        tempMat.copy(bvhCollider.current.matrixWorld).invert();
+        const sizeBox = new Box3().setFromObject(object);
+        const height = sizeBox.max.y - sizeBox.min.y;
+        radius = Math.max(sizeBox.max.x, sizeBox.max.z);
+        const segment = new Line3(
+          new Vector3(),
+          new Vector3(0, -height / 2, 0.0)
+        );
+        tempSegment.copy(segment);
+
+        // ローカル空間内のユーザーの位置を取得
+        tempSegment.start
+          .applyMatrix4(object.matrixWorld)
+          .applyMatrix4(tempMat);
+        tempSegment.end.applyMatrix4(object.matrixWorld).applyMatrix4(tempMat);
+        // 軸が整列した境界ボックスを取得
+        tempBox.expandByPoint(tempSegment.start);
+        tempBox.expandByPoint(tempSegment.end);
+
+        tempBox.min.addScalar(radius);
+        tempBox.max.addScalar(radius);
       }
-      if (!collider) return;
+      colliders.push(collider);
       // BVH-boundsTreeとの衝突判定
-    };
+      // TODO: Remove Deadbox
+      // if ( sphereCollider.center.y < - 80 ) {}
+
+      let collided = false;
+      boundsTree.current.shapecast({
+        intersectsBounds: (box) => {
+          if (om.phyType === "box") {
+            return box.intersectsBox(tempBox);
+          } else if (om.phyType === "sphere") {
+            return box.intersectsSphere(tempSphere);
+          } else if (om.phyType === "capsule") {
+            return box.intersectsBox(tempBox);
+          }
+          return false;
+        },
+        intersectsTriangle: (tri) => {
+          if (om.phyType === "sphere") {
+            // get delta between closest point and center
+            tri.closestPointToPoint(tempSphere.center, deltaVec);
+            deltaVec.sub(tempSphere.center);
+            const distance = deltaVec.length();
+            if (distance < tempSphere.radius) {
+              // move the sphere position to be outside the triangle
+              const radius = tempSphere.radius;
+              const depth = distance - radius;
+              deltaVec.multiplyScalar(1 / distance);
+              tempSphere.center.addScaledVector(deltaVec, depth);
+
+              collided = true;
+            }
+          } else if (om.phyType === "capsule") {
+            const triPoint = tempVector;
+            const capsulePoint = tempVector2;
+            const distance = tri.closestPointToSegment(
+              tempSegment,
+              triPoint,
+              capsulePoint
+            );
+            if (distance < radius) {
+              const depth = radius - distance;
+              const direction = capsulePoint.sub(triPoint).normalize();
+              tempSegment.start.addScaledVector(direction, depth);
+              tempSegment.end.addScaledVector(direction, depth);
+
+              collided = true;
+            }
+          } else if (om.phyType === "box") {
+            const triPoint = tempVector;
+            const capsulePoint = tempVector2;
+            const distance = tri.closestPointToSegment(
+              tempSegment,
+              triPoint,
+              capsulePoint
+            );
+            if (distance < radius) {
+              const depth = radius - distance;
+              const direction = capsulePoint.sub(triPoint).normalize();
+              tempSegment.start.addScaledVector(direction, depth);
+              tempSegment.end.addScaledVector(direction, depth);
+
+              collided = true;
+            }
+          }
+        },
+        boundsTraverseOrder: (box) => {
+          if (om.phyType === "box") {
+            return box.distanceToPoint(tempBox.min);
+          } else if (om.phyType === "capsule") {
+            return box.distanceToPoint(tempCapsule.start);
+          }
+          // Default Sphere
+          return box.distanceToPoint(tempSphere.center);
+        },
+      });
+
+      // 衝突処理
+      if (collided) {
+        if (om.phyType === "box") {
+          // TODO: sphereの関数を参考にして
+        } else if (om.phyType === "sphere") {
+          // get the delta direction and reflect the velocity across it
+          deltaVec
+            .subVectors(tempSphere.center, (collider as Sphere).center)
+            .normalize();
+          om.args.velocity.reflect(deltaVec);
+
+          // dampen the velocity and apply some drag
+          const dot = om.args.velocity.dot(deltaVec);
+          om.args.velocity.addScaledVector(deltaVec, -dot * 0.5);
+          om.args.velocity.multiplyScalar(Math.max(1.0 - deltaTime, 0));
+
+          // update the sphere collider position
+          (collider as Sphere).center.copy(tempSphere.center);
+
+          // find the point on the surface that was hit
+          tempVec
+            .copy(tempSphere.center)
+            .addScaledVector(deltaVec, -tempSphere.radius);
+
+          // TODO: 衝突処理
+          // onCollide( sphere, null, tempVec, deltaVec, dot, 0.05 );
+        } else if (om.phyType === "capsule") {
+          // TODO: sphereの関数を参考にして衝突関数前の処理を書く
+        }
+      }
+    }
+    // Handle collisions
+    for (const object of moveGrp.current.children) {
+      // TODO: ここで、衝突に対する移動値を計算する
+    }
   };
 
   return (
@@ -410,6 +613,7 @@ export const NinjaGL = ({
         isSound,
         setIsSound,
         bvhGrp,
+        bvhCollider,
         moveGrp,
         boundsTree,
         updateCollisions,

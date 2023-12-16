@@ -28,8 +28,8 @@ export {
   InitOM,
 } from "./NinjaInit";
 export {
-  checkBoxCapsuleCollision,
-  checkSphereCapsuleIntersect,
+  getBoxCapsuleCollision,
+  // checkSphereCapsuleIntersect,
   getInitCollision,
 } from "./Intersects";
 export type { CapsuleInfoProps } from "./Intersects";

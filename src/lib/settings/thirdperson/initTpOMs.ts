@@ -44,6 +44,27 @@ export const initTpOMs = (): IObjectManagement[] => {
     },
     {
       id: MathUtils.generateUUID(),
+      name: "moveablebox",
+      type: "three",
+      args: {
+        type: "box",
+        position: new Vector3(-2, 0.5, 3),
+        scale: new Vector3(1, 1, 1),
+        materialData: {
+          type: "standard",
+          value: "#42F3DF",
+        },
+        castShadow: true,
+        receiveShadow: true,
+      },
+      physics: true,
+      phyType: "box",
+      visibleType: "auto",
+      visible: true,
+      moveable: true,
+    },
+    {
+      id: MathUtils.generateUUID(),
       name: "wall01",
       type: "three",
       args: {

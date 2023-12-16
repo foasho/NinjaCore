@@ -22,8 +22,8 @@ import { EDeviceType, useMultiInputControl, useNinjaEngine } from "../../hooks";
 import {
   IInputMovement,
   CapsuleInfoProps,
-  checkBoxCapsuleCollision,
-  checkSphereCapsuleIntersect,
+  getBoxCapsuleCollision,
+  // checkSphereCapsuleIntersect,
   getInitCollision,
 } from "../../utils";
 
@@ -383,6 +383,7 @@ export const PlayerControl = ({
       }
 
       // moveGrpのケースも考えて衝突判定をする
+      let moveVelocity = new Vector3(0, 0, 0);
       let collided = getInitCollision();
       if (moveGrp.current && capsuleInfo.current) {
         // First Intersect Only
@@ -390,17 +391,27 @@ export const PlayerControl = ({
           const om = getOMById(object.userData.omId);
           if (!om) continue;
           if (om.phyType == "box") {
-            collided = checkBoxCapsuleCollision(
+            collided = getBoxCapsuleCollision(
               object as Mesh,
               player.current,
             );
             if (collided.intersect) {
-              const scale = om.args.scale || new Vector3(1, 1, 1);
-              if (collided.distance < capsuleInfo.current!.radius * scale.x) {
-                const depth = capsuleInfo.current!.radius - collided.distance;
-                const moveDirection = collided.direction.clone().multiplyScalar(depth * scale.x);
-                tempSegment.start.add(moveDirection);
-                tempSegment.end.add(moveDirection);
+              // const scale = om.args.scale || new Vector3(1, 1, 1);
+              // const depth = capsuleInfo.current!.radius - collided.distance;
+              // const moveDirection = collided.direction.clone().multiplyScalar(depth * scale.x);
+              // tempSegment.start.add(moveDirection);
+              // tempSegment.end.add(moveDirection);
+
+              // player.current.positionとcollided.pointの差分を時間で割って速度を計算
+              const dv = collided.point.clone().sub(player.current.position);
+              // deltaで割って速度を保存
+              const collidedVelocity = dv.divideScalar(delta);
+              // collidedVelocityを加算
+              moveVelocity.add(collidedVelocity);
+              
+              if (om.args.velocity){
+                moveVelocity.add((om.args.velocity as Vector3).negate());
+                console.log("moveVelocity", moveVelocity);
               }
               break;
             }
@@ -414,6 +425,8 @@ export const PlayerControl = ({
 
       const deltaVector = tempVector2;
       deltaVector.subVectors(newPosition, player.current.position);
+      // moveVectorを加算
+      deltaVector.add(moveVelocity);
 
       playerIsOnGround.current =
         deltaVector.y > Math.abs(delta * playerVelocity.current.y * 0.25);
@@ -458,7 +471,6 @@ export const PlayerControl = ({
       raycaster.set(camera.position, direction); // Raycast起源点をカメラに
       raycaster.far = distance - height / 2;
       raycaster.near = 0.01;
-      // @ts-ignore
       raycaster.firstHitOnly = true;
       const intersects = raycaster.intersectObject(collider.current!, true); // 全てのオブジェクトを対象にRaycast
       if (intersects.length > 0) {

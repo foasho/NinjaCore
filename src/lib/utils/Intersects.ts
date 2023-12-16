@@ -16,7 +16,8 @@ export type CapsuleInfoProps = {
 export type ResultCollisionProps = {
   intersect: boolean;
   distance: number;
-  direction: Vector3;
+  castDirection: Vector3;
+  recieveDirection: Vector3;
   point: Vector3;
 };
 
@@ -24,7 +25,8 @@ export const getInitCollision = (): ResultCollisionProps => {
   return {
     intersect: false,
     distance: 0,
-    direction: new Vector3(),
+    castDirection: new Vector3(),
+    recieveDirection: new Vector3(),
     point: new Vector3(),
   };
 };
@@ -35,92 +37,166 @@ export const getInitCollision = (): ResultCollisionProps => {
  * @param capsuleMesh
  * @returns
  */
-export const checkBoxCapsuleCollision = (
+export const getBoxCapsuleCollision = (
   boxMesh: Mesh,
   capsuleMesh: Mesh
 ): ResultCollisionProps => {
   // AABBを取得
-  const aabb = new Box3().setFromObject(boxMesh);
+  const box = new Box3().setFromObject(boxMesh);
+  // TODO: 純粋な方向ベクトルから、衝突判定のBoxの拡縮をするべき
+  if (boxMesh.rotation.y !== 0) {
+    // Boxのローカル座標系に変換するために、BoxのAABBを回転させる
+    // const scaleX = Math.abs(Math.sin(boxMesh.rotation.y));
+    // const scaleY = Math.abs(Math.cos(boxMesh.rotation.y));
+    // const scaleZ = Math.abs(Math.sin(boxMesh.rotation.y));
+    // box.max.x *= scaleX;
+    // box.min.x *= scaleX;
+    // box.max.y *= scaleY;
+    // box.min.y *= scaleY;
+    // box.max.z *= scaleZ;
+    // box.min.z *= scaleZ;
+  }
 
   // // Boxのローカル座標系に変換するためのマトリクスを取得
-  const aabb2 = new Box3().setFromObject(capsuleMesh);
-  const size = aabb2.getSize(new Vector3());
-  // console.log(aabb2.getSize(new Vector3()));
+  const capsule = new Box3().setFromObject(capsuleMesh);
 
-  const intersect = aabb.intersectsBox(aabb2);
-  const direction = new Vector3();
-  // aaab2の中心点とboxMeshの中心点の方向を計算
-  direction.subVectors(aabb2.getCenter(new Vector3()), boxMesh.position);
-  // 衝突点を計算
-  const point = aabb.clampPoint(
-    aabb2.getCenter(new Vector3()),
-    new Vector3()
-  );
+  const res = getInitCollision();
 
-  const res = {
-    intersect: intersect,
-    distance: boxMesh.position.distanceTo(capsuleMesh.position),
-    direction: direction.normalize(),
-    point: point,
-  };
+  const intersect = box.intersectsBox(capsule);
+  if (intersect) {
+    // Boxの中心
+    const boxCenter = box.getCenter(new Vector3());
 
-  // 衝突点がcapsuleのRadiusでなければdirectionのYを0にする
-  if (
-    intersect &&
-    point.y >
-    (capsuleMesh.geometry as CapsuleGeometry).parameters.radius
-  ) {
-    res.direction.setY(0);
-    // distanceをxzで再計算
-    res.distance = boxMesh.position
-      .clone()
-      .setY(0)
-      .distanceTo(capsuleMesh.position.clone().setY(0));
+    // 各軸に沿った重なり具合を計算
+    const overlapX =
+      Math.min(box.max.x, capsule.max.x) - Math.max(box.min.x, capsule.min.x);
+    const overlapY =
+      Math.min(box.max.y, capsule.max.y) - Math.max(box.min.y, capsule.min.y);
+    const overlapZ =
+      Math.min(box.max.z, capsule.max.z) - Math.max(box.min.z, capsule.min.z);
+
+    // 各軸に沿った重なりの中心点を計算
+    const centerOverlapX =
+      (Math.min(box.max.x, capsule.max.x) +
+        Math.max(box.min.x, capsule.min.x)) /
+      2;
+    const centerOverlapY =
+      (Math.min(box.max.y, capsule.max.y) +
+        Math.max(box.min.y, capsule.min.y)) /
+      2;
+    const centerOverlapZ =
+      (Math.min(box.max.z, capsule.max.z) +
+        Math.max(box.min.z, capsule.min.z)) /
+      2;
+
+    // Boxの中心から見た重なりの中心点の方向を計算
+    let direction = new Vector3(
+      centerOverlapX - boxCenter.x,
+      centerOverlapY - boxCenter.y,
+      centerOverlapZ - boxCenter.z
+    );
+
+    // 方向ベクトルを正規化して、最も大きい成分を基に方向を決定
+    direction.normalize();
+    const maxComponent = Math.max(
+      Math.abs(direction.x),
+      Math.abs(direction.y),
+      Math.abs(direction.z)
+    );
+
+    if (maxComponent === Math.abs(direction.x)) {
+      direction.set(direction.x > 0 ? 1 : -1, 0, 0);
+    } else if (maxComponent === Math.abs(direction.y)) {
+      direction.set(0, direction.y > 0 ? 1 : -1, 0);
+    } else {
+      direction.set(0, 0, direction.z > 0 ? 1 : -1);
+    }
+
+    // capsule側はそのまま、box側は逆方向にする
+    const capsuleDirection = direction.clone().negate();
+
+    // // directionは必ずVector3(-1or1, 0, 0), (0, -1or1, 0), (0, 0, -1or1)の1方向にする
+    // // 各軸において最も大きい絶対値を持つ成分を見つけ、それを基準に他の成分を0に設定
+    // const maxAbsComponent = Math.max(
+    //   Math.abs(direction.x),
+    //   Math.abs(direction.y),
+    //   Math.abs(direction.z)
+    // );
+    // if (maxAbsComponent === Math.abs(direction.x)) {
+    //   direction.set(direction.x > 0 ? 1 : -1, 0, 0);
+    // } else if (maxAbsComponent === Math.abs(direction.y)) {
+    //   direction.set(0, direction.y > 0 ? 1 : -1, 0);
+    // } else {
+    //   direction.set(0, 0, direction.z > 0 ? 1 : -1);
+    // }
+    // console.log("direction: ", direction);
+
+    // res.point.copy(point);
+    // res.direction.copy(direction);
+    // res.intersect = intersect;
+    // const capsuleRadius = (capsuleMesh.geometry as CapsuleGeometry).parameters.radius;
+    // res.distance = boxMesh.position.distanceTo(capsuleMesh.position) - capsuleRadius;
+  } else {
+    return res;
   }
+
+  // // 衝突点がcapsuleのRadiusでなければdirectionのYを0にする
+  // if (
+  //   intersect &&
+  //   point.y >
+  //   (capsuleMesh.geometry as CapsuleGeometry).parameters.radius
+  // ) {
+  //   res.direction.setY(0);
+  //   // distanceをxzで再計算
+  //   res.distance = boxMesh.position
+  //     .clone()
+  //     .setY(0)
+  //     .distanceTo(capsuleMesh.position.clone().setY(0));
+  // }
 
   // 衝突判定
   return res;
 };
 
-/**
- * SphereとCapsuleの衝突判定
- * @param sphereMesh
- * @param capsuleInfo
- * @returns
- */
-export const checkSphereCapsuleIntersect = (
-  sphereMesh: Mesh,
-  capsuleInfo: CapsuleInfoProps
-): ResultCollisionProps => {
-  // Sphereのバウンディングスフィアを取得
-  // Scaleから考慮する
-  const sphere = sphereMesh.geometry.boundingSphere;
-  if (!sphere)
-    return {
-      intersect: false,
-      distance: 0,
-      direction: new Vector3(),
-      point: new Vector3(),
-    };
-  // TODO: Scaleを考慮する必要があれば追記
+// /**
+//  * SphereとCapsuleの衝突判定
+//  * @param sphereMesh
+//  * @param capsuleInfo
+//  * @returns
+//  */
+// export const checkSphereCapsuleIntersect = (
+//   sphereMesh: Mesh,
+//   capsuleInfo: CapsuleInfoProps
+// ): ResultCollisionProps => {
+//   // Sphereのバウンディングスフィアを取得
+//   // Scaleから考慮する
+//   const sphere = sphereMesh.geometry.boundingSphere;
+//   if (!sphere)
+//     return {
+//       intersect: false,
+//       distance: 0,
+//       direction: new Vector3(),
+//       point: new Vector3(),
+//     };
+//   // TODO: Scaleを考慮する必要があれば追記
 
-  // Sphereの中心とCapsuleの中心線の最短距離を計算
-  const closestPoint = capsuleInfo.segment.closestPointToPoint(
-    sphere.center,
-    true,
-    new Vector3()
-  );
-  const distance = closestPoint.distanceTo(sphere.center);
+//   // Sphereの中心とCapsuleの中心線の最短距離を計算
+//   const closestPoint = capsuleInfo.segment.closestPointToPoint(
+//     sphere.center,
+//     true,
+//     new Vector3()
+//   );
+//   const distance = closestPoint.distanceTo(sphere.center);
 
-  // 衝突判定
-  // return distance <= sphere.radius + capsuleInfo.radius;
-  return {
-    intersect: distance <= sphere.radius + capsuleInfo.radius,
-    distance,
-    direction: closestPoint,
-    point: closestPoint,
-  };
-};
+//   // 衝突判定
+//   // return distance <= sphere.radius + capsuleInfo.radius;
+//   return {
+//     intersect: distance <= sphere.radius + capsuleInfo.radius,
+//     distance,
+//     direction: closestPoint,
+//     point: closestPoint,
+//   };
+// };
 
 /**
  *

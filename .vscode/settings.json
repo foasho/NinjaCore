@@ -3,9 +3,7 @@
   "editor.formatOnSave": true,
   // 保存時のアクション
   "editor.codeActionsOnSave": {
-    // 不足しているimportの追加
-    "source.addMissingImports": true,
-    // ファイルのfix
-    "source.fixAll.eslint": true
+    "source.addMissingImports": "explicit",
+    "source.fixAll.eslint": "explicit"
   }
 }

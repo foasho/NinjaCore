@@ -1,9 +1,9 @@
-import {
-  Box3,
-  Line3,
-  Mesh,
-  Vector3,
-} from "three";
+import { Box3, Line3, Mesh, Vector3 } from "three";
+
+// 再利用可能な変数
+const v1 = new Vector3();
+const b1 = new Box3();
+const b2 = new Box3();
 
 export type CapsuleInfoProps = {
   segment: Line3;
@@ -39,17 +39,17 @@ export const getBoxCapsuleCollision = (
   capsuleMesh: Mesh
 ): ResultCollisionProps => {
   // AABBを取得
-  const box = new Box3().setFromObject(boxMesh);
+  const box = b1.setFromObject(boxMesh);
   // TODO: 純粋な方向ベクトルから、衝突判定のBoxの拡縮をするべき
   // Boxのローカル座標系に変換するためのマトリクスを取得
-  const capsule = new Box3().setFromObject(capsuleMesh);
+  const capsule = b2.setFromObject(capsuleMesh);
 
   const res = getInitCollision();
 
   const intersect = box.intersectsBox(capsule);
   if (intersect) {
     // Boxの中心
-    const boxCenter = box.getCenter(new Vector3());
+    const boxCenter = box.getCenter(v1);
 
     // 各軸に沿った重なりの中心点を計算
     const centerOverlapX =
@@ -66,7 +66,7 @@ export const getBoxCapsuleCollision = (
       2;
 
     // Boxの中心から見た重なりの中心点の方向を計算
-    let direction = new Vector3(
+    let direction = v1.set(
       centerOverlapX - boxCenter.x,
       centerOverlapY - boxCenter.y,
       centerOverlapZ - boxCenter.z
@@ -100,23 +100,26 @@ export const getBoxCapsuleCollision = (
       point.x = direction.x > 0 ? box.max.x : box.min.x;
       point.y = Math.min(Math.max(rounededPoint.y, box.min.y), box.max.y);
       point.z = Math.min(Math.max(rounededPoint.z, box.min.z), box.max.z);
+      res.distance = Math.abs(capsuleMesh.position.x - point.x);
     } else if (direction.y !== 0) {
       // Y軸に沿った衝突の場合
       point.x = Math.min(Math.max(rounededPoint.x, box.min.x), box.max.x);
       point.y = direction.y > 0 ? box.max.y : box.min.y;
       point.z = Math.min(Math.max(rounededPoint.z, box.min.z), box.max.z);
+      res.distance = Math.abs(capsuleMesh.position.y - point.y);
     } else {
       // Z軸に沿った衝突の場合
       point.x = Math.min(Math.max(rounededPoint.x, box.min.x), box.max.x);
       point.y = Math.min(Math.max(rounededPoint.y, box.min.y), box.max.y);
       point.z = direction.z > 0 ? box.max.z : box.min.z;
+      res.distance = Math.abs(capsuleMesh.position.z - point.z);
     }
 
     res.point.copy(point);
     res.castDirection.copy(direction);
     res.recieveDirection.copy(capsuleDirection);
     res.intersect = intersect;
-    res.distance = boxMesh.position.distanceTo(point);
+    // res.distance = capsuleMesh.position.distanceTo(point);
   }
   return res;
 };

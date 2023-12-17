@@ -409,7 +409,7 @@ export const PlayerControl = ({
         for (const object of moveGrp.current.children) {
           const om = getOMById(object.userData.omId);
           if (!om) continue;
-          if (om.phyType == "box" && object.type == "Mesh") {
+          if (om.phyType == "box") {
             collided = getBoxCapsuleCollision(object as Mesh, player.current);
             const {
               intersect,
@@ -421,23 +421,10 @@ export const PlayerControl = ({
             if (intersect) {
               if (p.current) p.current.position.copy(point);
               const depth = capsuleInfo.current.radius - distance;
-              if (depth > 0) {
-                // tempSegment2: 衝突用の線分(Moveable)
-                // capsulePointからrecieveDirection方向をかける
-
-                const direction = capsulePoint.clone().sub(point).normalize();
-                const movement = new Vector3(
-                  castDirection.x * direction.x,
-                  castDirection.y * direction.y,
-                  castDirection.z * direction.z
-                );
-                // console.log(movement);
+              if (depth>0) {
+                const movement = castDirection.addScalar(depth);
                 tempSegment.start.addScaledVector(movement, depth);
-                // tempSegment2.start.addScaledVector(direction, depth);
-                // tempSegment2.end.addScaledVector(direction, depth);
-                // tempSegment.start.add(tempSegment2.start);
-                // tempSegment.end.sub(tempSegment2.end);
-                // 衝突方向に沿ってtempSegmentを移動させる
+                tempSegment.end.addScaledVector(movement, depth);
                 break;
               }
             }

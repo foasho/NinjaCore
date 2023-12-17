@@ -307,8 +307,11 @@ export const PlayerControl = ({
     ) {
       /**
        * 処理順序
-       * 1. 入力データから移動方向ベクトルを計算
-       * 2. 衝突検出からの方向ベクトルで位置を調整
+       * Step1. 入力データから移動方向ベクトルを計算
+       * Step2. 衝突検出からの方向ベクトルで位置を調整
+       * Step3. 動作オブジェクト(moveable)との衝突検出からの方向ベクトルで位置を調整
+       * Step4. 衝突微調整を加算
+       * Step5. オブジェクト/カメラの位置を同期
        */
       if (playerIsOnGround.current) {
         playerVelocity.current.y = delta * gravity;
@@ -332,7 +335,6 @@ export const PlayerControl = ({
         tempVector
           .set(0, 0, -1 * forwardAmount)
           .applyAxisAngle(upVector, angle);
-        // player.current.position.addScaledVector(tempVector, speed * delta);
         movementVector.add(tempVector);
       }
       // 左右方向の移動
@@ -398,8 +400,6 @@ export const PlayerControl = ({
         });
       }
 
-      // if (p.current) p.current.position.copy(player.current.position);
-
       /**
        * @step3 動作オブジェクト(moveable)との衝突検出を行い、同様にその方向に移動量を調整
        */
@@ -432,18 +432,13 @@ export const PlayerControl = ({
         }
       }
 
+      /**
+       * @step4 衝突微調整を加算
+       */
       const newPosition = tempVector;
-      if (input.action && collided.intersect) {
-        console.log("point: ", collided.point);
-      }
       newPosition
         .copy(tempSegment.start)
         .applyMatrix4(collider.current.matrixWorld);
-
-      // segment2も加算
-      // newPosition.add(tempSegment2.start);
-
-      // deltaVector: 移動ベクトル
       const deltaVector = capsulePoint;
       deltaVector.subVectors(newPosition, player.current.position);
 
@@ -455,6 +450,10 @@ export const PlayerControl = ({
       deltaVector.normalize().multiplyScalar(offset);
 
       player.current.position.add(deltaVector);
+
+      /**
+       * @step5 オブジェクト/カメラの位置を同期
+       */
       // Player(Capsule)とObjectの位置を同期
       if (object.current) {
         object.current.position.copy(

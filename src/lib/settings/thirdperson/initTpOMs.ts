@@ -49,7 +49,7 @@ export const initTpOMs = (): IObjectManagement[] => {
       args: {
         type: "box",
         position: new Vector3(-2, 0.5, 3),
-        scale: new Vector3(1, 1, 1),
+        scale: new Vector3(2, 1, 2),
         opacity: 0.5,
         materialData: {
           type: "standard",

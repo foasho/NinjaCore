@@ -74,6 +74,7 @@ export const PlayerControl = ({
   const isInit = useRef(true);
   const player = useRef<Mesh>(null);
   const capsuleInfo = useRef<CapsuleInfoProps>();
+  const height = 2.0;
   capsuleInfo.current = {
     radius: 0.5,
     segment: new Line3(new Vector3(), new Vector3(0, -1.0, 0.0)),
@@ -95,7 +96,6 @@ export const PlayerControl = ({
   const gravity = -30;
   const deadZone = -25;
   const upVector = new Vector3(0, 1, 0);
-  const height = 1.8;
   const baseSpeed = 2.5; // 移動速度を調整できるように定数を追加
   const physicsSteps = 5;
   const dashRatio = 2.1;
@@ -420,7 +420,10 @@ export const PlayerControl = ({
             } = collided;
             if (intersect) {
               if (p.current) p.current.position.copy(point);
-              const depth = capsuleInfo.current.radius - distance;
+              // TODO: direction方向がYの場合は、heightで比較する
+              const depth = Math.abs(castDirection.y)>0
+                ?height - capsuleInfo.current.radius - distance 
+                :capsuleInfo.current.radius - distance;
               if (depth>0) {
                 const movement = castDirection.addScalar(depth);
                 tempSegment.start.addScaledVector(movement, depth);

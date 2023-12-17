@@ -44,6 +44,7 @@ import { MemoSplashScreen } from "../commons";
 import { Moveable } from "../canvas-items/Moveables";
 import { MeshBVH } from "three-mesh-bvh";
 import { Capsule } from "three-stdlib";
+import { UIItems } from "../uis";
 
 export enum EDeviceType {
   Unknown = 0,
@@ -339,7 +340,7 @@ export const NinjaGL = ({
     }
     return null;
   };
-  const setArg = (id: string, key: string, arg: any) => {
+  const setArg = (id: string, key: string, arg: any, offListenser=false) => {
     const om = oms.find((om) => om.id === id);
     if (om) {
       // argsが異なれば、更新する
@@ -349,7 +350,7 @@ export const NinjaGL = ({
         } else {
           om.args[key] = arg;
         }
-        notifyOMIdChanged(id);
+        if (!offListenser) notifyOMIdChanged(id);
       }
     }
   };
@@ -653,6 +654,7 @@ export const NinjaGL = ({
       )}
       {!init && !noCanvas && <Loading2D />}
       <SystemSound />
+      <UIItems />
     </NinjaEngineContext.Provider>
   );
 };

@@ -62,6 +62,7 @@ export const PlayerControl = ({
   device,
 }: IPlayerControlProps) => {
   const {
+    config,
     boundsTree,
     bvhCollider: collider,
     moveGrp,
@@ -84,7 +85,6 @@ export const PlayerControl = ({
   // const collider: MutableRefObject<Mesh | null> = useRef<Mesh>(null);
   const controls = useRef<OrbitControlsImpl>(null);
   // --- ジャンプ/物理判定に関連する変数 ---
-  const persona = useRef<Mesh>(null);
   const playerIsOnGround = useRef(false);
   const playerVelocity = useRef(new Vector3(0, 0, 0));
   const tempBox = new Box3();
@@ -419,12 +419,15 @@ export const PlayerControl = ({
               point,
             } = collided;
             if (intersect) {
+              // 衝突していれば、player.current.hitsに衝突したオブジェクトを追加
+              player.current.userData.hits.push(om.id);
               if (p.current) p.current.position.copy(point);
               // TODO: direction方向がYの場合は、heightで比較する
-              const depth = Math.abs(castDirection.y)>0
-                ?height - capsuleInfo.current.radius - distance 
-                :capsuleInfo.current.radius - distance;
-              if (depth>0) {
+              const depth =
+                Math.abs(castDirection.y) > 0
+                  ? height - capsuleInfo.current.radius - distance
+                  : capsuleInfo.current.radius - distance;
+              if (depth > 0) {
                 const movement = castDirection.addScalar(depth);
                 tempSegment.start.addScaledVector(movement, depth);
                 tempSegment.end.addScaledVector(movement, depth);
@@ -432,6 +435,12 @@ export const PlayerControl = ({
               }
             }
           }
+        }
+      }
+      if (!collided.intersect) {
+        // 衝突していなければ、player.current.hitsを初期化
+        if (player.current.userData.hits) {
+          player.current.userData.hits = [];
         }
       }
 
@@ -615,7 +624,7 @@ export const PlayerControl = ({
         }
       />
       {/** 以下は物理判定Playerの可視化用：強制的に非表示に設定 */}
-      <mesh ref={player} visible={true}>
+      <mesh ref={player} visible={config.isDebug} userData={{ hits: [] }}>
         <capsuleGeometry
           args={[
             capsuleInfo.current.radius,
@@ -626,19 +635,12 @@ export const PlayerControl = ({
         />
         <meshBasicMaterial wireframe color={0xffff00} side={DoubleSide} />
       </mesh>
-      {/** persona */}
-      <mesh ref={persona} visible={true}>
-        <capsuleGeometry
-          args={[capsuleInfo.current.radius, height / 2, 1, 8]}
-        />
-        <meshBasicMaterial wireframe color={0xff0000} side={DoubleSide} />
-      </mesh>
-      <mesh ref={p}>
+      <mesh ref={p} visible={config.isDebug}>
         <boxGeometry args={[0.1, 0.1, 0.1]} />
         <meshBasicMaterial wireframe color={0xff0000} side={DoubleSide} />
       </mesh>
       {mergeGeometry && (
-        <mesh ref={collider} visible={false} name="collider">
+        <mesh ref={collider} visible={config.isDebug} name="collider">
           <primitive object={mergeGeometry} />
           <meshBasicMaterial wireframe color={0x00ff00} />
         </mesh>

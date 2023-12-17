@@ -8,7 +8,7 @@ export const UIItems = () => {
   const { worker } = useNinjaWorker();
 
   return (
-    <div className="absolute">
+    <div style={{ position: "absolute", zIndex: 10 }} id="target">
       {ums.map((um: IUIManagement) => {
         return (
           <div
@@ -24,7 +24,6 @@ export const UIItems = () => {
                 worker.current.postMessage({ id: um.id, type: "dblclick" });
               }
             }}
-            
           />
         );
       })}

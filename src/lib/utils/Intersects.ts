@@ -1,10 +1,7 @@
 import {
   Box3,
-  CapsuleGeometry,
   Line3,
-  Matrix4,
   Mesh,
-  Sphere,
   Vector3,
 } from "three";
 
@@ -44,20 +41,7 @@ export const getBoxCapsuleCollision = (
   // AABBを取得
   const box = new Box3().setFromObject(boxMesh);
   // TODO: 純粋な方向ベクトルから、衝突判定のBoxの拡縮をするべき
-  if (boxMesh.rotation.y !== 0) {
-    // Boxのローカル座標系に変換するために、BoxのAABBを回転させる
-    // const scaleX = Math.abs(Math.sin(boxMesh.rotation.y));
-    // const scaleY = Math.abs(Math.cos(boxMesh.rotation.y));
-    // const scaleZ = Math.abs(Math.sin(boxMesh.rotation.y));
-    // box.max.x *= scaleX;
-    // box.min.x *= scaleX;
-    // box.max.y *= scaleY;
-    // box.min.y *= scaleY;
-    // box.max.z *= scaleZ;
-    // box.min.z *= scaleZ;
-  }
-
-  // // Boxのローカル座標系に変換するためのマトリクスを取得
+  // Boxのローカル座標系に変換するためのマトリクスを取得
   const capsule = new Box3().setFromObject(capsuleMesh);
 
   const res = getInitCollision();
@@ -66,14 +50,6 @@ export const getBoxCapsuleCollision = (
   if (intersect) {
     // Boxの中心
     const boxCenter = box.getCenter(new Vector3());
-
-    // 各軸に沿った重なり具合を計算
-    const overlapX =
-      Math.min(box.max.x, capsule.max.x) - Math.max(box.min.x, capsule.min.x);
-    const overlapY =
-      Math.min(box.max.y, capsule.max.y) - Math.max(box.min.y, capsule.min.y);
-    const overlapZ =
-      Math.min(box.max.z, capsule.max.z) - Math.max(box.min.z, capsule.min.z);
 
     // 各軸に沿った重なりの中心点を計算
     const centerOverlapX =
@@ -95,6 +71,7 @@ export const getBoxCapsuleCollision = (
       centerOverlapY - boxCenter.y,
       centerOverlapZ - boxCenter.z
     );
+    const originDirection = direction.clone().normalize();
 
     // 方向ベクトルを正規化して、最も大きい成分を基に方向を決定
     direction.normalize();
@@ -115,46 +92,32 @@ export const getBoxCapsuleCollision = (
     // capsule側はそのまま、box側は逆方向にする
     const capsuleDirection = direction.clone().negate();
 
-    // // directionは必ずVector3(-1or1, 0, 0), (0, -1or1, 0), (0, 0, -1or1)の1方向にする
-    // // 各軸において最も大きい絶対値を持つ成分を見つけ、それを基準に他の成分を0に設定
-    // const maxAbsComponent = Math.max(
-    //   Math.abs(direction.x),
-    //   Math.abs(direction.y),
-    //   Math.abs(direction.z)
-    // );
-    // if (maxAbsComponent === Math.abs(direction.x)) {
-    //   direction.set(direction.x > 0 ? 1 : -1, 0, 0);
-    // } else if (maxAbsComponent === Math.abs(direction.y)) {
-    //   direction.set(0, direction.y > 0 ? 1 : -1, 0);
-    // } else {
-    //   direction.set(0, 0, direction.z > 0 ? 1 : -1);
-    // }
-    // console.log("direction: ", direction);
+    const rounededPoint = boxMesh.position.clone().add(originDirection);
+    // Boxの境界に合わせた衝突点を計算
+    let point = new Vector3();
+    if (direction.x !== 0) {
+      // X軸に沿った衝突の場合
+      point.x = direction.x > 0 ? box.max.x : box.min.x;
+      point.y = Math.min(Math.max(rounededPoint.y, box.min.y), box.max.y);
+      point.z = Math.min(Math.max(rounededPoint.z, box.min.z), box.max.z);
+    } else if (direction.y !== 0) {
+      // Y軸に沿った衝突の場合
+      point.x = Math.min(Math.max(rounededPoint.x, box.min.x), box.max.x);
+      point.y = direction.y > 0 ? box.max.y : box.min.y;
+      point.z = Math.min(Math.max(rounededPoint.z, box.min.z), box.max.z);
+    } else {
+      // Z軸に沿った衝突の場合
+      point.x = Math.min(Math.max(rounededPoint.x, box.min.x), box.max.x);
+      point.y = Math.min(Math.max(rounededPoint.y, box.min.y), box.max.y);
+      point.z = direction.z > 0 ? box.max.z : box.min.z;
+    }
 
-    // res.point.copy(point);
-    // res.direction.copy(direction);
-    // res.intersect = intersect;
-    // const capsuleRadius = (capsuleMesh.geometry as CapsuleGeometry).parameters.radius;
-    // res.distance = boxMesh.position.distanceTo(capsuleMesh.position) - capsuleRadius;
-  } else {
-    return res;
+    res.point.copy(point);
+    res.castDirection.copy(direction);
+    res.recieveDirection.copy(capsuleDirection);
+    res.intersect = intersect;
+    res.distance = boxMesh.position.distanceTo(point);
   }
-
-  // // 衝突点がcapsuleのRadiusでなければdirectionのYを0にする
-  // if (
-  //   intersect &&
-  //   point.y >
-  //   (capsuleMesh.geometry as CapsuleGeometry).parameters.radius
-  // ) {
-  //   res.direction.setY(0);
-  //   // distanceをxzで再計算
-  //   res.distance = boxMesh.position
-  //     .clone()
-  //     .setY(0)
-  //     .distanceTo(capsuleMesh.position.clone().setY(0));
-  // }
-
-  // 衝突判定
   return res;
 };
 

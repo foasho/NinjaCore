@@ -210,7 +210,7 @@ const ThreeObject = ({ om }: { om: IObjectManagement }) => {
   if (om.args.type == "plane") {
     geometry = <planeGeometry />;
   } else if (om.args.type == "sphere") {
-    geometry = <sphereGeometry />;
+    geometry = <sphereGeometry args={[om.args.radius || 0.5]} />;
   } else if (om.args.type == "box") {
     geometry = <boxGeometry />;
   } else if (om.args.type == "cylinder") {
@@ -225,7 +225,9 @@ const ThreeObject = ({ om }: { om: IObjectManagement }) => {
         ? new Color(materialData.value)
         : new Color(0xffffff);
     if (materialData.type == "standard") {
-      material = <meshStandardMaterial color={color} />;
+      material = (
+        <meshStandardMaterial color={color} opacity={om.args.opacity || 1.0} transparent={om.args.opacity} />
+      );
     } else if (materialData.type == "phong") {
       material = <meshPhongMaterial color={color} />;
     } else if (materialData.type == "toon") {

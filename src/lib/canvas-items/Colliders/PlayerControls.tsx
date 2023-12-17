@@ -3,7 +3,11 @@ import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import { OrbitControls, RoundedBox, useAnimations } from "@react-three/drei";
 import { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import { StaticGeometryGenerator, MeshBVH, ExtendedTriangle } from "three-mesh-bvh";
+import {
+  StaticGeometryGenerator,
+  MeshBVH,
+  ExtendedTriangle,
+} from "three-mesh-bvh";
 import {
   Mesh,
   Vector3,
@@ -17,6 +21,7 @@ import {
   AnimationAction,
   AnimationMixer,
   AnimationClip,
+  DoubleSide,
 } from "three";
 import { EDeviceType, useMultiInputControl, useNinjaEngine } from "../../hooks";
 import {
@@ -74,20 +79,23 @@ export const PlayerControl = ({
     segment: new Line3(new Vector3(), new Vector3(0, -1.0, 0.0)),
   };
   const [grpMeshesNum, setGrpMeshesNum] = useState<number>(0);
+  const p = useRef<Mesh>(null);
   // const collider: MutableRefObject<Mesh | null> = useRef<Mesh>(null);
   const controls = useRef<OrbitControlsImpl>(null);
   // --- ジャンプ/物理判定に関連する変数 ---
+  const persona = useRef<Mesh>(null);
   const playerIsOnGround = useRef(false);
   const playerVelocity = useRef(new Vector3(0, 0, 0));
   const tempBox = new Box3();
   const tempVector = new Vector3();
-  const tempVector2 = new Vector3();
+  const capsulePoint = new Vector3();
   const tempMat = new Matrix4();
-  const tempSegment = new Line3();
+  const tempSegment = new Line3(); // 衝突用の線分
+  const tempSegment2 = new Line3(); // 衝突用の線分(Moveable)
   const gravity = -30;
   const deadZone = -25;
   const upVector = new Vector3(0, 1, 0);
-  const height = 2.0;
+  const height = 1.8;
   const baseSpeed = 2.5; // 移動速度を調整できるように定数を追加
   const physicsSteps = 5;
   const dashRatio = 2.1;
@@ -291,14 +299,16 @@ export const PlayerControl = ({
   };
 
   const updatePlayer = (delta: number) => {
-    if (player.current && controls.current && mergeGeometry) {
+    if (
+      player.current &&
+      controls.current &&
+      collider.current &&
+      mergeGeometry
+    ) {
       /**
        * 処理順序
        * 1. 入力データから移動方向ベクトルを計算
-       * 　- 接地しているかどうか -> 重力分の移動ベクトルを追加
-       * 　-
-       * 2. 衝突検出
-       *
+       * 2. 衝突検出からの方向ベクトルで位置を調整
        */
       if (playerIsOnGround.current) {
         playerVelocity.current.y = delta * gravity;
@@ -307,7 +317,9 @@ export const PlayerControl = ({
       }
       player.current.position.addScaledVector(playerVelocity.current, delta);
 
-      // 移動
+      /**
+       * @step1 入力データ(input)からの単純な移動
+       */
       let speed = baseSpeed * input.speed;
       if (input.dash) {
         speed *= dashRatio;
@@ -315,29 +327,32 @@ export const PlayerControl = ({
       const angle = controls.current.getAzimuthalAngle();
       let forwardAmount = input.forward - input.backward;
       let movementVector = new Vector3(0, 0, 0);
+      // 前後方向の移動
       if (forwardAmount !== 0) {
         tempVector
           .set(0, 0, -1 * forwardAmount)
           .applyAxisAngle(upVector, angle);
-        player.current.position.addScaledVector(tempVector, speed * delta);
+        // player.current.position.addScaledVector(tempVector, speed * delta);
         movementVector.add(tempVector);
       }
+      // 左右方向の移動
       let rightAmount = input.right - input.left;
       if (rightAmount !== 0) {
         tempVector.set(rightAmount, 0, 0).applyAxisAngle(upVector, angle);
-        player.current.position.addScaledVector(tempVector, speed * delta);
         movementVector.add(tempVector);
       }
-      player.current.updateMatrixWorld();
 
       // 移動量があれば、その移動方向に応じてObjectのY軸を回転させる
       if (forwardAmount !== 0 || rightAmount !== 0) {
         const targetRotation = Math.atan2(movementVector.x, movementVector.z);
         object.current!.rotation.y = targetRotation;
+        // ここで移動量をセット
+        player.current.position.addScaledVector(movementVector, speed * delta);
       }
+      player.current.updateMatrixWorld();
 
       /**
-       * 衝突検出
+       * 衝突検出を行い、その方向に移動量を調整
        */
       if (collider.current && capsuleInfo.current) {
         tempBox.makeEmpty();
@@ -366,7 +381,7 @@ export const PlayerControl = ({
           },
           intersectsTriangle: (tri: ExtendedTriangle) => {
             const triPoint = tempVector;
-            const capsulePoint = tempVector2;
+            // const capsulePoint = tempVector2;
             const distance = tri.closestPointToSegment(
               tempSegment,
               triPoint,
@@ -375,6 +390,7 @@ export const PlayerControl = ({
             if (distance < capsuleInfo.current!.radius) {
               const depth = capsuleInfo.current!.radius - distance;
               const direction = capsulePoint.sub(triPoint).normalize();
+              // tempSegmentは衝突で移動すべき遷移座標
               tempSegment.start.addScaledVector(direction, depth);
               tempSegment.end.addScaledVector(direction, depth);
             }
@@ -382,60 +398,77 @@ export const PlayerControl = ({
         });
       }
 
-      // moveGrpのケースも考えて衝突判定をする
-      let moveVelocity = new Vector3(0, 0, 0);
+      // if (p.current) p.current.position.copy(player.current.position);
+
+      /**
+       * @step3 動作オブジェクト(moveable)との衝突検出を行い、同様にその方向に移動量を調整
+       */
       let collided = getInitCollision();
-      if (moveGrp.current && capsuleInfo.current) {
+      if (moveGrp.current && capsuleInfo.current && p.current) {
         // First Intersect Only
         for (const object of moveGrp.current.children) {
           const om = getOMById(object.userData.omId);
           if (!om) continue;
-          if (om.phyType == "box") {
-            collided = getBoxCapsuleCollision(
-              object as Mesh,
-              player.current,
-            );
-            if (collided.intersect) {
-              // const scale = om.args.scale || new Vector3(1, 1, 1);
-              // const depth = capsuleInfo.current!.radius - collided.distance;
-              // const moveDirection = collided.direction.clone().multiplyScalar(depth * scale.x);
-              // tempSegment.start.add(moveDirection);
-              // tempSegment.end.add(moveDirection);
+          if (om.phyType == "box" && object.type == "Mesh") {
+            collided = getBoxCapsuleCollision(object as Mesh, player.current);
+            const {
+              intersect,
+              distance,
+              castDirection,
+              recieveDirection,
+              point,
+            } = collided;
+            if (intersect) {
+              if (p.current) p.current.position.copy(point);
+              const depth = capsuleInfo.current.radius - distance;
+              if (depth > 0) {
+                // tempSegment2: 衝突用の線分(Moveable)
+                // capsulePointからrecieveDirection方向をかける
 
-              // player.current.positionとcollided.pointの差分を時間で割って速度を計算
-              const dv = collided.point.clone().sub(player.current.position);
-              // deltaで割って速度を保存
-              const collidedVelocity = dv.divideScalar(delta);
-              // collidedVelocityを加算
-              moveVelocity.add(collidedVelocity);
-              
-              if (om.args.velocity){
-                moveVelocity.add((om.args.velocity as Vector3).negate());
-                console.log("moveVelocity", moveVelocity);
+                const direction = capsulePoint.clone().sub(point).normalize();
+                const movement = new Vector3(
+                  castDirection.x * direction.x,
+                  castDirection.y * direction.y,
+                  castDirection.z * direction.z
+                );
+                // console.log(movement);
+                tempSegment.start.addScaledVector(movement, depth);
+                // tempSegment2.start.addScaledVector(direction, depth);
+                // tempSegment2.end.addScaledVector(direction, depth);
+                // tempSegment.start.add(tempSegment2.start);
+                // tempSegment.end.sub(tempSegment2.end);
+                // 衝突方向に沿ってtempSegmentを移動させる
+                break;
               }
-              break;
             }
-          } 
+          }
         }
       }
+
       const newPosition = tempVector;
+      if (input.action && collided.intersect) {
+        console.log("point: ", collided.point);
+      }
       newPosition
         .copy(tempSegment.start)
-        .applyMatrix4(collider.current!.matrixWorld);
+        .applyMatrix4(collider.current.matrixWorld);
 
-      const deltaVector = tempVector2;
+      // segment2も加算
+      // newPosition.add(tempSegment2.start);
+
+      // deltaVector: 移動ベクトル
+      const deltaVector = capsulePoint;
       deltaVector.subVectors(newPosition, player.current.position);
-      // moveVectorを加算
-      deltaVector.add(moveVelocity);
 
+      // 接地判定: 移動ベクトルのY成分が,player速度のY成分の絶対値の1/4より大きい場合は接地していないと判定
       playerIsOnGround.current =
         deltaVector.y > Math.abs(delta * playerVelocity.current.y * 0.25);
 
       const offset = Math.max(0.0, deltaVector.length() - 1e-5);
       deltaVector.normalize().multiplyScalar(offset);
 
-      // Player(Capsule)とObjectの位置を同期
       player.current.position.add(deltaVector);
+      // Player(Capsule)とObjectの位置を同期
       if (object.current) {
         object.current.position.copy(
           player.current.position
@@ -443,14 +476,16 @@ export const PlayerControl = ({
             .add(new Vector3(0, -(height - capsuleInfo.current!.radius), 0))
         );
       }
+      // 接地処理
       if (!playerIsOnGround.current) {
-        //
+        // 接地していない場合は、player速度にdeltaVector方向*重力分の移動ベクトルを追加
         deltaVector.normalize();
         playerVelocity.current.addScaledVector(
           deltaVector,
           -deltaVector.dot(playerVelocity.current)
         );
       } else {
+        // 接地している場合は、速度を０にして静止する
         playerVelocity.current.set(0, 0, 0);
       }
 
@@ -591,11 +626,27 @@ export const PlayerControl = ({
         }
       />
       {/** 以下は物理判定Playerの可視化用：強制的に非表示に設定 */}
-      <mesh
-        ref={player}
-        visible={false}
-      >
-        <capsuleGeometry args={[capsuleInfo.current.radius, height, 1, 8]} />
+      <mesh ref={player} visible={true}>
+        <capsuleGeometry
+          args={[
+            capsuleInfo.current.radius,
+            height - capsuleInfo.current.radius * 2,
+            1,
+            8,
+          ]}
+        />
+        <meshBasicMaterial wireframe color={0xffff00} side={DoubleSide} />
+      </mesh>
+      {/** persona */}
+      <mesh ref={persona} visible={true}>
+        <capsuleGeometry
+          args={[capsuleInfo.current.radius, height / 2, 1, 8]}
+        />
+        <meshBasicMaterial wireframe color={0xff0000} side={DoubleSide} />
+      </mesh>
+      <mesh ref={p}>
+        <boxGeometry args={[0.1, 0.1, 0.1]} />
+        <meshBasicMaterial wireframe color={0xff0000} side={DoubleSide} />
       </mesh>
       {mergeGeometry && (
         <mesh ref={collider} visible={false} name="collider">

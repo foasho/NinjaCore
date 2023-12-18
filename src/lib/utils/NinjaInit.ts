@@ -1,7 +1,12 @@
 import { MathUtils, Vector3, Euler } from "three";
-import { IConfigParams, IScriptManagement, IObjectManagement } from "./NinjaProps";
+import {
+  IConfigParams,
+  IScriptManagement,
+  IObjectManagement,
+} from "./NinjaProps";
 
 export const InitMobileConfipParams: IConfigParams = {
+  projectName: "NinjaGL",
   physics: true,
   dpr: 1,
   multi: true,
@@ -10,6 +15,7 @@ export const InitMobileConfipParams: IConfigParams = {
 };
 
 export const InitTabletConfipParams: IConfigParams = {
+  projectName: "NinjaGL",
   physics: true,
   dpr: [1, 1.5],
   multi: true,
@@ -20,6 +26,7 @@ export const InitTabletConfipParams: IConfigParams = {
 const isBrowser = typeof window !== "undefined";
 const dpr = isBrowser ? window.devicePixelRatio : 1;
 export const InitDesktopConfipParams: IConfigParams = {
+  projectName: "NinjaGL",
   physics: true,
   dpr: dpr,
   multi: true,
@@ -55,5 +62,5 @@ export const InitOM = (): IObjectManagement => {
     phyType: "box",
     visibleType: "auto",
     visible: true,
-  }
+  };
 };

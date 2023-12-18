@@ -11,6 +11,7 @@ import {
  * NinjaGLの基本パラメータ
  */
 export interface IConfigParams {
+  projectName: string; // プロジェクト名
   physics: boolean; // 物理演算を有効にするか
   dpr: undefined | number | [number, number]; // デバイスピクセル比※undefinedの場合は(window.devicePixelRatio || 1)を利用
   multi: boolean; // マルチモード

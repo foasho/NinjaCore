@@ -9,3 +9,6 @@ export const MoveableColliderTunnel = tunnel();
 
 // 非物理判定オブジェクト
 export const NonColliderTunnel = tunnel();
+
+// MultiPlayer内オブジェクト
+export const MultiPlayerTunnel = tunnel();

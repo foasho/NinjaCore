@@ -3,6 +3,7 @@ export {
   saveNJCFile,
   saveNJCBlob,
   loadNJCFile,
+  loadGLTF,
   convertObjectToBlob,
   convertObjectToFile,
   convertObjectToArrayBuffer,
@@ -37,4 +38,5 @@ export {
   NonColliderTunnel,
   ColliderTunnel,
   MoveableColliderTunnel,
+  MultiPlayerTunnel
 } from "./tunnel";

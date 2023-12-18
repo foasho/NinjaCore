@@ -11,11 +11,11 @@ export const ColliderField = () => {
   raycaster.firstHitOnly = true;
 
   return (
-    <InputControlProvider>
+    <>
       <OMPlayer grp={grp} />
       <group ref={grp} renderOrder={0}>
         <ColliderTunnel.Out />
       </group>
-    </InputControlProvider>
+    </>
   );
 };

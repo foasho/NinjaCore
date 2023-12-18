@@ -27,7 +27,7 @@ import {
   Vector3,
 } from "three";
 import { Canvas as NCanvas, useFrame as useNFrame } from "@react-three/fiber";
-import { useInputControl } from "./useInputControl";
+import { InputControlProvider, useInputControl } from "./useInputControl";
 import { Loading3D, Loading2D } from "../loaders";
 import {
   OMEffects,
@@ -340,7 +340,7 @@ export const NinjaGL = ({
     }
     return null;
   };
-  const setArg = (id: string, key: string, arg: any, offListenser=false) => {
+  const setArg = (id: string, key: string, arg: any, offListenser = false) => {
     const om = oms.find((om) => om.id === id);
     if (om) {
       // argsが異なれば、更新する
@@ -634,27 +634,29 @@ export const NinjaGL = ({
         offOMsChanged,
       }}
     >
-      {/** スプラッシュスクリーン */ isSplashScreen && <MemoSplashScreen />}
-      {init && njcFile && (
-        <>
-          {!noCanvas ? (
-            <NCanvas>
-              <React.Suspense
-                fallback={<Loading3D isLighting position={[0, 0, 3]} />}
-              >
-                <NinjaCanvasItems />
-                {children}
-              </React.Suspense>
-            </NCanvas>
-          ) : (
-            <>{children}</>
-          )}
-          {/** UIレンダリング */}
-        </>
-      )}
-      {!init && !noCanvas && <Loading2D />}
-      <SystemSound />
-      <UIItems />
+      <InputControlProvider>
+        {/** スプラッシュスクリーン */ isSplashScreen && <MemoSplashScreen />}
+        {init && njcFile && (
+          <>
+            {!noCanvas ? (
+              <NCanvas>
+                <React.Suspense
+                  fallback={<Loading3D isLighting position={[0, 0, 3]} />}
+                >
+                  <NinjaCanvasItems />
+                  {children}
+                </React.Suspense>
+              </NCanvas>
+            ) : (
+              <>{children}</>
+            )}
+            {/** UIレンダリング */}
+          </>
+        )}
+        {!init && !noCanvas && <Loading2D />}
+        <SystemSound />
+        <UIItems />
+      </InputControlProvider>
     </NinjaEngineContext.Provider>
   );
 };

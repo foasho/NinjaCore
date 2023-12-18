@@ -174,7 +174,7 @@ interface IInputControl {
 }
 export const useInputControl = ({
   device = "auto",
-  targetId = "target",
+  targetId = "Ninjaviewer",
   ratio = 0.375, // 0 ~ 1: 画面の何割をジョイスティックにするか
   margin = [48, 64], // 画面の端から何pxMarginをとるか
   joyColor = "rgba(255, 242, 189, 0.8)",
@@ -451,6 +451,8 @@ export const useInputControl = ({
         movement.current.backward = Math.max(0, forwardAmount);
         movement.current.left = Math.max(0, -rightAmount);
         movement.current.right = Math.max(0, rightAmount);
+
+        console.log("forward", movement.current.forward);
 
         // スピードの更新
         movement.current.speed = distanceFromCenter / (joyRadius.current * 0.5);

@@ -58,7 +58,7 @@ export const PlayerControl = ({
   resetPosition = new Vector3(0.0, 3, -30),
   resetPositionOffsetY = 3.0,
   desiredDistance = 3.5,
-  touchDomId = null,
+  touchDomId = "Ninjaviewer",
   device,
 }: IPlayerControlProps) => {
   const {
@@ -82,7 +82,6 @@ export const PlayerControl = ({
   };
   const [grpMeshesNum, setGrpMeshesNum] = useState<number>(0);
   const p = useRef<Mesh>(null);
-  // const collider: MutableRefObject<Mesh | null> = useRef<Mesh>(null);
   const controls = useRef<OrbitControlsImpl>(null);
   // --- ジャンプ/物理判定に関連する変数 ---
   const playerIsOnGround = useRef(false);
@@ -92,7 +91,6 @@ export const PlayerControl = ({
   const capsulePoint = new Vector3();
   const tempMat = new Matrix4();
   const tempSegment = new Line3(); // 衝突用の線分
-  const tempSegment2 = new Line3(); // 衝突用の線分(Moveable)
   const gravity = -30;
   const deadZone = -25;
   const upVector = new Vector3(0, 1, 0);
@@ -328,6 +326,7 @@ export const PlayerControl = ({
         speed *= dashRatio;
       }
       const angle = controls.current.getAzimuthalAngle();
+      // console.log("input2: " ,input.forward)
       let forwardAmount = input.forward - input.backward;
       let movementVector = new Vector3(0, 0, 0);
       // 前後方向の移動
@@ -535,6 +534,7 @@ export const PlayerControl = ({
   };
 
   useFrame((_state, delta) => {
+    console.log("input3", input.forward)
     const timeDelta = Math.min(delta, 0.1);
     // grp.currentのchildrenの数を取得
     const meshesNum = grp.current ? grp.current.children.length : 0;

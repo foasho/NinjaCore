@@ -24,6 +24,17 @@ export const UIItems = () => {
                 worker.current.postMessage({ id: um.id, type: "dblclick" });
               }
             }}
+            // hover
+            onMouseEnter={() => {
+              if (worker.current) {
+                worker.current.postMessage({ id: um.id, type: "mouseenter" });
+              }
+            }}
+            onMouseLeave={() => {
+              if (worker.current) {
+                worker.current.postMessage({ id: um.id, type: "mouseleave" });
+              }
+            }}
           />
         );
       })}

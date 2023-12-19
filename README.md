@@ -1,8 +1,11 @@
 # @ninjagl/coreライブラリ
 
+DEMO: https://ninjagl.vercel.app
+
 NinjaGLのコアライブラリ
-- NinjaGL: https://ninjagl.vercel.app
-- Editor: 
+- Editor: https://github.com/foasho/NinjaGL
+- Core: here repository
+- API: https://github.com/foasho/NinjaCore
 
 ## 主な依存関係
 - three

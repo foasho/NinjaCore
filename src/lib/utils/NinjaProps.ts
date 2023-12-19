@@ -151,3 +151,8 @@ export interface IUpdateSoundOption {
   trigAnim?: string;
   stopAnim?: string;
 }
+
+
+export type kvsProps = {
+  [key: string]: string;
+};

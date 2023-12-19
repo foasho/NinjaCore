@@ -452,8 +452,6 @@ export const useInputControl = ({
         movement.current.left = Math.max(0, -rightAmount);
         movement.current.right = Math.max(0, rightAmount);
 
-        console.log("forward", movement.current.forward);
-
         // スピードの更新
         movement.current.speed = distanceFromCenter / (joyRadius.current * 0.5);
         movement.current.prevDrag = movement.current.curDrag.clone();

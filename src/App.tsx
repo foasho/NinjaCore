@@ -7,6 +7,7 @@ import {
   initTpOMs,
   initTpConfig,
   initTpSMs,
+  initTpUMs,
 } from "./lib";
 
 export const App = () => {
@@ -15,10 +16,11 @@ export const App = () => {
   React.useEffect(() => {
     const _njcFile = ExportNjcFile(
       initTpOMs(),
-      [],
+      initTpUMs(),
       [],
       initTpSMs(),
-      initTpConfig()
+      initTpConfig(),
+      {}
     );
     setNJCFile(_njcFile);
     setReady(true);
@@ -30,7 +32,7 @@ export const App = () => {
   return (
     <div style={{ position: "absolute", height: "100dvh", width: "100dvw" }}>
       {ready && (
-        <div id="Ninjaviewer" style={{ height: "100%" }}>
+        <div style={{ height: "100%" }}>
           {njcFile && <NinjaGL njc={njcFile}></NinjaGL>}
         </div>
       )}

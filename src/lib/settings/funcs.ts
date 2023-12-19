@@ -5,6 +5,7 @@ import {
   IScriptManagement,
   IConfigParams,
   NJCFile,
+  kvsProps,
 } from "../utils";
 
 export const ExportNjcFile = (
@@ -12,7 +13,8 @@ export const ExportNjcFile = (
   ums: IUIManagement[],
   tms: ITextureManagement[],
   sms: IScriptManagement[],
-  config: IConfigParams
+  config: IConfigParams,
+  kvs: kvsProps
 ): NJCFile => {
   const newConfig = { ...config, dpr: undefined };
   // Configパラメータを設定する
@@ -26,5 +28,6 @@ export const ExportNjcFile = (
   njcFile.setUMs(ums);
   njcFile.setTMs(tms);
   njcFile.setSMs(sms);
+  njcFile.setKVS(kvs);
   return njcFile;
 };

@@ -1,7 +1,6 @@
 import React from "react";
 import { useNinjaEngine, useNinjaWorker } from "../hooks";
 import { IUIManagement } from "../utils";
-import { BsMicFill } from "react-icons/bs";
 import { convertCssProperties } from "../utils/Styling";
 import { MdSend } from "react-icons/md";
 
@@ -21,9 +20,21 @@ const UITextInput = ({ um }: { um: IUIManagement }) => {
   const { worker } = useNinjaWorker();
   const [message, setMessage] = React.useState("");
   const styles = um.args.styles ? convertCssProperties(um.args.styles) : {};
+  const positionMergedStyles: React.CSSProperties = {
+    ...styles,
+    position: "absolute",
+    zIndex: 10,
+    top: `${um.position.y}%`,
+    left: `${um.position.x}%`,
+    translate: "transform(-50%, -50%)",
+  };
 
   return (
-    <div style={styles} id={um.id}>
+    <div
+      style={positionMergedStyles}
+      className={um.args.className || ""}
+      id={um.id}
+    >
       <textarea
         value={message}
         onChange={(e) => {
@@ -80,30 +91,5 @@ const UITextInput = ({ um }: { um: IUIManagement }) => {
         <MdSend style={{ display: "inline" }} />
       </a>
     </div>
-  );
-};
-
-interface IRoundButtonProps {
-  size?: string;
-  className?: string;
-  style?: any;
-  onClick?: any;
-  children?: JSX.Element | undefined;
-}
-const RoundButton = ({
-  size = "w-10 h-10",
-  className = "",
-  style = undefined,
-  onClick = null,
-  children = undefined,
-}: IRoundButtonProps) => {
-  return (
-    <button
-      className={`rounded-full bg-main-color cursor-pointer ${size} ${className}`}
-      onClick={onClick!}
-      style={style}
-    >
-      {children}
-    </button>
   );
 };

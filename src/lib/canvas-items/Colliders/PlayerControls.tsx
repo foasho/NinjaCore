@@ -534,7 +534,6 @@ export const PlayerControl = ({
   };
 
   useFrame((_state, delta) => {
-    console.log("input3", input.forward)
     const timeDelta = Math.min(delta, 0.1);
     // grp.currentのchildrenの数を取得
     const meshesNum = grp.current ? grp.current.children.length : 0;

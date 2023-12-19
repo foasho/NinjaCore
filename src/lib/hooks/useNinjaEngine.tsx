@@ -45,6 +45,7 @@ import { Moveable } from "../canvas-items/Moveables";
 import { MeshBVH } from "three-mesh-bvh";
 import { Capsule } from "three-stdlib";
 import { UIItems } from "../uis";
+import { NinjaKVSProvider } from "./useKVS";
 
 export enum EDeviceType {
   Unknown = 0,
@@ -87,6 +88,7 @@ export enum ENinjaStatus {
 // }
 
 type NinjaEngineProp = {
+  device: EDeviceType;
   status: ENinjaStatus;
   isPhysics: boolean;
   player: React.MutableRefObject<Mesh | null>;
@@ -117,6 +119,7 @@ type NinjaEngineProp = {
   offOMsChanged: (listener: () => void) => void;
 };
 export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
+  device: EDeviceType.Unknown,
   status: ENinjaStatus.Pause,
   isPhysics: true,
   player: React.createRef<Mesh>(),
@@ -261,6 +264,14 @@ export const NinjaGL = ({
         setConfig(njcFile.config);
       }
       setInit(true);
+    }
+    document.addEventListener('contextmenu', function(event) {
+      event.preventDefault();
+    }, false);
+    return () => {
+      document.removeEventListener('contextmenu', function(event) {
+        event.preventDefault();
+      }, false);
     }
   }, [njcFile, njc, njcPath]);
 
@@ -604,6 +615,7 @@ export const NinjaGL = ({
   return (
     <NinjaEngineContext.Provider
       value={{
+        device,
         status,
         isPhysics: config.physics,
         input,
@@ -634,36 +646,53 @@ export const NinjaGL = ({
         offOMsChanged,
       }}
     >
-      <InputControlProvider>
-        {/** スプラッシュスクリーン */ isSplashScreen && <MemoSplashScreen />}
-        {init && njcFile && (
-          <>
-            {!noCanvas ? (
-              <NCanvas>
-                <React.Suspense
-                  fallback={<Loading3D isLighting position={[0, 0, 3]} />}
-                >
-                  <NinjaCanvasItems />
-                  {children}
-                </React.Suspense>
-              </NCanvas>
-            ) : (
-              <>{children}</>
-            )}
-            {/** UIレンダリング */}
-          </>
-        )}
-        {!init && !noCanvas && <Loading2D />}
-        <SystemSound />
-        <UIItems />
-      </InputControlProvider>
+      <div
+        id="Ninjaviewer"
+        style={{ width: "100%", height: "100%", position: "relative", userSelect: "none" }}
+      >
+        <NinjaWorkerProvider ThreeJSVer={ThreeJSVer}>
+          <NinjaKVSProvider>
+            <InputControlProvider>
+              {
+                /** スプラッシュスクリーン */ isSplashScreen && (
+                  <MemoSplashScreen />
+                )
+              }
+              {init && njcFile && (
+                <>
+                  {/** Canvasレンダリング */}
+                  {!noCanvas ? (
+                    <NCanvas
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        position: "absolute",
+                      }}
+                    >
+                      <React.Suspense
+                        fallback={<Loading3D isLighting position={[0, 0, 3]} />}
+                      >
+                        <NinjaCanvasItems />
+                        {children}
+                      </React.Suspense>
+                    </NCanvas>
+                  ) : (
+                    <>{children}</>
+                  )}
+                  {/** UIレンダリング */}
+                  <UIItems />
+                </>
+              )}
+              {!init && !noCanvas && <Loading2D />}
+              <SystemSound />
+            </InputControlProvider>
+          </NinjaKVSProvider>
+        </NinjaWorkerProvider>
+      </div>
     </NinjaEngineContext.Provider>
   );
 };
 
-/**
- * Canvasレンダリング
- */
 type NinjaCanvasProp = {
   children?: React.ReactNode;
 };
@@ -672,7 +701,7 @@ export const NinjaCanvas = ({ children }: NinjaCanvasProp) => (
 );
 export const NinjaCanvasItems = () => {
   return (
-    <NinjaWorkerProvider ThreeJSVer={ThreeJSVer}>
+    <>
       {/** OMのID */}
       <OMObjects />
       <StaticObjects />
@@ -695,7 +724,7 @@ export const NinjaCanvasItems = () => {
       <group>
         <SystemFrame />
       </group>
-    </NinjaWorkerProvider>
+    </>
   );
 };
 

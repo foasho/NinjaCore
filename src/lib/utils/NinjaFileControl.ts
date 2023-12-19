@@ -1,20 +1,47 @@
-import { IConfigParams, IObjectManagement, IScriptManagement, ITextureManagement, IUIManagement } from "./NinjaProps";
+import {
+  IConfigParams,
+  IObjectManagement,
+  IScriptManagement,
+  ITextureManagement,
+  IUIManagement,
+  kvsProps,
+} from "./NinjaProps";
 import { saveAs } from "file-saver";
-import { Euler, Vector3, Object3D, Mesh, Scene, LoadingManager, Quaternion } from "three";
-import { GLTFLoader, SkeletonUtils, DRACOLoader, KTX2Loader } from "three-stdlib";
-import JSZip from 'jszip';
+import {
+  Euler,
+  Vector3,
+  Object3D,
+  Mesh,
+  Scene,
+  LoadingManager,
+  Quaternion,
+} from "three";
+import {
+  GLTFLoader,
+  SkeletonUtils,
+  DRACOLoader,
+  KTX2Loader,
+} from "three-stdlib";
+import JSZip from "jszip";
 import { MeshoptDecoder } from "meshoptimizer";
 import { InitMobileConfipParams } from "./NinjaInit";
-import { GLTFExporter, GLTFExporterOptions } from "three/examples/jsm/exporters/GLTFExporter";
+import {
+  GLTFExporter,
+  GLTFExporterOptions,
+} from "three/examples/jsm/exporters/GLTFExporter";
 
 const MANAGER = new LoadingManager();
-const THREE_PATH = `https://unpkg.com/three@0.154.0`;
-export const DRACO_LOADER = new DRACOLoader( MANAGER ).setDecoderPath(`${THREE_PATH}/examples/jsm/libs/draco/gltf/` );
-export const KTX2_LOADER = new KTX2Loader( MANAGER ).setTranscoderPath( `${THREE_PATH}/examples/jsm/libs/basis/` );;
+const THREE_PATH = `https://unpkg.com/three@0.157.0`;
+export const DRACO_LOADER = new DRACOLoader(MANAGER).setDecoderPath(
+  `${THREE_PATH}/examples/jsm/libs/draco/gltf/`
+);
+export const KTX2_LOADER = new KTX2Loader(MANAGER).setTranscoderPath(
+  `${THREE_PATH}/examples/jsm/libs/basis/`
+);
 export const gltfLoader = new GLTFLoader()
-  .setCrossOrigin('anonymous')
-  .setDRACOLoader( DRACO_LOADER )
-  .setMeshoptDecoder( MeshoptDecoder );
+  .setCrossOrigin("anonymous")
+  .setDRACOLoader(DRACO_LOADER)
+  .setMeshoptDecoder(MeshoptDecoder);
 
 /**
  * データ構成を定義
@@ -37,12 +64,14 @@ export class NJCFile {
   ums: IUIManagement[];
   tms: ITextureManagement[];
   sms: IScriptManagement[];
+  kvs: kvsProps;
   constructor() {
     this.oms = [];
     this.ums = [];
     this.tms = [];
     this.sms = [];
     this.config = InitMobileConfipParams;
+    this.kvs = {};
   }
   setConfig(config: IConfigParams): void {
     this.config = config;
@@ -59,17 +88,23 @@ export class NJCFile {
   setSMs(sms: IScriptManagement[]): void {
     this.sms = sms;
   }
+  setKVS(kvs: kvsProps): void {
+    this.kvs = kvs;
+  }
   addOM(om: IObjectManagement): void {
     this.oms.push(om);
   }
-  addUM(um: IUIManagement):void {
-    this.ums.push(um)
+  addUM(um: IUIManagement): void {
+    this.ums.push(um);
   }
-  addTM(tm: ITextureManagement):void {
-    this.tms.push(tm)
+  addTM(tm: ITextureManagement): void {
+    this.tms.push(tm);
   }
-  addSM(sm: IScriptManagement):void {  
-    this.sms.push(sm)
+  addSM(sm: IScriptManagement): void {
+    this.sms.push(sm);
+  }
+  addKV(key: string, value: any): void {
+    this.kvs[key] = value;
   }
 }
 
@@ -82,7 +117,7 @@ export const saveNJCFile = async (njcFile: NJCFile, fileName: string) => {
   // ZIPファイルを保存
   saveAs(zipData, fileName);
   return zipData;
-}
+};
 
 /**
  * NJC出力ファイルをBlob変換
@@ -91,7 +126,7 @@ export const saveNJCBlob = async (njcFile: NJCFile): Promise<Blob> => {
   const zip = new JSZip();
 
   // objectsディレクトリを作成
-  const objectsDir = zip.folder('objects');
+  const objectsDir = zip.folder("objects");
 
   // GLBモデルをobjectsディレクトリに追加
   const exportOMs: IObjectManagement[] = [];
@@ -111,22 +146,22 @@ export const saveNJCBlob = async (njcFile: NJCFile): Promise<Blob> => {
   })();
 
   // JSONファイルを追加
-  zip.file('config.json', JSON.stringify(njcFile.config));
-  zip.file('ums.json', JSON.stringify(njcFile.ums));
-  zip.file('tms.json', JSON.stringify(njcFile.tms));
+  zip.file("config.json", JSON.stringify(njcFile.config));
+  zip.file("ums.json", JSON.stringify(njcFile.ums));
+  zip.file("tms.json", JSON.stringify(njcFile.tms));
   // zip.file('addons.json', JSON.stringify({})); // Addonは未対応
-  zip.file('sms.json', JSON.stringify(njcFile.sms));
-  zip.file('oms.json', JSON.stringify(njcFile.oms));
+  zip.file("sms.json", JSON.stringify(njcFile.sms));
+  zip.file("oms.json", JSON.stringify(njcFile.oms));
 
   // ZIPファイルを生成
-  const zipData = await zip.generateAsync({ type: 'blob' });
+  const zipData = await zip.generateAsync({ type: "blob" });
   return zipData;
-}
+};
 
 /**
  * NJCファイルを読み込む
- * @param file 
- * @returns 
+ * @param file
+ * @returns
  */
 export const loadNJCFile = async (
   file: File,
@@ -138,15 +173,17 @@ export const loadNJCFile = async (
   // ZIPファイルを読み込み
   const loadedZip = await zip.loadAsync(file);
   if (!loadedZip) {
-    throw new Error('ZIPファイルの読み込みに失敗しました');
+    throw new Error("ZIPファイルの読み込みに失敗しました");
   }
 
   // JSONファイルを抽出
-  const configJson = JSON.parse(await loadedZip.file('config.json')!.async('text'));
-  const umsJson = JSON.parse(await loadedZip.file('ums.json')!.async('text'));
-  const tmsJson = JSON.parse(await loadedZip.file('tms.json')!.async('text'));
-  const smsJson = JSON.parse(await loadedZip.file('sms.json')!.async('text'));
-  const omsJson = JSON.parse(await loadedZip.file('oms.json')!.async('text'));
+  const configJson = JSON.parse(
+    await loadedZip.file("config.json")!.async("text")
+  );
+  const umsJson = JSON.parse(await loadedZip.file("ums.json")!.async("text"));
+  const tmsJson = JSON.parse(await loadedZip.file("tms.json")!.async("text"));
+  const smsJson = JSON.parse(await loadedZip.file("sms.json")!.async("text"));
+  const omsJson = JSON.parse(await loadedZip.file("oms.json")!.async("text"));
 
   // NJCFileを生成
   const njcFile = new NJCFile();
@@ -160,38 +197,38 @@ export const loadNJCFile = async (
   // 4. smsを設定
   njcFile.setSMs(smsJson);
   // 5. omとGLBモデルを読み込み
-  const objectsDir = loadedZip.folder('objects');
+  const objectsDir = loadedZip.folder("objects");
   if (objectsDir) {
     for (const om of omsJson) {
       const glbFile = objectsDir.file(`${om.id}.glb`);
       if (glbFile) {
         // om.args.urlにGLBモデルのURLを設定
-        om.args.url = URL.createObjectURL(await glbFile.async('blob'));
+        om.args.url = URL.createObjectURL(await glbFile.async("blob"));
       }
       // Position,Rotation,Scale同期
-      if (om.args && om.args.position){
+      if (om.args && om.args.position) {
         om.args.position = new Vector3(
-          om.args.position.x, 
-          om.args.position.y, 
+          om.args.position.x,
+          om.args.position.y,
           om.args.position.z
         );
       }
       if (om.args && om.args.rotation) {
         om.args.rotation = new Euler(
-          om.args.rotation._x, 
-          om.args.rotation._y, 
-          om.args.rotation._z, 
+          om.args.rotation._x,
+          om.args.rotation._y,
+          om.args.rotation._z,
           om.args.rotation._order
         );
       }
-      if (om.args && om.args.scale){
+      if (om.args && om.args.scale) {
         om.args.scale = new Vector3(
-          om.args.scale.x, 
-          om.args.scale.y, 
+          om.args.scale.x,
+          om.args.scale.y,
           om.args.scale.z
         );
       }
-      if (om.args && om.args.quaternion){
+      if (om.args && om.args.quaternion) {
         om.args.quaternion = new Quaternion(
           om.args.quaternion._x,
           om.args.quaternion._y,
@@ -199,28 +236,36 @@ export const loadNJCFile = async (
           om.args.quaternion._w
         );
       }
-      if (om.args && om.args.cameraDirection){
+      if (om.args && om.args.cameraDirection) {
         om.args.cameraDirection = new Vector3(
           om.args.cameraDirection.x,
           om.args.cameraDirection.y,
           om.args.cameraDirection.z
         );
       }
-      if (om.args && om.args.offset){
+      if (om.args && om.args.offset) {
         om.args.offset = new Vector3(
           om.args.offset.x,
           om.args.offset.y,
           om.args.offset.z
         );
       }
-      if (om.args && om.args.offsetParams){
-        if (om.args.offsetParams.tp){
-          om.args.offsetParams.tp.offset = new Vector3().copy( om.args.offsetParams.tp.offset);
-          om.args.offsetParams.tp.lookAt = new Vector3().copy( om.args.offsetParams.tp.lookAt);
+      if (om.args && om.args.offsetParams) {
+        if (om.args.offsetParams.tp) {
+          om.args.offsetParams.tp.offset = new Vector3().copy(
+            om.args.offsetParams.tp.offset
+          );
+          om.args.offsetParams.tp.lookAt = new Vector3().copy(
+            om.args.offsetParams.tp.lookAt
+          );
         }
-        if (om.args.offsetParams.fp){
-          om.args.offsetParams.fp.offset = new Vector3().copy( om.args.offsetParams.fp.offset);
-          om.args.offsetParams.fp.lookAt = new Vector3().copy( om.args.offsetParams.fp.lookAt);
+        if (om.args.offsetParams.fp) {
+          om.args.offsetParams.fp.offset = new Vector3().copy(
+            om.args.offsetParams.fp.offset
+          );
+          om.args.offsetParams.fp.lookAt = new Vector3().copy(
+            om.args.offsetParams.fp.lookAt
+          );
         }
       }
       njcFile.addOM(om);
@@ -228,12 +273,12 @@ export const loadNJCFile = async (
   }
 
   return njcFile;
-}
+};
 
 /**
  * NJCファイルPathから読み込む
  * @param file Path
- * @returns 
+ * @returns
  */
 export const loadNJCFileFromURL = async (
   url: string,
@@ -241,13 +286,11 @@ export const loadNJCFileFromURL = async (
 ): Promise<NJCFile> => {
   const response = await fetch(url);
   const blob = await response.blob();
-  const file = new File(
-    [blob], 
-    "file.njc", 
-    { type: 'application/octet-stream' }
-  );
+  const file = new File([blob], "file.njc", {
+    type: "application/octet-stream",
+  });
   return await loadNJCFile(file, onProgress);
-}
+};
 
 async function loadGLTFFromData(
   data: ArrayBuffer,
@@ -255,13 +298,13 @@ async function loadGLTFFromData(
   totalSize?: number
 ): Promise<Object3D> {
   return new Promise<Object3D>((resolve, reject) => {
-    const blob = new Blob([data], { type: 'application/octet-stream' });
+    const blob = new Blob([data], { type: "application/octet-stream" });
     const url = URL.createObjectURL(blob);
 
     gltfLoader.load(
       url,
       (gltf) => {
-        const scene = gltf.scene || gltf.scenes[0] as Object3D;
+        const scene = gltf.scene || (gltf.scenes[0] as Object3D);
         scene.animations = gltf.animations; // アニメーションをセット
         resolve(scene);
         URL.revokeObjectURL(url);
@@ -285,7 +328,7 @@ export const loadGLTF = async (url: string): Promise<Object3D> => {
     gltfLoader.load(
       url,
       (gltf) => {
-        const scene = gltf.scene || gltf.scenes[0] as Object3D;
+        const scene = gltf.scene || (gltf.scenes[0] as Object3D);
         scene.animations = gltf.animations; // アニメーションをセット
         resolve(scene);
       },
@@ -299,7 +342,9 @@ export const loadGLTF = async (url: string): Promise<Object3D> => {
   });
 };
 
-export const exportGLTF = async (scene: Scene|Object3D): Promise<ArrayBuffer> => {
+export const exportGLTF = async (
+  scene: Scene | Object3D
+): Promise<ArrayBuffer> => {
   return new Promise<ArrayBuffer>((resolve, reject) => {
     const exporter = new GLTFExporter();
 
@@ -307,7 +352,7 @@ export const exportGLTF = async (scene: Scene|Object3D): Promise<ArrayBuffer> =>
       binary: true,
       animations: scene.animations,
       includeCustomExtensions: true,
-      maxTextureSize: 4096
+      maxTextureSize: 4096,
     };
 
     exporter.parse(
@@ -316,7 +361,7 @@ export const exportGLTF = async (scene: Scene|Object3D): Promise<ArrayBuffer> =>
         if (gltfData instanceof ArrayBuffer) {
           resolve(gltfData);
         } else {
-          reject(new Error('GLTFExporter returned a non-binary result.'));
+          reject(new Error("GLTFExporter returned a non-binary result."));
         }
       },
       (error) => {
@@ -325,15 +370,16 @@ export const exportGLTF = async (scene: Scene|Object3D): Promise<ArrayBuffer> =>
       options
     );
   });
-}
-
+};
 
 /**
  * SceneをArrayBufferに変更
- * @param scene 
- * @returns 
+ * @param scene
+ * @returns
  */
-export const convertObjectToArrayBuffer = async (scene: Scene): Promise<ArrayBuffer> => {
+export const convertObjectToArrayBuffer = async (
+  scene: Scene
+): Promise<ArrayBuffer> => {
   return new Promise((resolve) => {
     var exporter = new GLTFExporter();
     const options: GLTFExporterOptions = {
@@ -347,8 +393,7 @@ export const convertObjectToArrayBuffer = async (scene: Scene): Promise<ArrayBuf
       (result) => {
         if (result instanceof ArrayBuffer) {
           return result;
-        }
-        else {
+        } else {
           const output = JSON.stringify(result, null, 2);
           return saveString(output);
         }
@@ -357,10 +402,10 @@ export const convertObjectToArrayBuffer = async (scene: Scene): Promise<ArrayBuf
         console.log("error");
         console.log(error);
       },
-      options,
-      );
+      options
+    );
   });
-}
+};
 
 /**
  * 特定のObjectをBlobに変換する
@@ -372,21 +417,20 @@ export const convertObjectToBlob = async (object: Object3D): Promise<Blob> => {
       binary: true,
       animations: object.animations,
       includeCustomExtensions: true,
-      maxTextureSize: 4096
+      maxTextureSize: 4096,
     };
 
     // ユーザーデータは事前につけるため削除
     // if (userData){
     //   object.userData = userData;
     // }
-    
+
     exporter.parse(
       object,
       (result) => {
         if (result instanceof ArrayBuffer) {
           return resolve(saveArrayBuffer(result));
-        }
-        else {
+        } else {
           const output = JSON.stringify(result, null, 2);
           return resolve(saveString(output));
         }
@@ -396,22 +440,22 @@ export const convertObjectToBlob = async (object: Object3D): Promise<Blob> => {
         console.log(error);
       },
       options
-      );
+    );
   });
-}
+};
 
 const saveString = (text: string): Blob => {
-  return new Blob([text], { type: 'text/plain' });
-}
+  return new Blob([text], { type: "text/plain" });
+};
 const saveArrayBuffer = (buffer: ArrayBuffer): Blob => {
   return new Blob([buffer], { type: "application/octet-stream" });
-}
+};
 
 /**
  * 特定のObjectをFileに変換する
  */
 export const convertObjectToFile = (
-  object: Object3D, 
+  object: Object3D,
   fileName = "model.glb"
 ): Promise<File> => {
   return new Promise((resolve) => {
@@ -420,7 +464,7 @@ export const convertObjectToFile = (
       binary: true,
       animations: object.animations,
       includeCustomExtensions: true,
-      maxTextureSize: 4096
+      maxTextureSize: 4096,
     };
 
     // if (userData) {
@@ -454,4 +498,4 @@ export const convertObjectToFile = (
       options
     );
   });
-}
+};

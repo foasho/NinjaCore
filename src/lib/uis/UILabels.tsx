@@ -19,15 +19,33 @@ export const UILabels = () => {
 
 const UILabel = ({ um }: { um: IUIManagement }) => {
   const styles = um.styles ? convertCssProperties(um.styles) : {};
-  const text = um.args.text ? um.args.text : "";
+  const positionMergedStyles: React.CSSProperties = {
+    ...styles,
+    position: "absolute",
+    zIndex: 10,
+    top: `${um.position.y}%`,
+    left: `${um.position.x}%`,
+    translate: "transform(-50%, -50%)",
+  };
   return (
     <>
       {um.args.href ? (
-        <a id={um.id} href={um.args.href} style={styles}>
-          {text}
+        <a
+          id={um.id}
+          href={um.args.href}
+          style={positionMergedStyles}
+          className={um.args.className || ""}
+        >
+          {um.args.text || ""}
         </a>
       ) : (
-        <span id={um.id}>{text}</span>
+        <span
+          id={um.id}
+          style={positionMergedStyles}
+          className={um.args.className || ""}
+        >
+          {um.args.text || ""}
+        </span>
       )}
     </>
   );

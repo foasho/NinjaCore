@@ -6,3 +6,4 @@ export { StaticObjects } from "./OMStaticObjects";
 export { ColliderField } from "./Colliders";
 export { OMAudios } from "./Audios";
 export { AiNPCs } from "./AiNPCs";
+export { MultiPlayer } from "./MultiPlayer";

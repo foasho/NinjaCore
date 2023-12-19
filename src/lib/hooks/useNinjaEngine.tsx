@@ -10,7 +10,6 @@ import {
   NonColliderTunnel,
   NJCFile,
   loadNJCFileFromURL,
-  MoveableColliderTunnel,
   ConvPos,
 } from "../utils";
 import { MdMusicNote, MdMusicOff } from "react-icons/md";
@@ -38,6 +37,7 @@ import {
   StaticObjects,
   OMAudios,
   AiNPCs,
+  MultiPlayer,
 } from "../canvas-items";
 import { NinjaWorkerProvider, useNinjaWorker } from "./useNinjaWorker";
 import { MemoSplashScreen } from "../commons";
@@ -92,6 +92,7 @@ type NinjaEngineProp = {
   status: ENinjaStatus;
   isPhysics: boolean;
   player: React.MutableRefObject<Mesh | null>;
+  playerIsOnGround: React.MutableRefObject<boolean>;
   curPosition: React.MutableRefObject<Vector3>;
   updateCurPosition: (pos: Vector3) => void;
   curMessage: React.MutableRefObject<string>;
@@ -123,6 +124,7 @@ export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
   status: ENinjaStatus.Pause,
   isPhysics: true,
   player: React.createRef<Mesh>(),
+  playerIsOnGround: React.createRef<boolean>(),
   curPosition: React.createRef<Vector3>(),
   updateCurPosition: (pos: Vector3) => {},
   curMessage: React.createRef<string>(),
@@ -229,6 +231,7 @@ export const NinjaGL = ({
   const [sms, setSMs] = React.useState<IScriptManagement[]>([]);
   // Player情報
   const player = React.useRef<Mesh>(null);
+  const playerIsOnGround = useRef(false);
   const curPosition = React.useRef<Vector3>(new Vector3(0, 0, 0));
   const curMessage = React.useRef<string>("");
   // 物理世界
@@ -265,14 +268,22 @@ export const NinjaGL = ({
       }
       setInit(true);
     }
-    document.addEventListener('contextmenu', function(event) {
-      event.preventDefault();
-    }, false);
-    return () => {
-      document.removeEventListener('contextmenu', function(event) {
+    document.addEventListener(
+      "contextmenu",
+      function (event) {
         event.preventDefault();
-      }, false);
-    }
+      },
+      false
+    );
+    return () => {
+      document.removeEventListener(
+        "contextmenu",
+        function (event) {
+          event.preventDefault();
+        },
+        false
+      );
+    };
   }, [njcFile, njc, njcPath]);
 
   React.useEffect(() => {
@@ -620,6 +631,7 @@ export const NinjaGL = ({
         isPhysics: config.physics,
         input,
         player,
+        playerIsOnGround,
         curPosition,
         updateCurPosition,
         curMessage,
@@ -648,7 +660,12 @@ export const NinjaGL = ({
     >
       <div
         id="Ninjaviewer"
-        style={{ width: "100%", height: "100%", position: "relative", userSelect: "none" }}
+        style={{
+          width: "100%",
+          height: "100%",
+          position: "relative",
+          userSelect: "none",
+        }}
       >
         <NinjaWorkerProvider ThreeJSVer={ThreeJSVer}>
           <NinjaKVSProvider>
@@ -715,6 +732,8 @@ export const NinjaCanvasItems = () => {
       <OMEnvirments />
       {/** カメラ */}
       <Cameras />
+      {/** MultiPlayer */}
+      <MultiPlayer />
       {/** ColliderField & Player */}
       <ColliderField />
       {/** Moveable */}

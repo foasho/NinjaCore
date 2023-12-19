@@ -67,6 +67,7 @@ export const PlayerControl = ({
     bvhCollider: collider,
     moveGrp,
     getOMById,
+    playerIsOnGround,
   } = useNinjaEngine();
   const { input } = useMultiInputControl();
   const orbitTouchMove = useRef<{ flag: boolean; angleAxis: [number, number] }>(
@@ -84,7 +85,6 @@ export const PlayerControl = ({
   const p = useRef<Mesh>(null);
   const controls = useRef<OrbitControlsImpl>(null);
   // --- ジャンプ/物理判定に関連する変数 ---
-  const playerIsOnGround = useRef(false);
   const playerVelocity = useRef(new Vector3(0, 0, 0));
   const tempBox = new Box3();
   const tempVector = new Vector3();

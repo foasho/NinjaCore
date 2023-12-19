@@ -9,7 +9,7 @@ const port = 5174;
 
 app.get('/api/skyway/token', async (req, res) => {
   const response = await SkywayTokenApi();
-  res.send(response.data);
+  res.send(response);
 });
 
 app.post('/api/npc/conversations', async (req, res) => {

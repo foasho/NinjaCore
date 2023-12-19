@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Html, useHelper } from "@react-three/drei";
+import { Html, useGLTF, useHelper } from "@react-three/drei";
 import { useWebRTC } from "../../hooks";
 import { useFrame } from "@react-three/fiber";
 import {
@@ -27,6 +27,8 @@ export const Others = () => {
     return membersData.filter((data) => data.id !== me?.id);
   }, [updateCnt, membersData, me]);
 
+  console.log("othersData", othersData);
+
   return (
     <>
       {othersData.map((data) => {
@@ -38,54 +40,32 @@ export const Others = () => {
 
 interface IOtherPlayer {
   id: string;
+  url?: string;
 }
-const OtherPlayer = ({ id }: IOtherPlayer) => {
-  const otherRef = useRef<Mesh>(null);
+const OtherPlayer = ({ id, url="/models/ybot.glb" }: IOtherPlayer) => {
+  const otherRef = useRef<Group>(null);
   const messageRef = useRef<any>(null);
-  const { getMemberData, activeDistance, curPosition } = useWebRTC();
-  const [objUrl, setObjUrl] = useState<string>("/models/ybot.glb");
+  const { getMemberData } = useWebRTC();
+  const [objUrl, setObjUrl] = useState<string>(url);
+  const { scene, animations } = useGLTF(objUrl);
   const nowChange = useRef<boolean>(false);
-  const [scene, setScene] = useState<Group | null>(null);
   const [clone, setClone] = useState<Object3D | null>(null);
-  const [animations, setAnimations] = useState<AnimationClip[]>([]);
-  const [mixer, setMixer] = useState<AnimationMixer | null>(null);
   const [message, setMessage] = useState<string>("");
-  const [actions, setActions] = useState<{ [key: string]: AnimationAction }>(
-    {}
-  ); // アニメーションの再生用
 
   useEffect(() => {
-    const gltfSet = async (objUrl: string) => {
-      const gltf = await loadGLTF(objUrl);
-      if (gltf) {
-        setScene(gltf as Group);
-      }
-    };
-    // objUrlが変更されたら、アニメーションを更新
-    if (objUrl) {
-      gltfSet(objUrl);
-    }
-  }, [objUrl]);
-
-  useEffect(() => {
-    if (scene) {
-      // cloneを作成
+    if (scene){
+      nowChange.current = true;
       const clone = SkeletonUtils.clone(scene);
-      // animationsもコピー
       clone.animations = animations;
       clone.traverse((node) => {
         if (node instanceof Mesh) {
           node.castShadow = true;
         }
       });
-      clone.traverse((node) => {
-        if (node instanceof Mesh) {
-          node.receiveShadow = true;
-        }
-      });
       setClone(clone);
+      nowChange.current = false;
     }
-  }, [scene]);
+  }, [objUrl, scene]);
 
   useFrame(() => {
     const pdata = getMemberData(id);
@@ -102,7 +82,6 @@ const OtherPlayer = ({ id }: IOtherPlayer) => {
         );
       }
       if (pdata.objectURL && objUrl !== pdata.objectURL && !nowChange.current) {
-        nowChange.current = true;
         // objUrlが変更されたら、アニメーションを更新
         setObjUrl(pdata.objectURL);
       }
@@ -134,12 +113,16 @@ const OtherPlayer = ({ id }: IOtherPlayer) => {
     <>
       <DisntanceVisible>
         {clone ? (
-          <PlayerAnimationHelper id={id} object={clone} />
+          <group ref={otherRef}>
+            <PlayerAnimationHelper id={id} object={clone} />
+          </group>
         ) : (
-          <mesh ref={otherRef}>
-            <boxGeometry args={[1, 1, 1]} />
-            <meshStandardMaterial color={"#00FF00"} />
-          </mesh>
+          <group ref={otherRef}>
+            <mesh>
+              <boxGeometry args={[1, 1, 1]} />
+              <meshStandardMaterial color={"#00FF00"} />
+            </mesh>
+          </group>
         )}
       </DisntanceVisible>
       {message && message.length > 0 && (

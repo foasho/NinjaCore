@@ -54,6 +54,7 @@ export interface IPublishData {
   callingRoomId?: string | null; // 電話をかけている人のRoomID
   thumbnailImgURL?: string;
   callStatus?: number;
+  playerIsOnGround?: boolean; // プレイヤーが地面にいるかどうか
 }
 
 export interface IUseSkywayProps {
@@ -78,7 +79,6 @@ export interface IUseSkywayProps {
  */
 export const useSkyway = (props: IUseSkywayProps) => {
   const [updateCnt, setUpdateCnt] = useState<string>("");
-  const _enabled = props.enabled ? props.enabled : false;
   const me = useRef<LocalP2PRoomMember | null>(null);
   const members = useRef<RoomMember[]>([]);
   const membersData = useRef<IPublishData[]>([]);
@@ -181,7 +181,6 @@ export const useSkyway = (props: IUseSkywayProps) => {
     // Enableがtrueの場合に自動で、Skywayに接続する
     if (
       typeof window !== "undefined" &&
-      _enabled &&
       (!roomRef.current || roomName.current !== props.roomName)
     ) {
       if (!roomRef.current && !me.current) {
@@ -320,7 +319,6 @@ export const useSkyway = (props: IUseSkywayProps) => {
     }
     // メンバーのデータを更新する
     if (me.current) {
-      console.log("callingRoomId.current: ", callingRoomId.current);
       if (
         // 自分が通話のない状態で、
         // 自分当ての電話の呼び出しあれば呼び出し中にする

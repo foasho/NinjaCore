@@ -16,4 +16,5 @@ export {
 export { playTextToSpeech } from "./useTextToSpeech";
 export { useWebRTC, WebRTCProvider } from "./useWebRTC";
 export { useSkyway } from "./useSkyway";
+export type { IPublishData } from "./useSkyway";
 export { useNinjaKVS, NinjaKVSProvider } from "./useKVS";

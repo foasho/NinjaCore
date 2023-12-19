@@ -2,6 +2,7 @@ import React from "react";
 import { useNinjaEngine, useNinjaWorker } from "../hooks";
 import { IUIManagement } from "../utils";
 import { convertCssProperties } from "../utils/Styling";
+import { NinjaIcon } from "./NinjaIcons";
 
 export const UIButtons = () => {
   const { ums } = useNinjaEngine();
@@ -53,7 +54,9 @@ const UIButton = ({ um }: { um: IUIManagement }) => {
         }
       }}
     >
+      {um.startIcon && <NinjaIcon type={um.startIcon} color={positionMergedStyles.color} />}
       {text}
+      {um.endIcon && <NinjaIcon type={um.endIcon} color={positionMergedStyles.color} />}
     </button>
   );
 };

@@ -19,7 +19,6 @@ import {
 import { MeshoptDecoder } from "meshoptimizer";
 import { GLTFLoader, GLTF } from "three-stdlib";
 import { SimplifyModifier } from "three-stdlib";
-import { IObjectManagement } from "./NinjaProps";
 
 
 /**

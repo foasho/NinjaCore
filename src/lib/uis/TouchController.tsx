@@ -1,5 +1,9 @@
 import React from "react";
 
-export const TouchController = () => {
+export const TouchController = ({
+  type = "fixed",
+}: {
+  type?: "mutable" | "fixed";
+}) => {
   return <></>;
 };

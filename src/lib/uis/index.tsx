@@ -1,4 +1,4 @@
-export { NinjaIcons } from "./NinjaIcons";
+export { NinjaIcon, getNinjaIconTypes } from "./NinjaIcons";
 export { UIItems } from "./UIItems";
 export { NinjaLoader } from "./NinjaLoader";
 export { TouchController } from "./TouchController";

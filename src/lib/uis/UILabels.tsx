@@ -2,6 +2,7 @@ import React from "react";
 import { IUIManagement } from "../utils";
 import { useNinjaEngine } from "../hooks";
 import { convertCssProperties } from "../utils/Styling";
+import { NinjaIcon } from "./NinjaIcons";
 
 export const UILabels = () => {
   const { ums } = useNinjaEngine();
@@ -36,7 +37,13 @@ const UILabel = ({ um }: { um: IUIManagement }) => {
           style={positionMergedStyles}
           className={um.args.className || ""}
         >
+          {um.startIcon && (
+            <NinjaIcon type={um.startIcon} color={positionMergedStyles.color} />
+          )}
           {um.args.text || ""}
+          {um.endIcon && (
+            <NinjaIcon type={um.endIcon} color={positionMergedStyles.color} />
+          )}
         </a>
       ) : (
         <span
@@ -44,7 +51,13 @@ const UILabel = ({ um }: { um: IUIManagement }) => {
           style={positionMergedStyles}
           className={um.args.className || ""}
         >
+          {um.startIcon && (
+            <NinjaIcon type={um.startIcon} color={positionMergedStyles.color} />
+          )}
           {um.args.text || ""}
+          {um.endIcon && (
+            <NinjaIcon type={um.endIcon} color={positionMergedStyles.color} />
+          )}
         </span>
       )}
     </>

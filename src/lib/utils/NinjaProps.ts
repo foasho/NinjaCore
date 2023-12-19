@@ -6,6 +6,7 @@ import {
   Audio,
   Vector3,
 } from "three";
+import { NinjaIconType } from "../uis/NinjaIcons";
 
 /**
  * NinjaGLの基本パラメータ
@@ -87,6 +88,8 @@ export interface IUIManagement {
   styles?: string;
   args?: any;
   visible: boolean;
+  startIcon?: NinjaIconType;
+  endIcon?: NinjaIconType;
 }
 
 /**

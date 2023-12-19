@@ -66,6 +66,7 @@ export const PlayerControl = ({
     boundsTree,
     bvhCollider: collider,
     moveGrp,
+    shareGrp,
     getOMById,
     playerIsOnGround,
   } = useNinjaEngine();
@@ -308,8 +309,9 @@ export const PlayerControl = ({
        * Step1. 入力データから移動方向ベクトルを計算
        * Step2. 衝突検出からの方向ベクトルで位置を調整
        * Step3. 動作オブジェクト(moveable)との衝突検出からの方向ベクトルで位置を調整
-       * Step4. 衝突微調整を加算
-       * Step5. オブジェクト/カメラの位置を同期
+       * Step4. シェアオブジェクト(share)との衝突検出からの方向ベクトルで位置を調整
+       * Step5. 衝突微調整を加算
+       * Step6. オブジェクト/カメラの位置を同期
        */
       if (playerIsOnGround.current) {
         playerVelocity.current.y = delta * gravity;
@@ -436,6 +438,41 @@ export const PlayerControl = ({
           }
         }
       }
+
+      /**
+       * @step4 シェアオブジェクト(share)との衝突検出を行い、同様にその方向に移動量を調整
+       */
+      if (shareGrp.current && capsuleInfo.current && p.current) {
+        // First Intersect Only
+        for (const object of shareGrp.current.children) {
+          if (object.userData.phyType == "box") {
+            collided = getBoxCapsuleCollision(object as Mesh, player.current);
+            const {
+              intersect,
+              distance,
+              castDirection,
+              recieveDirection,
+              point,
+            } = collided;
+            if (intersect) {
+              // 衝突していれば、player.current.hitsに衝突したオブジェクトを追加
+              player.current.userData.hits.push(object.userData.shareId);
+              if (p.current) p.current.position.copy(point);
+              const depth =
+                Math.abs(castDirection.y) > 0
+                  ? height - capsuleInfo.current.radius - distance
+                  : capsuleInfo.current.radius - distance;
+              if (depth > 0) {
+                const movement = castDirection.addScalar(depth);
+                tempSegment.start.addScaledVector(movement, depth);
+                tempSegment.end.addScaledVector(movement, depth);
+                break;
+              }
+            }
+          }
+        }
+      }
+
       if (!collided.intersect) {
         // 衝突していなければ、player.current.hitsを初期化
         if (player.current.userData.hits) {
@@ -444,7 +481,7 @@ export const PlayerControl = ({
       }
 
       /**
-       * @step4 衝突微調整を加算
+       * @step5 衝突微調整を加算
        */
       const newPosition = tempVector;
       newPosition
@@ -463,7 +500,7 @@ export const PlayerControl = ({
       player.current.position.add(deltaVector);
 
       /**
-       * @step5 オブジェクト/カメラの位置を同期
+       * @step6 オブジェクト/カメラの位置を同期
        */
       // Player(Capsule)とObjectの位置を同期
       if (object.current) {

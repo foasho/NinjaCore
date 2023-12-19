@@ -2,6 +2,7 @@ import React from "react";
 import { useNinjaEngine } from "../../hooks";
 import { MoveCollider } from "./MoveCollider";
 import { useFrame } from "@react-three/fiber";
+import { MultiPlayerColliderTunnel } from "../../utils";
 
 export const Moveable = () => {
   const { moveGrp: grp, oms, updateCollisions } = useNinjaEngine();
@@ -17,10 +18,12 @@ export const Moveable = () => {
   });
 
   return (
-    <group ref={grp}>
-      {moveables.map((om) => (
-        <MoveCollider om={om} key={`${om.id}-moveable`} />
-      ))}
-    </group>
+    <>
+      <group ref={grp}>
+        {moveables.map((om) => (
+          <MoveCollider om={om} key={`${om.id}-moveable`} />
+        ))}
+      </group>
+    </>
   );
 };

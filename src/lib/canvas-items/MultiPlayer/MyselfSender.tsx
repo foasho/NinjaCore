@@ -22,7 +22,7 @@ export const MyselfSender = () => {
         position: player.current.position,
         rotation: player.current.rotation,
         objectURL: player.current.userData.url,
-        input: input,
+        input: { ...input, pressedKeys: [] }, // セキュリティのため、押されたキーは送信しない
         id: player.current.userData.omId,
         username: player.current.userData.username,
         message: curMessage.current,

@@ -1,23 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Html, useGLTF, useHelper } from "@react-three/drei";
-import { useWebRTC } from "../../hooks";
+import { Html, useGLTF } from "@react-three/drei";
+import { playTextToSpeech, useWebRTC } from "../../hooks";
 import { useFrame } from "@react-three/fiber";
-import {
-  AnimationAction,
-  Group,
-  Mesh,
-  LoadingManager,
-  AnimationClip,
-  AnimationMixer,
-  Quaternion,
-  Vector3,
-  BoxHelper,
-  Object3D,
-} from "three";
-import { IInputMovement, loadGLTF } from "../../utils";
+import { Group, Mesh, Quaternion, Vector3, Object3D } from "three";
 import { SkeletonUtils } from "three-stdlib";
 import { PlayerAnimationHelper } from "../../commons/PlayerAnimationHelper";
 import { DisntanceVisible } from "../../helpers";
+import { MultiPlayerColliderTunnel } from "../../utils";
 
 export interface IOthersProps {}
 
@@ -26,8 +15,6 @@ export const Others = () => {
   const othersData = useMemo(() => {
     return membersData.filter((data) => data.id !== me?.id);
   }, [updateCnt, membersData, me]);
-
-  console.log("othersData", othersData);
 
   return (
     <>
@@ -42,9 +29,10 @@ interface IOtherPlayer {
   id: string;
   url?: string;
 }
-const OtherPlayer = ({ id, url="/models/ybot.glb" }: IOtherPlayer) => {
+const OtherPlayer = ({ id, url = "/models/ybot.glb" }: IOtherPlayer) => {
   const otherRef = useRef<Group>(null);
   const messageRef = useRef<any>(null);
+  const moveableCollisionRef = useRef<Mesh>(null);
   const { getMemberData } = useWebRTC();
   const [objUrl, setObjUrl] = useState<string>(url);
   const { scene, animations } = useGLTF(objUrl);
@@ -53,7 +41,7 @@ const OtherPlayer = ({ id, url="/models/ybot.glb" }: IOtherPlayer) => {
   const [message, setMessage] = useState<string>("");
 
   useEffect(() => {
-    if (scene){
+    if (scene) {
       nowChange.current = true;
       const clone = SkeletonUtils.clone(scene);
       clone.animations = animations;
@@ -66,6 +54,12 @@ const OtherPlayer = ({ id, url="/models/ybot.glb" }: IOtherPlayer) => {
       nowChange.current = false;
     }
   }, [objUrl, scene]);
+
+  useEffect(() => {
+    if (message.length > 0) {
+      playTextToSpeech({ text: message });
+    }
+  }, [message]);
 
   useFrame(() => {
     const pdata = getMemberData(id);
@@ -80,6 +74,13 @@ const OtherPlayer = ({ id, url="/models/ybot.glb" }: IOtherPlayer) => {
           new Quaternion().setFromEuler(rotation),
           0.2
         );
+        // moveableCollisionの位置/回転情報更新
+        if (moveableCollisionRef.current) {
+          moveableCollisionRef.current.position.copy(position.clone());
+          moveableCollisionRef.current.quaternion.copy(
+            new Quaternion().setFromEuler(rotation)
+          );
+        }
       }
       if (pdata.objectURL && objUrl !== pdata.objectURL && !nowChange.current) {
         // objUrlが変更されたら、アニメーションを更新
@@ -148,6 +149,15 @@ const OtherPlayer = ({ id, url="/models/ybot.glb" }: IOtherPlayer) => {
           </mesh>
         </DisntanceVisible>
       )}
+      <MultiPlayerColliderTunnel.In>
+        <mesh
+          ref={moveableCollisionRef}
+          visible={false}
+          userData={{ shareId: id, phyType: "box" }}
+        >
+          <boxGeometry args={[1, 1, 1]} />
+        </mesh>
+      </MultiPlayerColliderTunnel.In>
     </>
   );
 };

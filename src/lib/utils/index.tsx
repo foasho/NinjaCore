@@ -38,5 +38,5 @@ export {
   NonColliderTunnel,
   ColliderTunnel,
   MoveableColliderTunnel,
-  MultiPlayerTunnel
+  MultiPlayerColliderTunnel
 } from "./tunnel";

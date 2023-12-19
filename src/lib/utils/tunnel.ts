@@ -11,7 +11,7 @@ export const MoveableColliderTunnel = tunnel();
 export const NonColliderTunnel = tunnel();
 
 // MultiPlayer内オブジェクト
-export const MultiPlayerTunnel = tunnel();
+export const MultiPlayerColliderTunnel = tunnel();
 
 // UI用のオブジェクト
 export const NinjaUITunnel = tunnel();

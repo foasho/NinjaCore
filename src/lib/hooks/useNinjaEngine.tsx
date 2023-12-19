@@ -101,6 +101,7 @@ type NinjaEngineProp = {
   bvhGrp: React.MutableRefObject<Group | null>;
   bvhCollider: React.MutableRefObject<Mesh | null>;
   moveGrp: React.MutableRefObject<Group | null>;
+  shareGrp: React.MutableRefObject<Group | null>;
   boundsTree: React.MutableRefObject<MeshBVH | null>;
   updateCollisions: (daltaTime: number) => void;
   input: IInputMovement;
@@ -133,6 +134,7 @@ export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
   bvhGrp: React.createRef<Group>(),
   bvhCollider: React.createRef<Mesh>(),
   moveGrp: React.createRef<Group>(),
+  shareGrp: React.createRef<Group>(),
   boundsTree: React.createRef<Object3D>(),
   updateCollisions: (daltaTime: number) => {},
   input: {
@@ -238,6 +240,7 @@ export const NinjaGL = ({
   const bvhGrp = React.useRef<Group>(null); // BVH用コライダー
   const bvhCollider = React.useRef<Mesh>(null); // BVH用コライダー
   const moveGrp = React.useRef<Group>(null); // 移動用コライダー
+  const shareGrp = React.useRef<Group>(null); // MultiPlayer共有用コライダー
   const boundsTree = React.useRef<MeshBVH>(null); // BVH-boundsTree
   // 汎用入力
   const { input, attachJumpBtn, attachRunBtn } = useInputControl({});
@@ -640,6 +643,7 @@ export const NinjaGL = ({
         bvhGrp,
         bvhCollider,
         moveGrp,
+        shareGrp,
         boundsTree,
         updateCollisions,
         config,

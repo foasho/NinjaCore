@@ -1,6 +1,6 @@
 interface ITextToSpeech {
   text: string;
-  lang: "en-US" | "ja-JP" | "Auto"; // ISO 639-1コードの形式
+  lang?: "en-US" | "ja-JP" | "Auto"; // ISO 639-1コードの形式
   speed?: number;     // 範囲: 0.1 ~ 10
   pitch?: number;     // 範囲: 0.1 ~ 10
   volume?: number;    // 範囲: 0 ~ 1
@@ -34,10 +34,10 @@ export const playTextToSpeech = (props: ITextToSpeech): Promise<void> => {
   }
   return new Promise((resolve) => {
     utterance.text = props.text.length > maxLen ? props.text.substring(0, maxLen - 1) : props.text;
-    if (props.lang == "Auto") {
+    if (props.lang == "Auto" || !props.lang) {
       utterance.lang = detectLanguage(props.text);
     } else {
-      utterance.lang = props.lang;
+      utterance.lang = props.lang ;
     }
     utterance.rate = props.speed ? props.speed : 1;
     if (props.voiceName) {

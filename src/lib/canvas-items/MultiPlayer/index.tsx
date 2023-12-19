@@ -1,31 +1,33 @@
 import React, { useEffect, useState } from "react";
 import { WebRTCProvider, useNinjaEngine } from "../../hooks";
 import { Others } from "./Others";
-import { MultiPlayerTunnel } from "../../utils";
 import { MyselfSender } from "./MyselfSender";
+import { ShareColliders } from "./ShareCollider";
 
 export const MultiPlayer = () => {
   const { config } = useNinjaEngine();
-  const [token, setToken] = useState<string>("");
+  const [token, setToken] = useState<string|null>(null);
 
   useEffect(() => {
     const fetchToken = async () => {
       const res = await fetch("/api/skyway/token");
       const response = await res.json();
-      setToken(response.data);
+      if (res.status === 200 && response.data){
+        setToken(response.data);
+      }
     };
-    if (config.isApi) {
+    if (config.isApi && config.multi) {
       fetchToken();
     }
-  }, [config.isApi]);
+  }, [config.isApi, config.multi]);
 
   return (
     <>
-      {token && config.isApi && (
+      {token && (
         <WebRTCProvider token={token} roomName={config.projectName}>
-          <MultiPlayerTunnel.Out />
           <Others />
           <MyselfSender />
+          <ShareColliders />
         </WebRTCProvider>
       )}
     </>

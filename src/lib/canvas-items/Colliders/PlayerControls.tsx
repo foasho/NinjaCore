@@ -23,7 +23,12 @@ import {
   AnimationClip,
   DoubleSide,
 } from "three";
-import { EDeviceType, useMultiInputControl, useNinjaEngine } from "../../hooks";
+import {
+  EDeviceType,
+  ENinjaStatus,
+  useMultiInputControl,
+  useNinjaEngine,
+} from "../../hooks";
 import {
   IInputMovement,
   CapsuleInfoProps,
@@ -63,6 +68,7 @@ export const PlayerControl = ({
 }: IPlayerControlProps) => {
   const {
     config,
+    status,
     boundsTree,
     bvhCollider: collider,
     moveGrp,
@@ -571,6 +577,9 @@ export const PlayerControl = ({
   };
 
   useFrame((_state, delta) => {
+    if (status.current === ENinjaStatus.Pause) {
+      return;
+    }
     const timeDelta = Math.min(delta, 0.1);
     // grp.currentのchildrenの数を取得
     const meshesNum = grp.current ? grp.current.children.length : 0;

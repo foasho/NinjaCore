@@ -21,6 +21,7 @@ pnpm dev
 ```
 
 ### Build & Publish
+lib issue
 ```
 npm publish
 ```

@@ -18,7 +18,7 @@ export const initTpUMs = (): IUIManagement[] => {
         text: "Hello World!",
       },
       position: {
-        x: 0,
+        x: 30,
         y: 0,
       },
       visible: true,

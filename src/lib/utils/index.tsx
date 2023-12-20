@@ -12,6 +12,8 @@ export {
   gltfLoader,
 } from "./NinjaFileControl";
 export * from "./NinjaProps";
+export { genRandom } from "./Seeds";
+export { DefaultAvatar } from "./DefaultAvatar";
 export {
   ConvPos,
   ConvRot,
@@ -28,6 +30,7 @@ export {
   InitScriptManagement,
   InitOM,
 } from "./NinjaInit";
+export { loadNJCFileFromPath } from "./NinjaLoaders";
 export {
   getBoxCapsuleCollision,
   // checkSphereCapsuleIntersect,
@@ -38,5 +41,5 @@ export {
   NonColliderTunnel,
   ColliderTunnel,
   MoveableColliderTunnel,
-  MultiPlayerColliderTunnel
+  MultiPlayerColliderTunnel,
 } from "./tunnel";

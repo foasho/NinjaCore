@@ -6,24 +6,17 @@ import React, {
   useCallback,
 } from "react";
 import {
-  LocalAudioStream,
   LocalP2PRoomMember,
-  LocalSFURoomMember,
   LocalDataStream,
-  LocalVideoStream,
-  nowInSec,
   P2PRoom,
   RoomMember,
   RoomPublication,
-  SfuRoom,
-  SkyWayAuthToken,
   SkyWayContext,
   SkyWayRoom,
   SkyWayStreamFactory,
-  uuidV4,
 } from "@skyway-sdk/room";
 import { SkyWayConfigOptions } from "@skyway-sdk/core";
-import { Euler, MathUtils, Vector3 } from "three";
+import { Euler, Vector3 } from "three";
 import { IInputMovement } from "../utils";
 
 export enum ECallStatus {
@@ -72,14 +65,22 @@ export interface IUseSkywayProps {
   videoElement?: RefObject<HTMLVideoElement | HTMLAudioElement>;
   maxSubscribers?: number;
 }
+export type MessageProps = {
+  id: string;
+  message: string;
+  username?: string;
+  avatar?: string;
+  messagedAt: Date;
+};
 
 /**
  * 位置の同期に使用
  * @returns
  */
 export const useSkyway = (props: IUseSkywayProps) => {
-  const [updateCnt, setUpdateCnt] = useState<string>("");
+  // refを使用して再レンダリングを防ぐ
   const me = useRef<LocalP2PRoomMember | null>(null);
+  const roomMessages = useRef<MessageProps[]>([]);
   const members = useRef<RoomMember[]>([]);
   const membersData = useRef<IPublishData[]>([]);
   const roomName = useRef<string | null>(null);
@@ -91,7 +92,7 @@ export const useSkyway = (props: IUseSkywayProps) => {
   const callingRoomId = useRef<string | null>(null); // 電話をかけている人のRoomID
   const recieveUser = useRef<IPublishData | null>(null); // 電話を受け取っている人のデータ
   const callStatus = useRef<ECallStatus>(ECallStatus.None);
-  const [callUsers, setCallUsers] = useState<IPublishData[]>([]);
+  const callUsers = useRef<IPublishData[]>([]);
 
   useEffect(() => {
     /**
@@ -106,49 +107,8 @@ export const useSkyway = (props: IUseSkywayProps) => {
        * 1.SkywayAuthTokenを作成する
        */
       let token = props.tokenString ? props.tokenString : undefined;
-      if (token === undefined || (token && token.length == 0)) {
-        token = new SkyWayAuthToken({
-          jti: uuidV4(),
-          iat: nowInSec(),
-          exp: nowInSec() + 3600 * 24,
-          scope: {
-            app: {
-              id: process.env.NEXT_PUBLIC_SKYWAY_APP_ID!,
-              turn: true,
-              actions: ["read"],
-              channels: [
-                {
-                  id: "*",
-                  name: "*",
-                  actions: ["write"],
-                  members: [
-                    {
-                      id: "*",
-                      name: "*",
-                      actions: ["write"],
-                      publication: {
-                        actions: ["write"],
-                      },
-                      subscription: {
-                        actions: ["write"],
-                      },
-                    },
-                  ],
-                  sfuBots: [
-                    {
-                      actions: ["write"],
-                      forwardings: [
-                        {
-                          actions: ["write"],
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          },
-        }).encode(process.env.NEXT_PUBLIC_SKYWAY_APP_SECRET_KEY!);
+      if (!token) {
+        return;
       }
 
       // 2.VideoStreamをアタッチ
@@ -200,14 +160,14 @@ export const useSkyway = (props: IUseSkywayProps) => {
         membersData.current = [];
         dataStream.current = null;
         callingId.current = null;
-        setCallUsers([]);
+        callUsers.current = [];
         if (localVideo.current) {
           localVideo.current.srcObject = null;
           localVideo.current = null;
         }
       }
     };
-  }, [props.enabled, props.roomName]);
+  }, [props.tokenString, props.roomName]);
 
   /**
    * メンバーのデータを取得する
@@ -300,24 +260,55 @@ export const useSkyway = (props: IUseSkywayProps) => {
     }
   };
 
-  /**z
-   * メンバーデータをセットする
+  /**
+   * Messageの処理
+   * roomMessagesの最後のメッセージと異なれば追加
+   */
+  const appendMessage = (pdata: IPublishData) => {
+    if (pdata.id && pdata.message) {
+      let LastMessage = null;
+      if (roomMessages.current.length > 0) {
+        LastMessage = roomMessages.current[roomMessages.current.length - 1];
+      }
+      if (
+        !LastMessage ||
+        !(LastMessage.id == pdata.id && LastMessage.message == pdata.message)
+      ) {
+        const newMessages = roomMessages;
+        newMessages.current = [
+          ...newMessages.current,
+          {
+            id: pdata.id!,
+            message: pdata.message!,
+            username: pdata.username,
+            messagedAt: new Date(),
+          },
+        ];
+      }
+    }
+  };
+
+  /**
+   * データを受けとる (送信)
+   * - メンバー処理
+   * - 電話処理
    */
   const setMemberData = (pdata: IPublishData) => {
+    /**
+     * メンバーのデータを更新する
+     */
     const index = membersData.current.findIndex((m) => m.id == pdata.id);
     if (index >= 0) {
-      if (membersData.current.length == 0) {
-        setUpdateCnt(MathUtils.generateUUID());
-      }
       membersData.current[index] = { ...pdata };
     } else {
       // 新しいメンバーの場合は、破壊的に追加する
       const _membersData = membersData.current;
       _membersData.push({ ...pdata });
       membersData.current = [..._membersData];
-      setUpdateCnt(MathUtils.generateUUID());
     }
-    // メンバーのデータを更新する
+    /**
+     * 電話の処理
+     */
     if (me.current) {
       if (
         // 自分が通話のない状態で、
@@ -330,7 +321,6 @@ export const useSkyway = (props: IUseSkywayProps) => {
         const index = membersData.current.findIndex((d) => d.id == pdata.id);
         if (index >= 0 && !recieveUser.current) {
           recieveUser.current = pdata;
-          setUpdateCnt(MathUtils.generateUUID());
         }
       } else if (
         // 自分宛ての通話招待があればよびだし中にする
@@ -343,7 +333,6 @@ export const useSkyway = (props: IUseSkywayProps) => {
         const index = membersData.current.findIndex((d) => d.id == pdata.id);
         if (index >= 0 && !recieveUser.current) {
           recieveUser.current = pdata;
-          setUpdateCnt(MathUtils.generateUUID());
         }
       } else if (
         // 自分が電話を書けていて、相手がAcceptした場合は、通話中にする
@@ -353,29 +342,27 @@ export const useSkyway = (props: IUseSkywayProps) => {
       ) {
         console.log("Talking Success");
         callStatus.current = ECallStatus.Talking;
-        setUpdateCnt(MathUtils.generateUUID());
       } else if (
         // 自分が誰かに電話をかけていて、相手が電話を切った場合は、呼び出し中を解除する
         callStatus.current == ECallStatus.Calling &&
         pdata.callStatus == ECallStatus.HangUp
       ) {
         // 呼び出し中になっていて切れた場合は、呼び出し中を解除する
-        const index = callUsers.findIndex((d) => d.id == pdata.id);
+        const index = callUsers.current.findIndex((d) => d.id == pdata.id);
         let _callUsers = callUsers;
         if (index >= 0) {
           console.log("通話参加者から１名抜けました");
-          _callUsers.splice(index, 1);
-          setCallUsers([..._callUsers]);
+          _callUsers.current.splice(index, 1);
+          _callUsers.current = [..._callUsers.current];
         }
         const rindex = membersData.current.findIndex((d) => d.id == pdata.id);
         if (rindex >= 0) {
           recieveUser.current = null;
         }
         // 0人になったら、呼び出し中を解除する
-        if (_callUsers.length == 0) {
+        if (_callUsers.current.length == 0) {
           console.log("通話参加者がいなくなりました");
           callStatus.current = ECallStatus.None;
-          setUpdateCnt(MathUtils.generateUUID());
         }
       } else if (
         // Invitationしたユーザーが、通話を拒否した場合は、呼び出し中を解除する
@@ -390,37 +377,45 @@ export const useSkyway = (props: IUseSkywayProps) => {
         callingRoomId.current == pdata.callingRoomId &&
         pdata.callStatus === ECallStatus.Talking
       ) {
-        console.log("pdata-callStatus: ", pdata.callStatus);
-        console.log("My - callStatus: ", callStatus.current);
         // 同じルームにいる人がいれば、RecieveCallDataに追加する
-        const index = callUsers.findIndex((d) => d.id == pdata.id);
+        const index = callUsers.current.findIndex((d) => d.id == pdata.id);
         if (index < 0) {
           console.log("通話に新しいユーザーが参加しました");
           const _callUsers = callUsers;
-          _callUsers.push(pdata);
-          setCallUsers([..._callUsers]);
-          setUpdateCnt(MathUtils.generateUUID());
+          callUsers.current = [..._callUsers.current, { ...pdata }];
         }
         // 現在の参加人数が2人以上なら、通話中にする
-        console.log("通話参加人数: ", callUsers.length);
+        console.log("通話参加人数: ", callUsers.current.length);
       }
     }
+    appendMessage(pdata);
   };
 
   /**
    * データを送信する
    */
   const publishData = useCallback(
-    (pdata: IPublishData) => {
+    (
+      pdata: IPublishData,
+      playerInfo: { name: string; avatar?: string } | null = null
+    ) => {
       if (dataStream.current) {
         if (!pdata.id) {
           pdata.id = me.current?.id;
+        }
+        if (!pdata.username && playerInfo) {
+          pdata.username = playerInfo.name;
+          if (playerInfo.avatar) {
+            pdata.thumbnailImgURL = playerInfo.avatar;
+          }
         }
         pdata.callStatus = callStatus.current;
         pdata.callingId = callingId.current;
         pdata.callingRoomId = callingRoomId.current;
         const sendData = JSON.stringify({ ...pdata });
         dataStream.current.write(sendData);
+        // 自分のMessageを追加する
+        if (pdata.message) appendMessage(pdata);
       }
     },
     [dataStream.current, callStatus.current, me.current]
@@ -441,7 +436,6 @@ export const useSkyway = (props: IUseSkywayProps) => {
     const newMbs = members.current;
     newMbs.push(member);
     members.current = [...newMbs];
-    setUpdateCnt(MathUtils.generateUUID());
   };
 
   /**
@@ -459,7 +453,6 @@ export const useSkyway = (props: IUseSkywayProps) => {
         me.current!.unsubscribe(s.id);
       }
     });
-    setUpdateCnt(MathUtils.generateUUID());
   };
 
   /**
@@ -468,7 +461,6 @@ export const useSkyway = (props: IUseSkywayProps) => {
   const Calling = (userId: string, roomId: string) => {
     callingId.current = userId;
     callingRoomId.current = roomId;
-    setUpdateCnt(MathUtils.generateUUID());
     console.log("通話をかけました。");
   };
 
@@ -478,7 +470,7 @@ export const useSkyway = (props: IUseSkywayProps) => {
   const HangUp = () => {
     callingId.current = null;
     callingRoomId.current = null;
-    setCallUsers([]);
+    callUsers.current = [];
   };
 
   /**
@@ -487,7 +479,6 @@ export const useSkyway = (props: IUseSkywayProps) => {
   const TakeCall = (callId: string, roomId: string) => {
     callingId.current = callId;
     callingRoomId.current = roomId;
-    setUpdateCnt(MathUtils.generateUUID());
   };
 
   const updateCallStatus = (status: ECallStatus) => {
@@ -495,8 +486,7 @@ export const useSkyway = (props: IUseSkywayProps) => {
   };
 
   return {
-    me: me.current,
-    updateCnt: updateCnt,
+    me,
     publishData: publishData,
     leaveRoom: leaveRoom,
     localVideo: localVideo,
@@ -510,231 +500,6 @@ export const useSkyway = (props: IUseSkywayProps) => {
     recieveUser: recieveUser.current,
     callStatus: callStatus.current,
     updateCallStatus: updateCallStatus,
+    roomMessages: roomMessages,
   };
 };
-
-/**
- * プライベート通話には、SFUを利用する
- */
-export interface IPrivateCallProps {
-  token: string;
-  audio: boolean;
-  video: boolean;
-  localVideo: HTMLVideoElement;
-  myId: string;
-  onStreamCallback?: (elm: HTMLVideoElement | HTMLAudioElement) => void;
-}
-
-export enum ICallRole {
-  Owner = "Owner", // 電話をかけた人
-  Joiner = "Joiner", // 電話に参加した人
-}
-
-// PrivateCallのRoom
-export class MyPrivateCall {
-  role: ICallRole | null = null;
-  me: LocalSFURoomMember | null = null;
-  context: SkyWayContext | null = null;
-  room: SfuRoom | null = null;
-  audioStream: LocalAudioStream | null = null;
-  videoStream: LocalVideoStream | null = null;
-  mediaStream: MediaStream | null = null;
-  maxSubscribers: number = 8;
-  params: IPrivateCallProps;
-
-  // 最初はパラメータのみ控えておく
-  constructor(props: IPrivateCallProps) {
-    this.params = { ...props };
-  }
-
-  /**
-   * PrivateCallを開始
-   * @param roomId
-   */
-  async startPrivateCall(roomId: string, role: ICallRole) {
-    const props = this.params;
-    this.context = await SkyWayContext.Create(props.token);
-    await this.CreateRoom(roomId);
-    if (this.room) {
-      // // ルーム内に既に存在するメンバーのStreamをSubscribeする
-      this.room.publications.forEach((publish) => {
-        console.log("already exist member: ", publish.id, " / ", this.me?.id);
-        this.subscribeAndAttach(props, publish);
-      });
-      // ルーム内に新しいメンバーがStreamをPublishしたときに呼ばれる
-      this.room.onStreamPublished.add((e) => {
-        console.log(
-          "onStreamPublished: ",
-          e.publication.id,
-          " / ",
-          this.me?.id
-        );
-        this.subscribeAndAttach(props, e.publication);
-      });
-
-      // ルーム内に既に存在するメンバーのStreamをSubscribeする
-      this.room.publications.forEach((pub) => {
-        console.log("New User: ", pub.id, " / ", this.me?.id);
-        this.subscribeAndAttach(props, pub);
-      });
-      this.role = role;
-    }
-  }
-
-  // ルームの作成
-  private async CreateRoom(roomId: string) {
-    if (!this.context) return;
-    this.room = await SkyWayRoom.FindOrCreate(this.context, {
-      type: "sfu",
-      name: roomId,
-      id: roomId,
-    });
-    this.me = await this.room.join();
-    this.publishStream();
-  }
-
-  private async publishStream() {
-    if (this.params.video || this.params.audio) {
-      try {
-        const { audio, video } =
-          await SkyWayStreamFactory.createMicrophoneAudioAndCameraStream({
-            video: { height: 640, width: 360, frameRate: 15 }, // 品質を落とす
-          });
-        if (this.params.video) {
-          this.videoStream = video;
-        }
-        if (this.params.audio) {
-          this.audioStream = audio;
-        }
-        video.attach(this.params.localVideo);
-        await this.params.localVideo.play();
-        if (this.params.audio) {
-          this.enableAudio();
-        }
-        if (this.params.video) {
-          this.enableVideo();
-        }
-      } catch (e) {}
-    }
-  }
-
-  /**
-   * 通話を切る
-   */
-  public destroyRoom = async () => {
-    if (this.room) {
-      if (this.role == ICallRole.Owner) {
-        // ルームを削除する
-        await this.room.close();
-      } else if (this.me) {
-        // ルームから退出する
-        await this.room.leave(this.me);
-      }
-      this.context = null;
-      this.room = null;
-      this.me = null;
-      this.audioStream = null;
-      this.videoStream = null;
-      this.role = null;
-    }
-  };
-
-  /**
-   * 音声を有効にする
-   * ※自分のStreamデータを送信する
-   */
-  public enableAudio = async () => {
-    if (this.audioStream && this.me) {
-      await this.me.publish(this.audioStream, {
-        maxSubscribers: this.maxSubscribers,
-      });
-    }
-  };
-
-  /**
-   * 音声を無効にする
-   */
-  public disableAudio = async () => {};
-
-  /**
-   * ビデオを有効にする(送信)
-   * ※自分のStreamデータを送信する
-   */
-  public enableVideo = async () => {
-    if (this.videoStream) {
-      await this.me!.publish(this.videoStream, {
-        maxSubscribers: this.maxSubscribers,
-        encodings: [
-          { maxBitrate: 80_000, id: "low" },
-          { maxBitrate: 400_000, id: "high" },
-        ],
-      });
-    }
-  };
-
-  /**
-   * 画面共有を有効にする
-   */
-  public enableScreenShare = async () => {
-    navigator.mediaDevices
-      .getDisplayMedia({
-        video: true,
-        audio: true,
-      })
-      .then((_mediaStream) => {
-        // 自分用のStream
-        this.mediaStream = new MediaStream();
-        let videoTrack = _mediaStream.getVideoTracks()[0];
-        if (videoTrack) {
-          this.mediaStream.addTrack(videoTrack);
-        }
-      });
-  };
-
-  /**
-   * 音声,ビデオをSubscribeする
-   * (受信)
-   */
-  private subscribeAndAttach = async (
-    props: IPrivateCallProps,
-    publication: RoomPublication
-  ) => {
-    try {
-      if (!this.me) return;
-      if (publication.publisher.id == this.me.id) return;
-      const { stream } = await this.me.subscribe(publication.id);
-      switch (stream.contentType) {
-        case "video":
-          {
-            console.log("video", stream);
-            const elm = document.createElement("video");
-            elm.playsInline = true;
-            elm.autoplay = true;
-            stream.attach(elm);
-            if (props.onStreamCallback) props.onStreamCallback(elm);
-          }
-          break;
-        case "audio":
-          {
-            console.log("audio", stream);
-            const elm = document.createElement("audio");
-            elm.controls = true;
-            elm.autoplay = true;
-            stream.attach(elm);
-            if (props.onStreamCallback) props.onStreamCallback(elm);
-          }
-          break;
-      }
-    } catch (e) {
-      console.log(e);
-    }
-  };
-
-  /**
-   * RoomIDを取得する
-   */
-  public getRoomId = () => {
-    if (!this.room) return null;
-    return this.room.id;
-  };
-}

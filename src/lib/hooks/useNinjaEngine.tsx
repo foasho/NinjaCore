@@ -11,6 +11,9 @@ import {
   NJCFile,
   loadNJCFileFromURL,
   ConvPos,
+  DefaultAvatar,
+  genRandom,
+  loadNJCFileFromPath,
 } from "../utils";
 import { MdMusicNote, MdMusicOff } from "react-icons/md";
 import {
@@ -26,7 +29,11 @@ import {
   Vector3,
 } from "three";
 import { Canvas as NCanvas, useFrame as useNFrame } from "@react-three/fiber";
-import { InputControlProvider, useInputControl } from "./useInputControl";
+import {
+  InputControlProvider,
+  useInputControl,
+  useMultiInputControl,
+} from "./useInputControl";
 import { Loading3D, Loading2D } from "../loaders";
 import {
   OMEffects,
@@ -46,6 +53,7 @@ import { MeshBVH } from "three-mesh-bvh";
 import { Capsule } from "three-stdlib";
 import { UIItems } from "../uis";
 import { NinjaKVSProvider } from "./useKVS";
+import { MemoWebRTCProvider, WebRTCProvider } from "./useWebRTC";
 
 export enum EDeviceType {
   Unknown = 0,
@@ -59,42 +67,17 @@ export enum ENinjaStatus {
   Pause = 1,
 }
 
-// function onCollide( object1: Object3D, object2: Object3D, point: Vector3, normal: any, velocity: number, gravity: number, offset = 0 ) {
-
-// 	if ( velocity < Math.max( Math.abs( 0.04 * gravity ), 5 ) ) {
-// 		return;
-// 	}
-
-// 	// Create an animation when objects collide
-// 	const effectScale = Math.max(
-// 		object2 ?
-// 			Math.max( object1.collider.radius, object2.collider.radius ) :
-// 			object1.collider.radius,
-// 		0.4
-// 	) * 2.0;
-// 	const plane = new Mesh(
-// 		new RingGeometry( 0, 1, 30 ),
-// 		new MeshBasicMaterial( { side: 2, transparent: true, depthWrite: false } )
-// 	);
-// 	plane.lifetime = 0;
-// 	plane.maxLifetime = 0.4;
-// 	plane.maxScale = effectScale * Math.max( Math.sin( Math.min( velocity / 200, 1 ) * Math.PI / 2 ), 0.35 );
-
-// 	plane.position.copy( point ).addScaledVector( normal, offset );
-// 	plane.quaternion.setFromUnitVectors( forwardVector, normal );
-// 	// scene.add( plane );
-// 	// hits.push( plane );
-
-// }
-
 type NinjaEngineProp = {
+  init: boolean;
   device: EDeviceType;
-  status: ENinjaStatus;
+  status: React.MutableRefObject<ENinjaStatus>;
   isPhysics: boolean;
   player: React.MutableRefObject<Mesh | null>;
+  playerInfo: React.MutableRefObject<{
+    name: string;
+    avatar: string;
+  }>;
   playerIsOnGround: React.MutableRefObject<boolean>;
-  curPosition: React.MutableRefObject<Vector3>;
-  updateCurPosition: (pos: Vector3) => void;
   curMessage: React.MutableRefObject<string>;
   isSound: boolean;
   setIsSound: (isSound: boolean) => void;
@@ -104,7 +87,6 @@ type NinjaEngineProp = {
   shareGrp: React.MutableRefObject<Group | null>;
   boundsTree: React.MutableRefObject<MeshBVH | null>;
   updateCollisions: (daltaTime: number) => void;
-  input: IInputMovement;
   config: IConfigParams;
   oms: IObjectManagement[];
   sms: IScriptManagement[];
@@ -121,13 +103,16 @@ type NinjaEngineProp = {
   offOMsChanged: (listener: () => void) => void;
 };
 export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
+  init: false,
   device: EDeviceType.Unknown,
-  status: ENinjaStatus.Pause,
+  status: React.createRef<ENinjaStatus>(),
   isPhysics: true,
   player: React.createRef<Mesh>(),
+  playerInfo: React.createRef<{
+    name: string;
+    avatar: string;
+  }>(),
   playerIsOnGround: React.createRef<boolean>(),
-  curPosition: React.createRef<Vector3>(),
-  updateCurPosition: (pos: Vector3) => {},
   curMessage: React.createRef<string>(),
   isSound: false,
   setIsSound: (isSound: boolean) => {},
@@ -137,20 +122,6 @@ export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
   shareGrp: React.createRef<Group>(),
   boundsTree: React.createRef<Object3D>(),
   updateCollisions: (daltaTime: number) => {},
-  input: {
-    forward: 0,
-    backward: 0,
-    left: 0,
-    right: 0,
-    jump: false,
-    dash: false,
-    action: false,
-    prevDrag: null,
-    curDrag: null,
-    speed: 0,
-    pressedKeys: [],
-    angleAxis: [0, 0],
-  },
   config: InitMobileConfipParams,
   oms: [],
   sms: [],
@@ -210,67 +181,100 @@ interface INinjaEngineProvider {
   children?: React.ReactNode;
 }
 export const ThreeJSVer = "0.157.0";
-export const NinjaGL = ({
+const _NinjaGL = ({
   njc,
   njcPath,
   noCanvas = false,
   isSplashScreen = true,
   children,
 }: INinjaEngineProvider) => {
-  const [init, setInit] = React.useState(false);
-  const [status, setStatus] = React.useState<ENinjaStatus>(ENinjaStatus.Pause);
-  const [isSound, setIsSound] = React.useState<boolean>(false); // サウンドの有効/無効
-  // coreファイル
+  /**
+   * 可能な限り再レンダリングされないようにuseStateは最低限
+   */
+  // core設定
   const [njcFile, setNjcFile] = React.useState<NJCFile | null>(null);
-  const [device, setDevice] = React.useState<EDeviceType>(EDeviceType.Unknown);
+  const [init, setInit] = React.useState(false);
+  const status = React.useRef<ENinjaStatus>(ENinjaStatus.Pause);
+  const [isSound, setIsSound] = React.useState<boolean>(false); // サウンドの有効/無効
   // コンテンツ管理
-  const [config, setConfig] = React.useState<IConfigParams>(
-    InitMobileConfipParams
-  );
-  const [oms, setOMs] = React.useState<IObjectManagement[]>([]);
-  const [ums, setUMs] = React.useState<IUIManagement[]>([]);
-  const [tms, setTMs] = React.useState<ITextureManagement[]>([]);
-  const [sms, setSMs] = React.useState<IScriptManagement[]>([]);
+  const [Contents, setContents] = React.useState<{
+    config: IConfigParams;
+    oms: IObjectManagement[];
+    sms: IScriptManagement[];
+    ums: IUIManagement[];
+    tms: ITextureManagement[];
+    device: EDeviceType;
+    token?: string;
+  }>({
+    config: InitMobileConfipParams,
+    oms: [],
+    sms: [],
+    ums: [],
+    tms: [],
+    device: EDeviceType.Unknown,
+    token: undefined,
+  });
+  const { config, oms, sms, ums, tms, device, token } = Contents;
   // Player情報
   const player = React.useRef<Mesh>(null);
+  const playerInfo = useRef<{
+    name: string;
+    avatar: string;
+  }>({
+    name: `Guest`,
+    avatar: DefaultAvatar, // base64型か、URL
+  });
   const playerIsOnGround = useRef(false);
-  const curPosition = React.useRef<Vector3>(new Vector3(0, 0, 0));
   const curMessage = React.useRef<string>("");
-  // 物理世界
+  // 物理エンジン用
   const bvhGrp = React.useRef<Group>(null); // BVH用コライダー
   const bvhCollider = React.useRef<Mesh>(null); // BVH用コライダー
   const moveGrp = React.useRef<Group>(null); // 移動用コライダー
   const shareGrp = React.useRef<Group>(null); // MultiPlayer共有用コライダー
   const boundsTree = React.useRef<MeshBVH>(null); // BVH-boundsTree
-  // 汎用入力
-  const { input, attachJumpBtn, attachRunBtn } = useInputControl({});
-  // Debugツリー
+  // TODO: Debugツリー
   const debugTree = React.useRef<any>(null);
 
   React.useEffect(() => {
-    // njcが指定されていればそのままセット
-    if (njc && !njcFile) {
-      setNjcFile(njc);
-    }
-    // njcPathが指定されていれば読み込み
-    if (njcPath && !njcFile) {
-      console.log(njcPath);
-      loadNJCFile(njcPath);
-    }
-    // njcFileが設定済みなら初期設定を行う
-    if (njcFile) {
-      // 1. 接続デバイスを判定する
-      setDevice(detectDeviceType());
-      // 3. Coreファイルを読み込む
-      setOMs(njcFile.oms);
-      setUMs(njcFile.ums);
-      setTMs(njcFile.tms);
-      setSMs(njcFile.sms);
-      if (njcFile.config) {
-        setConfig(njcFile.config);
+    const fetchToken = async () => {
+      const res = await fetch("/api/skyway/token");
+      const response = await res.json();
+      if (res.status === 200 && response.data) {
+        return response.data;
       }
-      setInit(true);
-    }
+      return undefined;
+    };
+    const loadNjc = async () => {
+      // njcが指定されていればそのままセット
+      if (njc && !njcFile) {
+        setNjcFile(njc);
+      }
+      // njcPathが指定されていれば読み込み
+      if (njcPath && !njcFile) {
+        const _njcFile = await loadNJCFileFromPath(njcPath);
+        setNjcFile(_njcFile);
+        return;
+      }
+      // njcFileが設定済みなら初期設定を行う
+      if (njcFile) {
+        let _token = undefined;
+        if (njcFile.config.multi) {
+          // MultiPlayerの場合は、SkyWayのトークンを取得する
+          _token = await fetchToken();
+        }
+        setContents({
+          config: njcFile.config,
+          oms: njcFile.oms,
+          sms: njcFile.sms,
+          ums: njcFile.ums,
+          tms: njcFile.tms,
+          device: detectDeviceType(),
+          token: _token,
+        });
+        setInit(true);
+      }
+    };
+    loadNjc();
     document.addEventListener(
       "contextmenu",
       function (event) {
@@ -294,47 +298,10 @@ export const NinjaGL = ({
       // 1. 初期設定完了後にPhyWold/ScriptWorkerの設置アップ
       // scriptWorker.loadUserScript(sms);
       setTimeout(() => {
-        setStatus(ENinjaStatus.Play);
+        status.current = ENinjaStatus.Play;
       }, 3000);
     }
   }, [init]);
-
-  React.useEffect(() => {
-    console.log("isSound", isSound);
-
-    const checkAudio = async () => {
-      // 音声をならせられるかどうかを設定する
-      const audioContext = new AudioContext();
-      try {
-        audioContext
-          .resume()
-          .then(() => {
-            console.log("AudioContext successfully started");
-            setIsSound(true); // 成功時に isSound を true に設定
-          })
-          .catch((error) => {
-            console.error("Webセキュリティにより、音声を再生できません。");
-            setIsSound(false); // エラー時に isSound を false に設定
-          });
-      } catch (error) {
-        console.error("Webセキュリティにより、音声を再生できません。");
-        setIsSound(false); // エラー時に isSound を false に設定
-      }
-    };
-    checkAudio();
-  }, []);
-
-  /**
-   * njcPathからFileをロード
-   */
-  const loadNJCFile = async (path: string) => {
-    const startTime = new Date().getTime();
-    const data = await loadNJCFileFromURL(path);
-    const endTime = new Date().getTime();
-    console.info(`<< LoadedTime: ${endTime - startTime}ms >>`);
-    setNjcFile(data);
-    console.log(data);
-  };
 
   /**
    * ----------------------------------------
@@ -380,7 +347,7 @@ export const NinjaGL = ({
     }
   };
   const addOM = (om: IObjectManagement, multiShare = true) => {
-    setOMs([...oms, om]);
+    oms.push(om);
     if (multiShare) {
       // multiplayer利用時は、他のクライアントにもOMを追加する
       // TODO: 他のクライアントにOMを追加する
@@ -431,10 +398,6 @@ export const NinjaGL = ({
   // OMsの変更を通知する
   const notifyOMsChanged = () => {
     objectManagementChangedListeners.current.forEach((l) => l());
-  };
-
-  const updateCurPosition = (pos: Vector3) => {
-    curPosition.current = pos;
   };
 
   const gravity = -9.8;
@@ -629,14 +592,13 @@ export const NinjaGL = ({
   return (
     <NinjaEngineContext.Provider
       value={{
+        init,
         device,
         status,
         isPhysics: config.physics,
-        input,
         player,
+        playerInfo,
         playerIsOnGround,
-        curPosition,
-        updateCurPosition,
         curMessage,
         isSound,
         setIsSound,
@@ -671,48 +633,79 @@ export const NinjaGL = ({
           userSelect: "none",
         }}
       >
-        <NinjaWorkerProvider ThreeJSVer={ThreeJSVer}>
-          <NinjaKVSProvider>
-            <InputControlProvider>
-              {
-                /** スプラッシュスクリーン */ isSplashScreen && (
-                  <MemoSplashScreen />
-                )
-              }
-              {init && njcFile && (
-                <>
-                  {/** Canvasレンダリング */}
-                  {!noCanvas ? (
-                    <NCanvas
+        <InputControlProvider>
+          <MemoWebRTCProvider token={token} roomName={config.projectName}>
+            <NinjaWorkerProvider ThreeJSVer={ThreeJSVer}>
+              <NinjaKVSProvider>
+                {
+                  /** スプラッシュスクリーン */ isSplashScreen && (
+                    <MemoSplashScreen />
+                  )
+                }
+                {init && njcFile && (
+                  <>
+                    {/** Canvasレンダリング */}
+                    {!noCanvas ? (
+                      <NCanvas
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          zIndex: 1,
+                        }}
+                      >
+                        <React.Suspense
+                          fallback={
+                            <Loading3D isLighting position={[0, 0, 3]} />
+                          }
+                        >
+                          <NinjaCanvasItems />
+                          {children}
+                        </React.Suspense>
+                      </NCanvas>
+                    ) : (
+                      <>{children}</>
+                    )}
+                    {/** UIレンダリング */}
+                    <div
+                      id="domContainer"
                       style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
                         width: "100%",
                         height: "100%",
-                        position: "absolute",
+                        zIndex: 2,
+                        overflow: "hidden",
+                        pointerEvents: "none",
                       }}
                     >
-                      <React.Suspense
-                        fallback={<Loading3D isLighting position={[0, 0, 3]} />}
-                      >
-                        <NinjaCanvasItems />
-                        {children}
-                      </React.Suspense>
-                    </NCanvas>
-                  ) : (
-                    <>{children}</>
-                  )}
-                  {/** UIレンダリング */}
-                  <UIItems />
-                </>
-              )}
-              {!init && !noCanvas && <Loading2D />}
-              <SystemSound />
-            </InputControlProvider>
-          </NinjaKVSProvider>
-        </NinjaWorkerProvider>
+                      <UIItems />
+                      <SystemSound />
+                    </div>
+                  </>
+                )}
+                {!init && !noCanvas && <Loading2D />}
+              </NinjaKVSProvider>
+            </NinjaWorkerProvider>
+          </MemoWebRTCProvider>
+        </InputControlProvider>
       </div>
     </NinjaEngineContext.Provider>
   );
 };
+// NinjaGLはnjc/njcPathどちらかでMemo化する
+export const NinjaGL = React.memo(_NinjaGL, (prev, next) => {
+  if (prev.njc && next.njc) {
+    return prev.njc === next.njc;
+  }
+  if (prev.njcPath && next.njcPath) {
+    return prev.njcPath === next.njcPath;
+  }
+  return false;
+});
 
 type NinjaCanvasProp = {
   children?: React.ReactNode;
@@ -755,13 +748,11 @@ export const NinjaCanvasItems = () => {
  * システムフレーム(時間をすすめる)
  */
 const SystemFrame = () => {
-  const { status, input, sms } = useNinjaEngine();
+  const { init, status, sms } = useNinjaEngine();
+  const { input } = useMultiInputControl();
   const { runFrameLoop, runInitialize, loadUserScript } = useNinjaWorker();
 
   useEffect(() => {
-    if (status === ENinjaStatus.Pause) {
-      return;
-    }
     const startScript = async () => {
       // 1. ユーザースクリプトの読み込み
       await loadUserScript(sms);
@@ -771,11 +762,11 @@ const SystemFrame = () => {
       });
     };
     startScript();
-  }, [status, sms]);
+  }, [init, sms]);
 
   // フレームの更新
   useNFrame((state, delta) => {
-    if (status === ENinjaStatus.Pause) {
+    if (status.current === ENinjaStatus.Pause) {
       return;
     }
 
@@ -796,11 +787,11 @@ const SystemSound = () => {
         position: "absolute",
         top: "1rem",
         right: "1rem",
-        padding: ".5rem 1.5rem",
         fontSize: "1.5rem",
         color: "#fff",
-        background: "rgba(0,0,0,0.5)",
         borderRadius: "5px",
+        cursor: "pointer",
+        pointerEvents: "auto",
       }}
       onClick={() => {
         setIsSound(!isSound);

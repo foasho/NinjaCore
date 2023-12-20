@@ -91,7 +91,7 @@ export const Player = ({
   recieveShadow = false,
   scale = 1.0,
 }: IPlayerProps) => {
-  const { updateCurPosition, player: playerRef } = useNinjaEngine();
+  const { player: playerRef } = useNinjaEngine();
   const [device, setDevice] = useState<EDeviceType>(EDeviceType.Unknown);
   const { scene, animations } = useGLTF(objectURL) as any;
   const [clone, setClone] = useState<Object3D>();
@@ -131,12 +131,6 @@ export const Player = ({
     // Storeに保持
     // setPlayerRef(playerRef);
   }, [scene, animations, objectURL]);
-
-  useFrame(() => {
-    if (playerRef.current) {
-      updateCurPosition(playerRef.current.position);
-    }
-  });
 
   return (
     <Suspense fallback={null}>

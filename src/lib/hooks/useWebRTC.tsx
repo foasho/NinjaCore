@@ -1,4 +1,5 @@
 import React, {
+  MutableRefObject,
   createContext,
   useContext,
   useEffect,
@@ -9,27 +10,25 @@ import { MathUtils, Vector3 } from "three";
 import {
   IPublishData,
   useSkyway,
-  MyPrivateCall,
   ECallStatus,
-  ICallRole,
+  MessageProps,
 } from "./useSkyway";
+import { ICallRole, MyPrivateCall } from "./SkywayHelper/PrivateCall";
+import { LocalP2PRoomMember } from "@skyway-sdk/room";
 
 type WebRTCContextType = {
-  audioStream: MediaStream | null;
-  videoStream: MediaStream | null;
+  audioStream: MutableRefObject<MediaStream | null>;
+  videoStream: MutableRefObject<MediaStream | null>;
   turnOnAudio: () => Promise<boolean>;
   turnOffAudio: () => void;
   turnOnVideo: (select?: "value" | "min" | "max") => Promise<boolean>;
   turnOffVideo: () => void;
   publishData?: (pdata: IPublishData) => void;
   roomName: string;
-  me: any;
+  me: MutableRefObject<LocalP2PRoomMember | null>;
   membersData: IPublishData[];
-  updateCnt: string;
   getMemberData: (id: string) => IPublishData | undefined;
-  curPosition: Vector3;
-  updateCurPosition: (position: Vector3) => void;
-  callUsers: IPublishData[];
+  callUsers: MutableRefObject<IPublishData[]>;
   StartCall: (memberId: string) => Promise<void>;
   InviteCall: (memberId: string) => Promise<void>;
   JoinCall: (callId: string, roomId: string) => Promise<void>;
@@ -39,23 +38,21 @@ type WebRTCContextType = {
   recieveUser: IPublishData | null;
   callStatus: ECallStatus;
   updateCallStatus: (status: ECallStatus) => void;
+  roomMessages: MutableRefObject<MessageProps[]>;
 };
 const WebRTCContext = createContext<WebRTCContextType>({
-  audioStream: null,
-  videoStream: null,
+  audioStream: { current: null },
+  videoStream: { current: null },
   turnOnAudio: async () => false,
   turnOffAudio: () => {},
   turnOnVideo: async () => false,
   turnOffVideo: () => {},
   publishData: () => {},
   roomName: "",
-  me: undefined,
+  me: { current: null },
   membersData: [],
-  updateCnt: "",
   getMemberData: (id: string) => undefined,
-  curPosition: new Vector3(0, 0, 0),
-  updateCurPosition: (position: Vector3) => {},
-  callUsers: [],
+  callUsers: { current: [] },
   StartCall: async (memberId: string) => {},
   InviteCall: async (memberId: string) => {},
   JoinCall: async (roomId: string) => {},
@@ -65,6 +62,7 @@ const WebRTCContext = createContext<WebRTCContextType>({
   recieveUser: null,
   callStatus: ECallStatus.None,
   updateCallStatus: (status: ECallStatus) => {},
+  roomMessages: { current: [] },
 });
 export const useWebRTC = () => useContext(WebRTCContext);
 let webrtc = 0;
@@ -72,20 +70,17 @@ let webrtc = 0;
 type WebRTCProviderProps = {
   roomName: string;
   token?: string;
-  font?: string;
   children: React.ReactNode;
 };
 export const WebRTCProvider = ({
   roomName,
   token = "",
-  font = "/fonts/MPLUS1-Regular.ttf",
   children,
 }: WebRTCProviderProps) => {
   const {
     publishData,
     membersData,
     me,
-    updateCnt,
     callUsers,
     recieveUser,
     callStatus,
@@ -93,26 +88,27 @@ export const WebRTCProvider = ({
     Calling, // 電話をかける
     HangUp, // 電話を切る
     TakeCall, // 電話を受ける
+    roomMessages,
   } = useSkyway({
     roomName: roomName,
     tokenString: token,
   });
-  const timer = useRef<NodeJS.Timeout | null>(null);
-  const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
-  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
+  console.log("WebRTCProvider Render Count: ", webrtc++);
+  const audioStream = useRef<MediaStream | null>(null);
+  const videoStream = useRef<MediaStream | null>(null);
   const curPosition = useRef<Vector3>(new Vector3(0, 0, 0));
   const localVodeo = useRef<HTMLVideoElement>(document.createElement("video"));
   const [CallSFURoom, setCallSFURoom] = useState<MyPrivateCall | null>(null);
 
   // 最初にプライベートCallクラスを追加
   useEffect(() => {
-    if (me && me.id) {
+    if (me.current && me.current.id) {
       const newCallRoom = new MyPrivateCall({
         token: token,
         audio: true,
         video: false,
         localVideo: localVodeo.current,
-        myId: me?.id,
+        myId: me.current.id,
       });
       setCallSFURoom(newCallRoom);
     }
@@ -159,7 +155,7 @@ export const WebRTCProvider = ({
     isInvitation: boolean = false // 招待か
   ) => {
     if (CallSFURoom && roomId) {
-      console.log("通話始めるよ");
+      console.info("START > ---- 通話 -----");
       await CallSFURoom.startPrivateCall(roomId, ICallRole.Joiner);
       if (!isInvitation) {
         TakeCall(callId, roomId);
@@ -199,7 +195,8 @@ export const WebRTCProvider = ({
   const turnOnAudio = async (): Promise<boolean> => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      setAudioStream(stream);
+      audioStream.current = stream;
+      // setAudioStream(stream);
       return true;
     } catch (error) {
       console.error("Failed to access the microphone:", error);
@@ -208,9 +205,9 @@ export const WebRTCProvider = ({
   };
 
   const turnOffAudio = () => {
-    if (audioStream) {
-      audioStream.getTracks().forEach((track) => track.stop());
-      setAudioStream(null);
+    if (audioStream.current) {
+      audioStream.current.getTracks().forEach((track) => track.stop());
+      audioStream.current = null;
     }
   };
 
@@ -225,7 +222,7 @@ export const WebRTCProvider = ({
           frameRate: { ideal: videoSettings.frameRate[select] },
         },
       });
-      setVideoStream(stream);
+      videoStream.current = stream;
     } catch (error) {
       console.error("Failed to access the camera:", error);
     }
@@ -233,9 +230,9 @@ export const WebRTCProvider = ({
   };
 
   const turnOffVideo = () => {
-    if (videoStream) {
-      videoStream.getTracks().forEach((track) => track.stop());
-      setVideoStream(null);
+    if (videoStream.current) {
+      videoStream.current.getTracks().forEach((track) => track.stop());
+      videoStream.current = null;
     }
   };
 
@@ -244,10 +241,6 @@ export const WebRTCProvider = ({
       return undefined;
     }
     return membersData.filter((data) => data.id === id)[0];
-  };
-
-  const updateCurPosition = (position: Vector3) => {
-    curPosition.current.copy(position.clone());
   };
 
   return (
@@ -262,11 +255,8 @@ export const WebRTCProvider = ({
         roomName,
         me,
         membersData,
-        updateCnt,
         getMemberData,
         publishData: sendRTCData,
-        curPosition: curPosition.current,
-        updateCurPosition,
         callUsers,
         StartCall,
         InviteCall,
@@ -277,9 +267,15 @@ export const WebRTCProvider = ({
         recieveUser,
         callStatus,
         updateCallStatus,
+        roomMessages,
       }}
     >
       {children}
     </WebRTCContext.Provider>
   );
 };
+
+// tokenでMemo化する
+export const MemoWebRTCProvider = React.memo(WebRTCProvider, (prev, next) => {
+  return prev.token === next.token;
+});

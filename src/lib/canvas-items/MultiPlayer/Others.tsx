@@ -8,13 +8,27 @@ import { PlayerAnimationHelper } from "../../commons/PlayerAnimationHelper";
 import { DisntanceVisible } from "../../helpers";
 import { MultiPlayerColliderTunnel } from "../../utils";
 
-export interface IOthersProps {}
-
 export const Others = () => {
-  const { membersData, me, updateCnt } = useWebRTC();
-  const othersData = useMemo(() => {
-    return membersData.filter((data) => data.id !== me?.id);
-  }, [updateCnt, membersData, me]);
+  const { membersData, me } = useWebRTC();
+  const [othersData, setOthersData] = useState<any[]>([]);
+
+  useEffect(() => {
+    // 1秒ごとに更新
+    const interval = setInterval(() => {
+      const newOthersData = membersData.filter(
+        (data) => data.id !== me.current?.id
+      );
+      if (
+        newOthersData.length !== othersData.length ||
+        newOthersData.some((data, i) => data.id !== othersData[i].id)
+      ) {
+        setOthersData(newOthersData);
+      }
+    }, 1000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [membersData, me, othersData]);
 
   return (
     <>
@@ -66,6 +80,7 @@ const OtherPlayer = ({ id, url = "/models/ybot.glb" }: IOtherPlayer) => {
     if (pdata && otherRef.current) {
       // 位置/回転情報更新
       const { position, rotation } = pdata;
+      // console.log("position", position);
       if (position && rotation) {
         // lerpを使って滑らかに移動
         otherRef.current.position.lerp(position, 0.2);

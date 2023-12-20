@@ -46,7 +46,7 @@ const OMAudio = ({
   load?: any;
 }) => {
   const ref = useRef<PositionalAudioImpl | any>(null);
-  const { curPosition, isSound } = useNinjaEngine();
+  const { player, isSound } = useNinjaEngine();
   // let isTime = 0;
 
   useEffect(() => {
@@ -67,7 +67,8 @@ const OMAudio = ({
   useFrame(() => {
     if (!isSound) return;
     if (ref.current) {
-      const d = position.distanceTo(curPosition.current);
+      if (!player.current) return;
+      const d = position.distanceTo(player.current.position);
       if (d > distance) {
         ref.current.setVolume(0);
         if (ref.current.isPlaying) {

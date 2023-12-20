@@ -91,7 +91,7 @@ export const AiNPC = ({
   const target = useRef<Group | null>(null);
   const mesHtmlRef = useRef<any>(null);
   const { scene, animations, nodes } = useGLTF(objectURL) as any;
-  const { curPosition, curMessage, config } = useNinjaEngine();
+  const { player, curMessage, config } = useNinjaEngine();
   const [conversations, setConversations] = useState<IConversationProps[]>([]);
   const [lastAssistantMessage, setLastAssistantMessage] =
     useState<IConversationProps>();
@@ -137,7 +137,8 @@ export const AiNPC = ({
 
   useEffect(() => {
     if (!config.isApi) return;
-    const dinstance = curPosition.current.distanceTo(target.current!.position);
+    if (!player.current) return;
+    const dinstance = player.current?.position.clone().distanceTo(target.current!.position);
     // systemが設定されている場合、初期メッセージを追加する
     if (system && conversations.length === 0) {
       const convers: IConversationProps[] = [];
@@ -212,12 +213,14 @@ export const AiNPC = ({
       if (isRandomMove) {
         // 調整中
       }
-      const dinstance = curPosition.current.distanceTo(target.current.position);
+      if (!player.current) return;
+      const curPosition = player.current.position.clone();
+      const dinstance = curPosition.distanceTo(target.current.position);
       if (dinstance < conversationDistance) {
         // trackingRotationがtrueの場合、curPositionの方向を向く
         const rotationY = Math.atan2(
-          curPosition.current.x - target.current.position.x,
-          curPosition.current.z - target.current.position.z
+          curPosition.x - target.current.position.x,
+          curPosition.z - target.current.position.z
         );
         if (trackingRotation) {
           // 向くときはTargetPositionに向くように回転させる

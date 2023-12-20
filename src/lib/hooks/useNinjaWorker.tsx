@@ -12,15 +12,20 @@ import {
 import { useNinjaEngine } from "./useNinjaEngine";
 import { InitOM } from "../utils";
 import { Euler } from "three";
+import { useNinjaKVS } from "./useKVS";
 
 // scriptで扱う送信データ
-const SCRIPTS_DATA = {
+const SD = {
   getOMByName: "getOMByName",
   setPosition: "setPosition",
   setRotation: "setRotation",
   setScale: "setScale",
   setArg: "setArg",
   addOM: "addOM",
+  getKVS: "getKVS",
+  createKVS: "createKVS",
+  updateKVS: "updateKVS",
+  removeKVS: "removeKVS",
 };
 
 interface NWorkerProviderProps {
@@ -52,6 +57,7 @@ export const NinjaWorkerProvider = ({
   children,
 }: NWorkerProviderProps) => {
   const engine = useNinjaEngine();
+  const { getKVS, createKVS, updateKVS, removeKVS } = useNinjaKVS();
   const worker = React.useRef<Worker | null>(null);
   const bugScriptListIds = React.useRef<string[]>([]);
 
@@ -78,7 +84,7 @@ export const NinjaWorkerProvider = ({
       importScripts("${threeCDN}");
 
       // SCRIPTS_DATAのプロパティに対応する関数を作成する
-      ${Object.keys(SCRIPTS_DATA)
+      ${Object.keys(SD)
         .map(
           (key) => `
           const ${key} = async (data) => {
@@ -265,7 +271,7 @@ export const NinjaWorkerProvider = ({
     if (log) {
       console.log(log);
     }
-    if (type === "getOMByName") {
+    if (type === SD.getOMByName) {
       // 特定の名前のOMを取得する
       const { name } = data as { name: string };
       const om = engine.getOMByName(name);
@@ -283,7 +289,7 @@ export const NinjaWorkerProvider = ({
           messageId: messageId,
         });
       }
-    } else if (type == "setPosition") {
+    } else if (type == SD.setPosition) {
       // 特定のOMの位置を設定する
       const { id, position } = data as {
         id: string;
@@ -307,7 +313,7 @@ export const NinjaWorkerProvider = ({
           messageId: messageId,
         });
       }
-    } else if (type == "setRotation") {
+    } else if (type == SD.setRotation) {
       // 特定のOMの回転を設定する
       const { id, rotation } = data as {
         id: string;
@@ -331,7 +337,7 @@ export const NinjaWorkerProvider = ({
           messageId: messageId,
         });
       }
-    } else if (type == "setScale") {
+    } else if (type == SD.setScale) {
       // 特定のOMのスケールを設定する
       const { id, scale } = data as {
         id: string;
@@ -353,7 +359,7 @@ export const NinjaWorkerProvider = ({
           messageId: messageId,
         });
       }
-    } else if (type == "setArg") {
+    } else if (type == SD.setArg) {
       // 特定のOMの属性を変更する
       const { id, key, value } = data as {
         id: string;
@@ -376,7 +382,7 @@ export const NinjaWorkerProvider = ({
           messageId: messageId,
         });
       }
-    } else if (type == "addOM") {
+    } else if (type == SD.addOM) {
       // OMを追加する
       const { om } = data as {
         om: any;
@@ -385,14 +391,45 @@ export const NinjaWorkerProvider = ({
       // initをベースとしてomをマージする
       const _om = { ...init, ...om } as IObjectManagement;
       engine.addOM(_om);
+    } else if (type == SD.getKVS) {
+      // KVSを取得する
+      const { key } = data as { key: string };
+      const value = getKVS(key);
+      worker.current.postMessage({
+        type: "response",
+        data: value,
+        messageId: messageId,
+      });
+    } else if (type == SD.createKVS) {
+      // KVSを作成する
+      const { key, value } = data as { key: string; value: any };
+      createKVS(key, value);
+      worker.current.postMessage({
+        type: "response",
+        data: null,
+        messageId: messageId,
+      });
+    } else if (type == SD.updateKVS) {
+      // KVSを更新する
+      const { key, value } = data as { key: string; value: any };
+      updateKVS(key, value);
+      worker.current.postMessage({
+        type: "response",
+        data: null,
+        messageId: messageId,
+      });
+    } else if (type == SD.removeKVS) {
+      // KVSを削除する
+      const { key } = data as { key: string };
+      removeKVS(key);
+      worker.current.postMessage({
+        type: "response",
+        data: null,
+        messageId: messageId,
+      });
     }
   };
 
-  // return {
-  //   loadUserScript,
-  //   runInitialize,
-  //   runFrameLoop,
-  // };
   return (
     <NinjaWorkerContext.Provider
       value={{

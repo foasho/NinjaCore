@@ -12,7 +12,7 @@ import { useFrame } from "@react-three/fiber";
  * 自分自身のデータを共有
  */
 export const MyselfSender = () => {
-  const { player, curMessage, playerIsOnGround } = useNinjaEngine();
+  const { player, playerInfo, playerIsOnGround } = useNinjaEngine();
   const { publishData } = useWebRTC();
   const { input } = useMultiInputControl();
 
@@ -24,8 +24,8 @@ export const MyselfSender = () => {
         objectURL: player.current.userData.url,
         input: { ...input, pressedKeys: [] }, // セキュリティのため、押されたキーは送信しない
         id: player.current.userData.omId,
-        username: player.current.userData.username,
-        message: curMessage.current,
+        username: playerInfo.current? playerInfo.current.name : "",
+        thumbnailImgURL: playerInfo.current? playerInfo.current.avatar : undefined,
         playerIsOnGround: playerIsOnGround.current,
       };
       publishData(sendData);

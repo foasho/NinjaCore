@@ -14,9 +14,6 @@ export const Others = () => {
 
   useEffect(() => {
     const update = () => {
-      console.log("update");
-      console.log("membersData", membersData.current.length);
-      console.log("othersData", othersData.length);
       setOthersData(
         membersData.current.filter((m) => {
           return m.id !== me.current?.id;

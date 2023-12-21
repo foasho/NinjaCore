@@ -453,6 +453,8 @@ export const useSkyway = (props: IUseSkywayProps) => {
         me.current!.unsubscribe(s.id);
       }
     });
+    // 変更を通知する
+    notifyMembersChanged();
   };
 
   /**
@@ -493,8 +495,9 @@ export const useSkyway = (props: IUseSkywayProps) => {
     membersChangedListeners.current.push(listener);
   };
   const offMembersChanged = (listener: () => void) => {
-    membersChangedListeners.current =
-      membersChangedListeners.current.filter((l) => l !== listener);
+    membersChangedListeners.current = membersChangedListeners.current.filter(
+      (l) => l !== listener
+    );
   };
   // OMsの変更を通知する
   const notifyMembersChanged = () => {

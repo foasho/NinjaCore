@@ -35,6 +35,7 @@
     "dev:frontend": "vite",
     "dev:backend": "node backend/index.js",
     "build": "vite build && tsc",
+    "start": "concurrently \"node backend/index.js\" \"vite preview\"",
     "eslint": "eslint --fix .",
     "eslint:ci": "eslint .",
     "prettier": "prettier --check .",

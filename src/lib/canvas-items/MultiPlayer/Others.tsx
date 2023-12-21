@@ -79,7 +79,6 @@ const OtherPlayer = ({ id, url = "/models/ybot.glb" }: IOtherPlayer) => {
       const { position, rotation } = pdata;
       // console.log("position", position);
       if (position && rotation) {
-        console.log("pdata: ", position.x);
         // lerpを使って滑らかに移動
         otherRef.current.position.lerp(position, 0.2);
         // slerpを使って滑らかに回転

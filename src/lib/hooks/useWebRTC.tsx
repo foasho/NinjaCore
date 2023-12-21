@@ -26,7 +26,7 @@ type WebRTCContextType = {
   publishData?: (pdata: IPublishData) => void;
   roomName: string;
   me: MutableRefObject<LocalP2PRoomMember | null>;
-  membersData: IPublishData[];
+  membersData: MutableRefObject<IPublishData[]>;
   getMemberData: (id: string) => IPublishData | undefined;
   callUsers: MutableRefObject<IPublishData[]>;
   StartCall: (memberId: string) => Promise<void>;
@@ -35,10 +35,12 @@ type WebRTCContextType = {
   TakeCall: (callId: string, roomId: string) => void;
   HangUpCall: () => void;
   EndCall: () => Promise<void>;
-  recieveUser: IPublishData | null;
-  callStatus: ECallStatus;
+  recieveUser: MutableRefObject<IPublishData | null>;
+  callStatus: MutableRefObject<ECallStatus>;
   updateCallStatus: (status: ECallStatus) => void;
   roomMessages: MutableRefObject<MessageProps[]>;
+  onMembersChanged: (listener: () => void) => void;
+  offMembersChanged: (listener: () => void) => void;
 };
 const WebRTCContext = createContext<WebRTCContextType>({
   audioStream: { current: null },
@@ -50,7 +52,7 @@ const WebRTCContext = createContext<WebRTCContextType>({
   publishData: () => {},
   roomName: "",
   me: { current: null },
-  membersData: [],
+  membersData: { current: [] },
   getMemberData: (id: string) => undefined,
   callUsers: { current: [] },
   StartCall: async (memberId: string) => {},
@@ -59,10 +61,12 @@ const WebRTCContext = createContext<WebRTCContextType>({
   TakeCall: () => {},
   HangUpCall: () => {},
   EndCall: async () => {},
-  recieveUser: null,
-  callStatus: ECallStatus.None,
+  recieveUser: { current: null },
+  callStatus: { current: ECallStatus.None },
   updateCallStatus: (status: ECallStatus) => {},
   roomMessages: { current: [] },
+  onMembersChanged: () => {},
+  offMembersChanged: () => {},
 });
 export const useWebRTC = () => useContext(WebRTCContext);
 let webrtc = 0;
@@ -89,6 +93,8 @@ export const WebRTCProvider = ({
     HangUp, // 電話を切る
     TakeCall, // 電話を受ける
     roomMessages,
+    onMembersChanged,
+    offMembersChanged,
   } = useSkyway({
     roomName: roomName,
     tokenString: token,
@@ -96,7 +102,6 @@ export const WebRTCProvider = ({
   console.log("WebRTCProvider Render Count: ", webrtc++);
   const audioStream = useRef<MediaStream | null>(null);
   const videoStream = useRef<MediaStream | null>(null);
-  const curPosition = useRef<Vector3>(new Vector3(0, 0, 0));
   const localVodeo = useRef<HTMLVideoElement>(document.createElement("video"));
   const [CallSFURoom, setCallSFURoom] = useState<MyPrivateCall | null>(null);
 
@@ -237,10 +242,10 @@ export const WebRTCProvider = ({
   };
 
   const getMemberData = (id: string): IPublishData | undefined => {
-    if (membersData.length === 0) {
+    if (membersData.current.length === 0) {
       return undefined;
     }
-    return membersData.filter((data) => data.id === id)[0];
+    return membersData.current.filter((data) => data.id === id)[0];
   };
 
   return (
@@ -268,6 +273,8 @@ export const WebRTCProvider = ({
         callStatus,
         updateCallStatus,
         roomMessages,
+        onMembersChanged,
+        offMembersChanged,
       }}
     >
       {children}

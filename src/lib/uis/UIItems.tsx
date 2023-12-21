@@ -5,10 +5,10 @@ import { UITextInputs } from "./UITextInputs";
 import { TouchController } from "./TouchController";
 import { NinjaLoader } from "./NinjaLoader";
 import { CommunicationUI } from "./TemplateUI/CommunicationUI";
-import { useNinjaEngine } from "../hooks";
+import { EDeviceType, useNinjaEngine } from "../hooks";
 
 export const UIItems = React.memo(() => {
-  const { config } = useNinjaEngine();
+  const { config, device } = useNinjaEngine();
   const [mounted, setMounted] = React.useState(false);
   useEffect(() => {
     // 1秒後にマウント
@@ -26,7 +26,12 @@ export const UIItems = React.memo(() => {
           <UIButtons />
           <UILabels />
           <UITextInputs />
+          {(
+            device === EDeviceType.Mobile ||
+            device === EDeviceType.Tablet
+          ) &&
           <TouchController />
+          }
           <NinjaLoader />
           {config.multi && <CommunicationUI />}
         </>

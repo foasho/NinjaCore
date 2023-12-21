@@ -1,6 +1,7 @@
 import React, {
   useEffect,
   useState,
+  memo,
   useRef,
   RefObject,
   useCallback,
@@ -99,9 +100,6 @@ export const useSkyway = (props: IUseSkywayProps) => {
      * Roomに参加する
      */
     const RoomJoin = async () => {
-      if (typeof window === "undefined") {
-        return;
-      }
       if (!roomName.current) return;
       /**
        * 1.SkywayAuthTokenを作成する
@@ -152,19 +150,21 @@ export const useSkyway = (props: IUseSkywayProps) => {
 
     return () => {
       if (me.current && roomRef.current) {
-        // 退出して初期化
         roomRef.current.leave(me.current);
+      }
+      if (me.current) {
         me.current = null;
         roomRef.current = null;
-        members.current = [];
-        membersData.current = [];
-        dataStream.current = null;
-        callingId.current = null;
-        callUsers.current = [];
-        if (localVideo.current) {
-          localVideo.current.srcObject = null;
-          localVideo.current = null;
-        }
+      }
+      // 退出して初期化
+      members.current = [];
+      membersData.current = [];
+      dataStream.current = null;
+      callingId.current = null;
+      callUsers.current = [];
+      if (localVideo.current) {
+        localVideo.current.srcObject = null;
+        localVideo.current = null;
       }
     };
   }, [props.tokenString, props.roomName]);
@@ -172,13 +172,10 @@ export const useSkyway = (props: IUseSkywayProps) => {
   /**
    * メンバーのデータを取得する
    */
-  const getPData = useCallback(
-    (id: string): IPublishData | null => {
-      const memberData = membersData.current.find((data) => data.id === id);
-      return memberData || null;
-    },
-    [membersData]
-  );
+  const getPData = (id: string): IPublishData | null => {
+    const memberData = membersData.current.find((data) => data.id === id);
+    return memberData || null;
+  };
 
   /**
    * SkywayでRoomを参加する[P2P]
@@ -305,6 +302,9 @@ export const useSkyway = (props: IUseSkywayProps) => {
       const _membersData = membersData.current;
       _membersData.push({ ...pdata });
       membersData.current = [..._membersData];
+      // 変更を通知する
+      console.log("新しいメンバーが追加されました。");
+      notifyMembersChanged();
     }
     /**
      * 電話の処理
@@ -485,21 +485,39 @@ export const useSkyway = (props: IUseSkywayProps) => {
     callStatus.current = status;
   };
 
+  /**
+   * 再レンダリングを防ぎつつ変更を検知できるリスナーを用意
+   */
+  const membersChangedListeners = useRef<(() => void)[]>([]);
+  const onMembersChanged = (listener: () => void) => {
+    membersChangedListeners.current.push(listener);
+  };
+  const offMembersChanged = (listener: () => void) => {
+    membersChangedListeners.current =
+      membersChangedListeners.current.filter((l) => l !== listener);
+  };
+  // OMsの変更を通知する
+  const notifyMembersChanged = () => {
+    membersChangedListeners.current.forEach((l) => l());
+  };
+
   return {
     me,
     publishData: publishData,
     leaveRoom: leaveRoom,
     localVideo: localVideo,
-    members: members.current,
-    membersData: membersData.current,
+    members: members,
+    membersData: membersData,
     getPData: getPData,
     Calling: Calling,
     HangUp: HangUp,
     TakeCall: TakeCall,
     callUsers: callUsers,
-    recieveUser: recieveUser.current,
-    callStatus: callStatus.current,
+    recieveUser: recieveUser,
+    callStatus: callStatus,
     updateCallStatus: updateCallStatus,
     roomMessages: roomMessages,
+    onMembersChanged: onMembersChanged,
+    offMembersChanged: offMembersChanged,
   };
 };

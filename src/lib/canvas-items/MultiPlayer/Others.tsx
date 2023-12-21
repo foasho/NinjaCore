@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Html, useGLTF } from "@react-three/drei";
-import { playTextToSpeech, useWebRTC } from "../../hooks";
+import { IPublishData, playTextToSpeech, useWebRTC } from "../../hooks";
 import { useFrame } from "@react-three/fiber";
 import { Group, Mesh, Quaternion, Vector3, Object3D } from "three";
 import { SkeletonUtils } from "three-stdlib";
@@ -9,26 +9,26 @@ import { DisntanceVisible } from "../../helpers";
 import { MultiPlayerColliderTunnel } from "../../utils";
 
 export const Others = () => {
-  const { membersData, me } = useWebRTC();
-  const [othersData, setOthersData] = useState<any[]>([]);
+  const { membersData, me, onMembersChanged, offMembersChanged } = useWebRTC();
+  const [othersData, setOthersData] = useState<IPublishData[]>([]);
 
   useEffect(() => {
-    // 1秒ごとに更新
-    const interval = setInterval(() => {
-      const newOthersData = membersData.filter(
-        (data) => data.id !== me.current?.id
+    const update = () => {
+      console.log("update");
+      console.log("membersData", membersData.current.length);
+      console.log("othersData", othersData.length);
+      setOthersData(
+        membersData.current.filter((m) => {
+          return m.id !== me.current?.id;
+        })
       );
-      if (
-        newOthersData.length !== othersData.length ||
-        newOthersData.some((data, i) => data.id !== othersData[i].id)
-      ) {
-        setOthersData(newOthersData);
-      }
-    }, 1000);
-    return () => {
-      clearInterval(interval);
     };
-  }, [membersData, me, othersData]);
+    update();
+    onMembersChanged(update);
+    return () => {
+      offMembersChanged(update);
+    };
+  }, []);
 
   return (
     <>
@@ -82,6 +82,7 @@ const OtherPlayer = ({ id, url = "/models/ybot.glb" }: IOtherPlayer) => {
       const { position, rotation } = pdata;
       // console.log("position", position);
       if (position && rotation) {
+        console.log("pdata: ", position.x);
         // lerpを使って滑らかに移動
         otherRef.current.position.lerp(position, 0.2);
         // slerpを使って滑らかに回転

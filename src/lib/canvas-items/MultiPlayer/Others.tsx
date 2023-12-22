@@ -165,7 +165,7 @@ const OtherPlayer = ({ id, url = "/models/ybot.glb" }: IOtherPlayer) => {
         <mesh
           ref={moveableCollisionRef}
           visible={false}
-          userData={{ shareId: id, phyType: "box" }}
+          userData={{ shareId: id, phyType: "capsule" }}
         >
           <boxGeometry args={[1, 1, 1]} />
         </mesh>

@@ -35,7 +35,9 @@ export {
   getBoxCapsuleCollision,
   // checkSphereCapsuleIntersect,
   getInitCollision,
+  getCapsuleCapsuleCollision,
 } from "./Intersects";
+export * from "./IntersectsDetector";
 export type { CapsuleInfoProps } from "./Intersects";
 export {
   NonColliderTunnel,

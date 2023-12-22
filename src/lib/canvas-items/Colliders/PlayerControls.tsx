@@ -35,6 +35,7 @@ import {
   getBoxCapsuleCollision,
   // checkSphereCapsuleIntersect,
   getInitCollision,
+  getCapsuleCapsuleCollision,
 } from "../../utils";
 
 /**
@@ -474,6 +475,20 @@ export const PlayerControl = ({
                 tempSegment.end.addScaledVector(movement, depth);
                 break;
               }
+            }
+          }
+          else if (object.userData.phyType == "capsule") {
+            collided = getCapsuleCapsuleCollision(object as Mesh, player.current);
+            const {
+              intersect,
+              distance,
+              castDirection,
+              recieveDirection,
+              point,
+            } = collided;
+            // console.log("intersect: ", intersect)
+            if (p.current){
+              p.current.position.copy(point);
             }
           }
         }

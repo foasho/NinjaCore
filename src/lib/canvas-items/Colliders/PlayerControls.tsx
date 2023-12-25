@@ -1,7 +1,7 @@
 import React from "react";
-import { MutableRefObject, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
-import { OrbitControls, RoundedBox, useAnimations } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
 import { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import {
   StaticGeometryGenerator,
@@ -32,7 +32,7 @@ import {
 import {
   IInputMovement,
   CapsuleInfoProps,
-  getBoxCapsuleCollision,
+  detectAABBCapsuleCollision,
   // checkSphereCapsuleIntersect,
   getInitCollision,
   getCapsuleCapsuleCollision,
@@ -418,7 +418,10 @@ export const PlayerControl = ({
           const om = getOMById(object.userData.omId);
           if (!om) continue;
           if (om.phyType == "box") {
-            collided = getBoxCapsuleCollision(object as Mesh, player.current);
+            collided = detectAABBCapsuleCollision(
+              object as Mesh,
+              player.current
+            );
             const {
               intersect,
               distance,
@@ -453,7 +456,10 @@ export const PlayerControl = ({
         // First Intersect Only
         for (const object of shareGrp.current.children) {
           if (object.userData.phyType == "box") {
-            collided = getBoxCapsuleCollision(object as Mesh, player.current);
+            collided = detectAABBCapsuleCollision(
+              object as Mesh,
+              player.current
+            );
             const {
               intersect,
               distance,
@@ -476,9 +482,11 @@ export const PlayerControl = ({
                 break;
               }
             }
-          }
-          else if (object.userData.phyType == "capsule") {
-            collided = getCapsuleCapsuleCollision(object as Mesh, player.current);
+          } else if (object.userData.phyType == "capsule") {
+            collided = getCapsuleCapsuleCollision(
+              object as Mesh,
+              player.current
+            );
             const {
               intersect,
               distance,
@@ -487,7 +495,7 @@ export const PlayerControl = ({
               point,
             } = collided;
             // console.log("intersect: ", intersect)
-            if (p.current){
+            if (p.current) {
               p.current.position.copy(point);
             }
           }
@@ -690,7 +698,7 @@ export const PlayerControl = ({
             capsuleInfo.current.radius,
             height - capsuleInfo.current.radius * 2,
             1,
-            8,
+            6,
           ]}
         />
         <meshBasicMaterial wireframe color={0xffff00} side={DoubleSide} />

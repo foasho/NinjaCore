@@ -17,3 +17,4 @@ export const getInitCollision = (): ResultCollisionProps => {
     point: new Vector3(),
   };
 };
+

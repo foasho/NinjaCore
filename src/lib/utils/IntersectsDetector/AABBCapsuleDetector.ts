@@ -1,4 +1,5 @@
 import { Box3, CapsuleGeometry, Line3, Mesh, Vector3 } from "three";
+import { getInitCollision, ResultCollisionProps } from "./Common";
 
 // 再利用可能な変数
 const v1 = new Vector3();
@@ -11,31 +12,13 @@ export type CapsuleInfoProps = {
   radius: number;
 };
 
-export type ResultCollisionProps = {
-  intersect: boolean;
-  distance: number;
-  castDirection: Vector3;
-  recieveDirection: Vector3;
-  point: Vector3;
-};
-
-export const getInitCollision = (): ResultCollisionProps => {
-  return {
-    intersect: false,
-    distance: 0,
-    castDirection: new Vector3(),
-    recieveDirection: new Vector3(),
-    point: new Vector3(),
-  };
-};
-
 /**
  * BoxとCapsuleの衝突判定
  * @param boxMesh
  * @param capsuleMesh
  * @returns
  */
-export const getBoxCapsuleCollision = (
+export const detectAABBCapsuleCollision = (
   boxMesh: Mesh,
   capsuleMesh: Mesh
 ): ResultCollisionProps => {
@@ -150,10 +133,7 @@ export const getCapsuleCapsuleCollision = (
   );
 
   // 線分間の最短距離を計算する
-  const closestPoints = getClosestPointsBetweenLines(
-    segment1,
-    segment2
-  );
+  const closestPoints = getClosestPointsBetweenLines(segment1, segment2);
   // console.log("closestPoints", closestPoints);
   // 最短距離ベクトルを計算
   if (closestPoints.length !== 2) return res;
@@ -180,7 +160,10 @@ export const getCapsuleCapsuleCollision = (
  * @param line2
  * @returns
  */
-export const getClosestPointsBetweenLines = (line1: Line3, line2: Line3): Vector3[] => {
+export const getClosestPointsBetweenLines = (
+  line1: Line3,
+  line2: Line3
+): Vector3[] => {
   let p1 = line1.start;
   let p2 = line1.end;
   let p3 = line2.start;
@@ -210,4 +193,4 @@ export const getClosestPointsBetweenLines = (line1: Line3, line2: Line3): Vector
   let pb = p3.clone().add(p43.clone().multiplyScalar(mub));
 
   return [pa, pb];
-}
+};

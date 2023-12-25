@@ -71,8 +71,15 @@ export const detectBoxBoxCollision = (
 ): ResultCollisionProps => {
   const res = getInitCollision();
   let intersect = false;
-  // 回転率がなく、AABBが重なっている場合は衝突している
-  if (boxMesh1.rotation.equals(boxMesh2.rotation)) {
+  // 回転率が微小な場合は、AABBで判定
+  if (
+    Math.abs(boxMesh1.rotation.x) < 0.1 &&
+    Math.abs(boxMesh1.rotation.y) < 0.1 &&
+    Math.abs(boxMesh1.rotation.z) < 0.1 &&
+    Math.abs(boxMesh2.rotation.x) < 0.1 &&
+    Math.abs(boxMesh2.rotation.y) < 0.1 &&
+    Math.abs(boxMesh2.rotation.z) < 0.1
+  ) {
     const box1 = b1.setFromObject(boxMesh1);
     const box2 = b2.setFromObject(boxMesh2);
     if (box1.intersectsBox(box2)) {

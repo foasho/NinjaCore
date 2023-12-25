@@ -1,3 +1,7 @@
+/**
+ * 参考: Oimo.js
+ * https://github.com/lo-th/Oimo.js/blob/gh-pages/src/collision/narrowphase/SphereSphereCollisionDetector_X.js
+ */
 import { getInitCollision, ResultCollisionProps } from "./Common";
 import { Mesh, SphereGeometry, Vector3 } from "three";
 
@@ -19,17 +23,17 @@ export const detectSphereSphereCollision = (
   const scaledRadius2 = radius2 * Math.max(...sphereMesh2.scale.toArray());
 
   const rad = scaledRadius1 + scaledRadius2;
-  const center1 = sphereMesh1.position;
-  const center2 = sphereMesh2.position;
-  const normal = new Vector3().subVectors(center2, center1);
+  c1.copy(sphereMesh1.position);
+  c2.copy(sphereMesh2.position);
+  const normal = n.subVectors(c2, c1);
   const distance = normal.length();
 
   if (distance <= rad) {
     normal.normalize();
-    const collisionPoint = new Vector3().copy(center1).add(normal.clone().multiplyScalar(scaledRadius1));
+    p.copy(c1).add(normal.clone().multiplyScalar(scaledRadius1));
     res.intersect = true;
     res.distance = distance;
-    res.point = collisionPoint;
+    res.point.copy(p);
     res.castDirection.copy(normal);
     res.recieveDirection.copy(normal.clone().negate());
   }

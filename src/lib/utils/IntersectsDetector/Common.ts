@@ -8,13 +8,15 @@ export type ResultCollisionProps = {
   point: Vector3;
 };
 
+const cd = new Vector3();
+const rd = new Vector3();
+const p = new Vector3();
 export const getInitCollision = (): ResultCollisionProps => {
   return {
     intersect: false,
     distance: 0,
-    castDirection: new Vector3(),
-    recieveDirection: new Vector3(),
-    point: new Vector3(),
+    castDirection: cd,
+    recieveDirection: rd,
+    point: p,
   };
 };
-

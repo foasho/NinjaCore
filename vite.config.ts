@@ -18,6 +18,9 @@ export default defineConfig({
       root: '/'                    // Directory for root imports
     }
   )],
+  define: {
+    'process.env': process.env
+  },
   server: {
     proxy: {
       '/api': 'http://localhost:5174'

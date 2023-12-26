@@ -47,7 +47,7 @@ const Template: StoryFn<typeof NinjaGL> = (args: INinjaGL) => {
     initTpConfig(),
     {}
   );
-
+  // config
   return <NinjaGL {...args} njc={njcFile} />;
 };
 

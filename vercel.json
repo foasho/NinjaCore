@@ -1,7 +1,7 @@
 {
   "framework": "other",
   "buildCommand": "npm run build-storybook",
-  "outputDir": "./storybook-static",
+  "outputDirectory": "./storybook-static",
   "installCommand": "npm install",
   "deployCommand": "npm run storybook"
 }

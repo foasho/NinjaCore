@@ -35,7 +35,7 @@ import {
   detectAABBCapsuleCollision,
   // checkSphereCapsuleIntersect,
   getInitCollision,
-  getCapsuleCapsuleCollision,
+  detectCapsuleCapsuleCollision,
 } from "../../utils";
 
 /**
@@ -483,7 +483,7 @@ export const PlayerControl = ({
               }
             }
           } else if (object.userData.phyType == "capsule") {
-            collided = getCapsuleCapsuleCollision(
+            collided = detectCapsuleCapsuleCollision(
               object as Mesh,
               player.current
             );

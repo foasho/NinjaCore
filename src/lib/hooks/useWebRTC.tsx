@@ -72,11 +72,13 @@ export const useWebRTC = () => useContext(WebRTCContext);
 let webrtc = 0;
 
 type WebRTCProviderProps = {
+  enable: boolean;
   roomName: string;
   token?: string;
   children: React.ReactNode;
 };
 export const WebRTCProvider = ({
+  enable,
   roomName,
   token = "",
   children,
@@ -107,7 +109,7 @@ export const WebRTCProvider = ({
 
   // 最初にプライベートCallクラスを追加
   useEffect(() => {
-    if (me.current && me.current.id) {
+    if (me.current && me.current.id && enable) {
       const newCallRoom = new MyPrivateCall({
         token: token,
         audio: true,
@@ -120,7 +122,7 @@ export const WebRTCProvider = ({
     return () => {
       setCallSFURoom(null);
     };
-  }, [me]);
+  }, [me, enable]);
 
   // RTCDataChannelでデータを送信する(中継)
   const sendRTCData = (data: IPublishData) => {
@@ -284,5 +286,9 @@ export const WebRTCProvider = ({
 
 // tokenでMemo化する
 export const MemoWebRTCProvider = React.memo(WebRTCProvider, (prev, next) => {
-  return prev.token === next.token;
+  // token or enableが変更されたら再レンダリング
+  if (prev.token !== next.token || prev.enable !== next.enable) {
+    return false;
+  }
+  return true;
 });

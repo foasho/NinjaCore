@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import {
   IConfigParams,
-  IInputMovement,
   IObjectManagement,
   IScriptManagement,
   ITextureManagement,
@@ -173,7 +172,7 @@ export const detectDeviceType = (): EDeviceType => {
  *  <NinjaEngineProvider/>
  * </Canvas>
  */
-interface INinjaEngineProvider {
+export interface INinjaGL {
   njc?: NJCFile | null;
   njcPath?: string;
   noCanvas?: boolean;
@@ -187,7 +186,7 @@ const _NinjaGL = ({
   noCanvas = false,
   isSplashScreen = true,
   children,
-}: INinjaEngineProvider) => {
+}: INinjaGL) => {
   /**
    * 可能な限り再レンダリングされないようにuseStateは最低限
    */
@@ -259,8 +258,13 @@ const _NinjaGL = ({
       if (njcFile) {
         let _token = undefined;
         if (njcFile.config.multi) {
-          // MultiPlayerの場合は、SkyWayのトークンを取得する
-          _token = await fetchToken();
+          try {
+            // MultiPlayerの場合は、SkyWayのトークンを取得する
+            _token = await fetchToken();
+          } catch (e) {
+            // 強制的にmultiをfalseにする
+            njcFile.config.multi = false;
+          }
         }
         setContents({
           config: njcFile.config,
@@ -634,7 +638,11 @@ const _NinjaGL = ({
         }}
       >
         <InputControlProvider>
-          <MemoWebRTCProvider token={token} roomName={config.projectName}>
+          <MemoWebRTCProvider
+            enable={init}
+            token={token}
+            roomName={config.projectName}
+          >
             <NinjaWorkerProvider ThreeJSVer={ThreeJSVer}>
               <NinjaKVSProvider>
                 {

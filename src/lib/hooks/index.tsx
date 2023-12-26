@@ -13,6 +13,7 @@ export {
   ENinjaStatus,
   detectDeviceType,
 } from "./useNinjaEngine";
+export type { INinjaGL } from "./useNinjaEngine";
 export { playTextToSpeech } from "./useTextToSpeech";
 export { useWebRTC, WebRTCProvider } from "./useWebRTC";
 export { useSkyway } from "./useSkyway";

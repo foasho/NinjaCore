@@ -177,6 +177,7 @@ export interface INinjaGL {
   njcPath?: string;
   noCanvas?: boolean;
   isSplashScreen?: boolean;
+  apiURL?: string;
   children?: React.ReactNode;
 }
 export const ThreeJSVer = "0.157.0";
@@ -185,6 +186,7 @@ const _NinjaGL = ({
   njcPath,
   noCanvas = false,
   isSplashScreen = true,
+  apiURL = "",
   children,
 }: INinjaGL) => {
   /**
@@ -236,7 +238,7 @@ const _NinjaGL = ({
 
   React.useEffect(() => {
     const fetchToken = async () => {
-      const res = await fetch("/api/skyway/token");
+      const res = await fetch(apiURL+"/api/skyway/token");
       const response = await res.json();
       if (res.status === 200 && response.data) {
         return response.data;

@@ -30,11 +30,12 @@
   "scripts": {
     "test": "vitest",
     "prebuild": "rimraf dist && pnpm run typegen",
-    "prepublishOnly": "pnpm run build && pnpm version patch",
+    "prepublishOnly": "pnpm run package:build && pnpm version patch",
     "dev": "concurrently \"pnpm run dev:frontend\" \"pnpm run dev:backend\"",
     "dev:frontend": "vite",
     "dev:backend": "node backend/index.js",
     "build": "vite build && tsc",
+    "package:build": "vite build --config vite-lib.config.ts",
     "start": "concurrently \"node backend/index.js\" \"vite preview\"",
     "eslint": "eslint --fix .",
     "eslint:ci": "eslint .",

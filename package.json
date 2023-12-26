@@ -45,7 +45,7 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
     "typegen": "tsc",
     "storybook": "concurrently \"storybook dev -p 6006\" \"pnpm run dev:backend\"",
-    "build-storybook": "build-storybook -o ./storybook-static"
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@minchat/react-chat-ui": "^0.13.4",

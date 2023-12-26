@@ -31,14 +31,8 @@ export {
   InitOM,
 } from "./NinjaInit";
 export { loadNJCFileFromPath } from "./NinjaLoaders";
-export {
-  getBoxCapsuleCollision,
-  // checkSphereCapsuleIntersect,
-  getInitCollision,
-  getCapsuleCapsuleCollision,
-} from "./Intersects";
 export * from "./IntersectsDetector";
-export type { CapsuleInfoProps } from "./Intersects";
+export type { CapsuleInfoProps } from "./IntersectsDetector";
 export {
   NonColliderTunnel,
   ColliderTunnel,

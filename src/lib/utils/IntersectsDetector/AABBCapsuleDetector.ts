@@ -1,4 +1,4 @@
-import { Box3, CapsuleGeometry, Line3, Mesh, Vector3 } from "three";
+import { Box3, Line3, Mesh, Vector3 } from "three";
 import { getInitCollision, ResultCollisionProps } from "./Common";
 
 // 再利用可能な変数
@@ -106,91 +106,4 @@ export const detectAABBCapsuleCollision = (
     // res.distance = capsuleMesh.position.distanceTo(point);
   }
   return res;
-};
-
-/**
- * Capsule同士の衝突判定
- * @param capsuleMesh1
- * @param capsuleMesh2
- * @returns
- */
-export const getCapsuleCapsuleCollision = (
-  capsuleMesh1: Mesh,
-  capsuleMesh2: Mesh
-): ResultCollisionProps => {
-  const res = getInitCollision();
-  const length1 = (capsuleMesh1.geometry as CapsuleGeometry).parameters.length;
-  const length2 = (capsuleMesh2.geometry as CapsuleGeometry).parameters.length;
-  const radius1 = (capsuleMesh1.geometry as CapsuleGeometry).parameters.radius;
-  const radius2 = (capsuleMesh2.geometry as CapsuleGeometry).parameters.radius;
-  const segment1 = new Line3(
-    new Vector3(0, length1 / 2 - radius1, 0).add(capsuleMesh1.position),
-    new Vector3(0, -length1 / 2 + radius1, 0).add(capsuleMesh1.position)
-  );
-  const segment2 = new Line3(
-    new Vector3(0, length2 / 2 - radius2, 0).add(capsuleMesh2.position),
-    new Vector3(0, -length2 / 2 + radius2, 0).add(capsuleMesh2.position)
-  );
-
-  // 線分間の最短距離を計算する
-  const closestPoints = getClosestPointsBetweenLines(segment1, segment2);
-  // console.log("closestPoints", closestPoints);
-  // 最短距離ベクトルを計算
-  if (closestPoints.length !== 2) return res;
-
-  const distanceVec = closestPoints[0].sub(closestPoints[1]);
-  const distance = distanceVec.length();
-  // console.log("distance", distance);
-
-  // 衝突判定
-  if (distance <= radius1 + radius2) {
-    res.intersect = true;
-    res.distance = distance;
-    res.point.copy(closestPoints[0].lerp(closestPoints[1], 0.5));
-    res.castDirection.copy(distanceVec.normalize());
-    res.recieveDirection.copy(distanceVec.normalize().negate());
-  }
-
-  return res;
-};
-
-/**
- * 線分間の最短距離を計算する
- * @param line1
- * @param line2
- * @returns
- */
-export const getClosestPointsBetweenLines = (
-  line1: Line3,
-  line2: Line3
-): Vector3[] => {
-  let p1 = line1.start;
-  let p2 = line1.end;
-  let p3 = line2.start;
-  let p4 = line2.end;
-
-  let p13 = p1.clone().sub(p3);
-  let p43 = p4.clone().sub(p3);
-
-  if (p43.lengthSq() < Number.EPSILON) return [];
-  let p21 = p2.clone().sub(p1);
-  if (p21.lengthSq() < Number.EPSILON) return [];
-
-  let d1343 = p13.dot(p43);
-  let d4321 = p43.dot(p21);
-  let d1321 = p13.dot(p21);
-  let d4343 = p43.dot(p43);
-  let d2121 = p21.dot(p21);
-
-  let denom = d2121 * d4343 - d4321 * d4321;
-  if (Math.abs(denom) < Number.EPSILON) return [];
-  let numer = d1343 * d4321 - d1321 * d4343;
-
-  let mua = numer / denom;
-  let mub = (d1343 + d4321 * mua) / d4343;
-
-  let pa = p1.clone().add(p21.clone().multiplyScalar(mua));
-  let pb = p3.clone().add(p43.clone().multiplyScalar(mub));
-
-  return [pa, pb];
 };

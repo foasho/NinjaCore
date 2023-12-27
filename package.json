@@ -114,6 +114,7 @@
     "typescript": "^5.0.4",
     "vite": "^4.4.5",
     "vite-plugin-glsl": "^1.1.2",
+    "vite-plugin-pwa": "^0.17.4",
     "vitest": "^0.34.6"
   },
   "peerDependencies": {

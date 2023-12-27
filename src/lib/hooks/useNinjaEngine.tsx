@@ -15,15 +15,14 @@ import {
   loadNJCFileFromPath,
 } from "../utils";
 import { MdMusicNote, MdMusicOff } from "react-icons/md";
+import { BsHeadsetVr } from "react-icons/bs";
 import {
   Box3,
   Group,
   Line3,
   Matrix4,
   Mesh,
-  MeshBasicMaterial,
   Object3D,
-  RingGeometry,
   Sphere,
   Vector3,
 } from "three";
@@ -69,6 +68,7 @@ export enum ENinjaStatus {
 type NinjaEngineProp = {
   init: boolean;
   device: EDeviceType;
+  isVertical: boolean;
   status: React.MutableRefObject<ENinjaStatus>;
   isPhysics: boolean;
   player: React.MutableRefObject<Mesh | null>;
@@ -104,6 +104,7 @@ type NinjaEngineProp = {
 export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
   init: false,
   device: EDeviceType.Unknown,
+  isVertical: false,
   status: React.createRef<ENinjaStatus>(),
   isPhysics: true,
   player: React.createRef<Mesh>(),
@@ -205,6 +206,7 @@ const _NinjaGL = ({
     ums: IUIManagement[];
     tms: ITextureManagement[];
     device: EDeviceType;
+    isVertical: boolean;
     token?: string;
   }>({
     config: InitMobileConfipParams,
@@ -213,9 +215,10 @@ const _NinjaGL = ({
     ums: [],
     tms: [],
     device: EDeviceType.Unknown,
+    isVertical: false,
     token: undefined,
   });
-  const { config, oms, sms, ums, tms, device, token } = Contents;
+  const { config, oms, sms, ums, tms, device, isVertical, token } = Contents;
   // Player情報
   const player = React.useRef<Mesh>(null);
   const playerInfo = useRef<{
@@ -275,6 +278,7 @@ const _NinjaGL = ({
           ums: njcFile.ums,
           tms: njcFile.tms,
           device: detectDeviceType(),
+          isVertical: window.innerHeight > window.innerWidth,
           token: _token,
         });
         setInit(true);
@@ -600,6 +604,7 @@ const _NinjaGL = ({
       value={{
         init,
         device,
+        isVertical,
         status,
         isPhysics: config.physics,
         player,
@@ -664,6 +669,7 @@ const _NinjaGL = ({
                           top: 0,
                           left: 0,
                           zIndex: 1,
+                          background: "#d2d2d2",
                         }}
                       >
                         <React.Suspense
@@ -791,6 +797,7 @@ const SystemFrame = () => {
 
 const SystemSound = () => {
   const { isSound, setIsSound } = useNinjaEngine();
+  // BsHeadsetVr
   return (
     <div
       style={{

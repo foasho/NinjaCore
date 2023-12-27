@@ -26,12 +26,7 @@ export const UIItems = React.memo(() => {
           <UIButtons />
           <UILabels />
           <UITextInputs />
-          {(
-            device === EDeviceType.Mobile ||
-            device === EDeviceType.Tablet
-          ) &&
           <TouchController />
-          }
           <NinjaLoader />
           {config.multi && <CommunicationUI />}
         </>

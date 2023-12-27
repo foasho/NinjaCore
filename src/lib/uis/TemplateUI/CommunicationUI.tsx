@@ -22,7 +22,7 @@ export const _CommunicationUI = ({
 }: {
   themeColor?: string;
 }) => {
-  const { device } = useNinjaEngine();
+  const { device, isVertical } = useNinjaEngine();
   const [open, setOpen] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const { publishData } = useWebRTC();
@@ -49,7 +49,7 @@ export const _CommunicationUI = ({
           config: { duration: 400 },
         });
         await next({
-          transform: "translateY(90%)",
+          transform: "translateY(92%)",
           config: { duration: 100 },
         });
       }
@@ -70,18 +70,19 @@ export const _CommunicationUI = ({
     <animated.div
       style={{
         position: "absolute",
-        right: device === EDeviceType.Mobile ? "0px" : "8px",
-        bottom: "8px",
-        padding: "25px 15px",
+        right: isVertical ? "15px" : "8px",
+        bottom: "24px",
+        // padding: "0px 15px",
+        width: isVertical ? "80%" : "300px",
+        zIndex: 11,
         ...spring,
       }}
     >
       <MainContainer
         style={{
-          height: "70vh",
-          width: device === EDeviceType.Mobile ? "100vw" : "30vw",
+          height: isVertical ? "70vh": "85vh",
+          width: "100%",
           pointerEvents: "auto",
-          minWidth: device === EDeviceType.Mobile ? "100vw" : "300px",
         }}
       >
         <MessageContainer>
@@ -263,10 +264,11 @@ const MessageListComponent = ({
             textAlign: "center",
             display: "flex",
             justifyContent: "center",
-            padding: "20px",
             height: "100%",
             alignItems: "center",
             color: "#999",
+            width: "75%",
+            margin: "0px auto",
           }}
         >
           チャットがありません

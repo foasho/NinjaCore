@@ -504,6 +504,8 @@ export const useSkyway = (props: IUseSkywayProps) => {
     membersChangedListeners.current.forEach((l) => l());
   };
 
+  console.log("Skyway Rerender: ", membersData.current);
+
   return {
     me,
     publishData: publishData,

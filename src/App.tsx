@@ -45,6 +45,7 @@ export const App = () => {
           left: "10px",
           fontSize: "30px",
           cursor: "pointer",
+          zIndex: 100,
         }}
         onClick={() => {
           setReady(!ready);

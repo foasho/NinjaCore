@@ -6,6 +6,7 @@ import { TouchController } from "./TouchController";
 import { NinjaLoader } from "./NinjaLoader";
 import { CommunicationUI } from "./TemplateUI/CommunicationUI";
 import { EDeviceType, useNinjaEngine } from "../hooks";
+import { SystemMenuUI } from "./TemplateUI/SystemMenuUI";
 
 export const UIItems = React.memo(() => {
   const { config, device } = useNinjaEngine();
@@ -17,7 +18,7 @@ export const UIItems = React.memo(() => {
     }, 1000);
     return () => {
       setMounted(false);
-    }
+    };
   }, [config.multi]);
   return (
     <>
@@ -29,6 +30,7 @@ export const UIItems = React.memo(() => {
           <TouchController />
           <NinjaLoader />
           {config.multi && <CommunicationUI />}
+          <SystemMenuUI />
         </>
       )}
     </>

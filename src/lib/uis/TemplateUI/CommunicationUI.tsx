@@ -7,7 +7,7 @@ import {
   MessageContainer,
 } from "@minchat/react-chat-ui";
 import { useSpring, animated } from "@react-spring/web";
-import { EDeviceType, useNinjaEngine, useWebRTC } from "../../hooks";
+import { useNinjaEngine, useWebRTC } from "../../hooks";
 import { FaRocketchat } from "react-icons/fa";
 import { FaGear } from "react-icons/fa6";
 import { MdClose } from "react-icons/md";
@@ -73,16 +73,18 @@ export const _CommunicationUI = ({
         right: isVertical ? "15px" : "8px",
         bottom: "24px",
         // padding: "0px 15px",
-        width: isVertical ? "80%" : "300px",
+        width: isVertical ? "80%" : "350px",
         zIndex: 11,
         ...spring,
       }}
     >
       <MainContainer
         style={{
-          height: isVertical ? "70vh": "85vh",
+          height: isVertical ? "70vh" : "85vh",
+          maxHeight: "680px",
           width: "100%",
           pointerEvents: "auto",
+          
         }}
       >
         <MessageContainer>

@@ -60,14 +60,23 @@ export const SplashScreen: React.FC = ({
       }}
     >
       <div
-       // styleを上限
+        // styleを上限
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <img src={logoSrc} alt="ロゴ" />
+        <img
+          src={logoSrc}
+          style={{
+            padding: "32px",
+            height: "80%",
+            width: "80%",
+            margin: "auto",
+          }}
+          alt="ロゴ"
+        />
       </div>
     </StyledDiv>
   );

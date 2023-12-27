@@ -699,7 +699,6 @@ const _NinjaGL = ({
                       }}
                     >
                       <UIItems />
-                      <SystemSound />
                     </div>
                   </>
                 )}
@@ -795,31 +794,3 @@ const SystemFrame = () => {
   return <></>;
 };
 
-const SystemSound = () => {
-  const { isSound, setIsSound } = useNinjaEngine();
-  // BsHeadsetVr
-  return (
-    <div
-      style={{
-        position: "absolute",
-        top: "1rem",
-        right: "1rem",
-        fontSize: "1.5rem",
-        color: "#fff",
-        borderRadius: "5px",
-        cursor: "pointer",
-        pointerEvents: "auto",
-      }}
-      onClick={() => {
-        setIsSound(!isSound);
-      }}
-    >
-      {isSound && (
-        <MdMusicNote style={{ display: "inline", verticalAlign: "middle" }} />
-      )}
-      {!isSound && (
-        <MdMusicOff style={{ display: "inline", verticalAlign: "middle" }} />
-      )}
-    </div>
-  );
-};

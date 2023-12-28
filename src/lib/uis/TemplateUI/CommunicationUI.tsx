@@ -22,7 +22,7 @@ export const _CommunicationUI = ({
 }: {
   themeColor?: string;
 }) => {
-  const { device, isVertical } = useNinjaEngine();
+  const { playerInfo, isVertical, curMessage } = useNinjaEngine();
   const [open, setOpen] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const { publishData } = useWebRTC();
@@ -58,9 +58,13 @@ export const _CommunicationUI = ({
 
   const sendMessage = (message: string) => {
     if (message !== "" && publishData) {
-      publishData({
-        message: message,
-      });
+      publishData(
+        {
+          message: message,
+        },
+        playerInfo.current
+      );
+      curMessage.current = message;
     }
   };
 
@@ -74,6 +78,7 @@ export const _CommunicationUI = ({
         bottom: "24px",
         // padding: "0px 15px",
         width: isVertical ? "80%" : "350px",
+        maxWidth: "420px",
         zIndex: 11,
         ...spring,
       }}
@@ -84,7 +89,6 @@ export const _CommunicationUI = ({
           maxHeight: "680px",
           width: "100%",
           pointerEvents: "auto",
-          
         }}
       >
         <MessageContainer>
@@ -168,7 +172,7 @@ const MessageHeaderComponent = ({
           {open ? <MdClose /> : <FaRocketchat />}
         </a>
 
-        {!edit && "Chat"}
+        {!edit && "Room Chat"}
         {edit && (
           <form
             onSubmit={(e: any) => {

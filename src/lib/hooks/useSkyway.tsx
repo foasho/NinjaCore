@@ -18,7 +18,7 @@ import {
 } from "@skyway-sdk/room";
 import { SkyWayConfigOptions } from "@skyway-sdk/core";
 import { Euler, Vector3 } from "three";
-import { IInputMovement } from "../utils";
+import { IInputMovement, MessageProps, PlayerInfoProps } from "../utils";
 
 export enum ECallStatus {
   None = 0,
@@ -66,13 +66,6 @@ export interface IUseSkywayProps {
   videoElement?: RefObject<HTMLVideoElement | HTMLAudioElement>;
   maxSubscribers?: number;
 }
-export type MessageProps = {
-  id: string;
-  message: string;
-  username?: string;
-  avatar?: string;
-  messagedAt: Date;
-};
 
 /**
  * 位置の同期に使用
@@ -397,7 +390,7 @@ export const useSkyway = (props: IUseSkywayProps) => {
   const publishData = useCallback(
     (
       pdata: IPublishData,
-      playerInfo: { name: string; avatar?: string } | null = null
+      playerInfo: PlayerInfoProps | null = null
     ) => {
       if (dataStream.current) {
         if (!pdata.id) {

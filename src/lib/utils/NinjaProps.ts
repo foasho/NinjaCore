@@ -155,7 +155,22 @@ export interface IUpdateSoundOption {
   stopAnim?: string;
 }
 
-
 export type kvsProps = {
   [key: string]: string;
+};
+
+export type MessageProps = {
+  id: string;
+  message: string;
+  username?: string;
+  avatar?: string;
+  fileUrl?: any;
+  fileType?: "image" | "video" | "audio" | "file";
+  messagedAt: Date;
+};
+
+export type PlayerInfoProps = {
+  name: string;
+  avatar: string;
+  objectURL?: string;
 };

@@ -13,6 +13,8 @@ import {
   DefaultAvatar,
   genRandom,
   loadNJCFileFromPath,
+  MessageProps,
+  PlayerInfoProps,
 } from "../utils";
 import { MdMusicNote, MdMusicOff } from "react-icons/md";
 import { BsHeadsetVr } from "react-icons/bs";
@@ -78,6 +80,7 @@ type NinjaEngineProp = {
   }>;
   playerIsOnGround: React.MutableRefObject<boolean>;
   curMessage: React.MutableRefObject<string>;
+  npcChatHistory: React.MutableRefObject<MessageProps[]>;
   isSound: boolean;
   setIsSound: (isSound: boolean) => void;
   bvhGrp: React.MutableRefObject<Group | null>;
@@ -87,6 +90,7 @@ type NinjaEngineProp = {
   boundsTree: React.MutableRefObject<MeshBVH | null>;
   updateCollisions: (daltaTime: number) => void;
   config: IConfigParams;
+  apiEndpoint: string;
   oms: IObjectManagement[];
   sms: IScriptManagement[];
   ums: IUIManagement[];
@@ -114,6 +118,7 @@ export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
   }>(),
   playerIsOnGround: React.createRef<boolean>(),
   curMessage: React.createRef<string>(),
+  npcChatHistory: React.createRef<MessageProps[]>(),
   isSound: false,
   setIsSound: (isSound: boolean) => {},
   bvhGrp: React.createRef<Group>(),
@@ -123,6 +128,7 @@ export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
   boundsTree: React.createRef<Object3D>(),
   updateCollisions: (daltaTime: number) => {},
   config: InitMobileConfipParams,
+  apiEndpoint: "",
   oms: [],
   sms: [],
   ums: [],
@@ -178,7 +184,7 @@ export interface INinjaGL {
   njcPath?: string;
   noCanvas?: boolean;
   isSplashScreen?: boolean;
-  apiURL?: string;
+  apiEndpoint?: string;
   children?: React.ReactNode;
 }
 export const ThreeJSVer = "0.157.0";
@@ -187,7 +193,7 @@ const _NinjaGL = ({
   njcPath,
   noCanvas = false,
   isSplashScreen = true,
-  apiURL = "",
+  apiEndpoint = "",
   children,
 }: INinjaGL) => {
   /**
@@ -221,15 +227,15 @@ const _NinjaGL = ({
   const { config, oms, sms, ums, tms, device, isVertical, token } = Contents;
   // Player情報
   const player = React.useRef<Mesh>(null);
-  const playerInfo = useRef<{
-    name: string;
-    avatar: string;
-  }>({
+  const playerInfo = useRef<PlayerInfoProps>({
     name: `Guest`,
     avatar: DefaultAvatar, // base64型か、URL
+    objectURL: undefined,
   });
   const playerIsOnGround = useRef(false);
   const curMessage = React.useRef<string>("");
+  // NPC用Chat履歴
+  const npcChatHistory = React.useRef<MessageProps[]>([]);
   // 物理エンジン用
   const bvhGrp = React.useRef<Group>(null); // BVH用コライダー
   const bvhCollider = React.useRef<Mesh>(null); // BVH用コライダー
@@ -241,7 +247,7 @@ const _NinjaGL = ({
 
   React.useEffect(() => {
     const fetchToken = async () => {
-      const res = await fetch(apiURL+"/api/skyway/token");
+      const res = await fetch(apiEndpoint + "/api/skyway/token");
       const response = await res.json();
       if (res.status === 200 && response.data) {
         return response.data;
@@ -611,6 +617,7 @@ const _NinjaGL = ({
         playerInfo,
         playerIsOnGround,
         curMessage,
+        npcChatHistory,
         isSound,
         setIsSound,
         bvhGrp,
@@ -620,6 +627,7 @@ const _NinjaGL = ({
         boundsTree,
         updateCollisions,
         config,
+        apiEndpoint,
         oms,
         sms,
         ums,
@@ -793,4 +801,3 @@ const SystemFrame = () => {
 
   return <></>;
 };
-

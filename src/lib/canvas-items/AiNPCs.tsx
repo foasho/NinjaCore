@@ -9,7 +9,7 @@ import {
   AnimationMixer,
   Object3D,
 } from "three";
-import { playTextToSpeech } from "../hooks";
+import { playTextToSpeech, useWebRTC } from "../hooks";
 import { useNinjaEngine } from "../hooks";
 import { SkeletonUtils } from "three-stdlib";
 import { AnimationHelper } from "../helpers";
@@ -28,7 +28,7 @@ export const AiNPCs = () => {
           npcName={ainpc.args.npcName}
           objectURL={ainpc.args.url}
           system={ainpc.args.system}
-          apiURL={ainpc.args.apiURL}
+          apiRoute={ainpc.args.apiRoute}
           position={ainpc.args.position}
           rotation={ainpc.args.rotation}
           scale={ainpc.args.scale}
@@ -47,6 +47,8 @@ interface IConversationProps {
   content: string;
 }
 
+const initSystem = `あなたはゲームのNPCとしての会話をふるまってください。私がPlayerで、これから会話シミュレーションを行います。返答はこれから行う入力言語に合わせてください。`;
+
 /**
  * NPC
  */
@@ -55,7 +57,7 @@ export interface AiNPCProps {
   npcName?: string;
   objectURL?: string;
   system?: string;
-  apiURL?: string;
+  apiRoute?: string;
   trackingRotation?: boolean;
   trackingNodeName?: string;
   conversationDistance?: number;
@@ -71,10 +73,10 @@ export interface AiNPCProps {
 }
 export const AiNPC = ({
   om,
-  npcName = "AIくん",
+  npcName = "NPC",
   objectURL = "/models/ybot.glb",
-  system = undefined,
-  apiURL = "/api/npc/conversations",
+  system = initSystem,
+  apiRoute = "/api/npc/conversations",
   trackingRotation = true,
   trackingNodeName = undefined,
   conversationDistance = 5,
@@ -91,7 +93,9 @@ export const AiNPC = ({
   const target = useRef<Group | null>(null);
   const mesHtmlRef = useRef<any>(null);
   const { scene, animations, nodes } = useGLTF(objectURL) as any;
-  const { player, curMessage, config } = useNinjaEngine();
+  const [localMessage, setLocalMessage] = useState<string>("");
+  const { player, curMessage, config, apiEndpoint, npcChatHistory } = useNinjaEngine();
+  const { publishData } = useWebRTC();
   const [conversations, setConversations] = useState<IConversationProps[]>([]);
   const [lastAssistantMessage, setLastAssistantMessage] =
     useState<IConversationProps>();
@@ -120,7 +124,7 @@ export const AiNPC = ({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ conversations: cons }),
     };
-    const response = await fetch(apiURL, requestOptions);
+    const response = await fetch(apiEndpoint + apiRoute, requestOptions);
     const json = await response.json();
     // 失敗した場合、適当に埋め合わせする
     if (response.status !== 200) {
@@ -129,33 +133,51 @@ export const AiNPC = ({
         content: "すみません、\nよくわかりませんでした。",
       };
     }
+    // NPCメッセージに追記する
+    npcChatHistory.current.push(
+      {
+        id: om.id,
+        username: npcName,
+        message: json.data.content as string,
+        messagedAt: new Date(),
+      }
+    );
+    // webRTCを使用していれば、publishする
+    if (config.multi){
+      if (publishData) {
+        publishData({
+          id: om.id,
+          username: npcName,
+          message: json.data.content as string,
+        });
+      }
+    }
     return {
       role: "assistant",
-      content: json.content,
+      content: json.data.content,
     };
   };
 
   useEffect(() => {
-    if (!config.isApi) return;
-    if (!player.current) return;
-    const dinstance = player.current?.position.clone().distanceTo(target.current!.position);
-    // systemが設定されている場合、初期メッセージを追加する
-    if (system && conversations.length === 0) {
-      const convers: IConversationProps[] = [];
-      const systemMessage: IConversationProps = {
-        role: "system",
-        content: system,
-      };
-      convers.push(systemMessage);
-      setConversations(convers);
-    }
+    if (localMessage !== "") {
+      if (!config.isApi) return;
+      if (!player.current) return;
+      const convs = [...conversations];
+      // systemが設定されている場合、初期メッセージを追加する
+      if (system && conversations.length === 0) {
+        const systemMessage: IConversationProps = {
+          role: "system",
+          content: system,
+        };
+        convs.push(systemMessage);
+      }
 
-    if (dinstance < conversationDistance) {
-      if (curMessage.current && curMessage.current !== "") {
+      if (localMessage !== "") {
         const userMessage: IConversationProps = {
           role: "user",
-          content: curMessage.current,
+          content: localMessage,
         };
+        convs.push(userMessage);
         // 最後の要素が重複していないかチェックする
         if (conversations.length > 0) {
           const lastConversation = conversations[conversations.length - 1];
@@ -163,16 +185,10 @@ export const AiNPC = ({
             return;
           }
         }
-        setConversations((prevConversations) => [
-          ...prevConversations,
-          userMessage,
-        ]);
+        setConversations(convs);
       }
     }
-    return () => {
-      setConversations([]);
-    };
-  }, [curMessage]);
+  }, [localMessage]);
 
   useEffect(() => {
     const update = async (conversations: IConversationProps[]) => {
@@ -184,7 +200,7 @@ export const AiNPC = ({
       setConversations([..._nowConversations]);
       setLastAssistantMessage(assistantMessage);
     };
-    // conversationsの最後のroleがuserの場合、assistantの発言を追加する
+    // conversationsの最後のroleがuserの場合のみ、assistantの発言を追加する
     if (conversations.length > 0) {
       const lastConversation = conversations[conversations.length - 1];
       if (lastConversation.role === "user") {
@@ -217,6 +233,12 @@ export const AiNPC = ({
       const curPosition = player.current.position.clone();
       const dinstance = curPosition.distanceTo(target.current.position);
       if (dinstance < conversationDistance) {
+        // 現在メッセージがLocalと異なれば更新
+        if (curMessage.current && curMessage.current !== "") {
+          if (localMessage !== curMessage.current){
+            setLocalMessage(curMessage.current);
+          }
+        }
         // trackingRotationがtrueの場合、curPositionの方向を向く
         const rotationY = Math.atan2(
           curPosition.x - target.current.position.x,
@@ -269,18 +291,18 @@ export const AiNPC = ({
   return (
     <>
       <DisntanceVisible distance={om.args.distance}>
-        <group ref={target} position={position} scale={scale} rotation={rotation}>
-          {clone && (
-            <AnimationHelper
-              id={om.id}
-              object={clone}
-            />
-          )}
+        <group
+          ref={target}
+          position={position}
+          scale={scale}
+          rotation={rotation}
+        >
+          {clone && <AnimationHelper id={om.id} object={clone} />}
         </group>
       </DisntanceVisible>
       {lastAssistantMessage && (
         <mesh ref={mesHtmlRef}>
-          <Html position={[0, 1, 0]}>
+          <Html position={[0, 0.5, 0]}>
             <div
               style={{
                 position: "absolute",

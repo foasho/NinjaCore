@@ -9,8 +9,13 @@ import {
   SpringRef,
 } from "@react-spring/web";
 import { MdMusicNote, MdMusicOff } from "react-icons/md";
-import { FaMicrophone, FaMicrophoneSlash } from "react-icons/fa";
-import { BsHeadset, BsHeadsetVr } from "react-icons/bs";
+import {
+  FaCompress,
+  FaExpand,
+  FaMicrophone,
+  FaMicrophoneSlash,
+} from "react-icons/fa";
+import { BsCameraVideo, BsHeadset, BsHeadsetVr } from "react-icons/bs";
 
 const animationConfig = {
   mass: 1,
@@ -187,7 +192,7 @@ type IconMenuItemsProps = {
 };
 
 const IconMenuItems = ({ open }: IconMenuItemsProps) => {
-  const items = [<VoiceChat />, <SystemSound />, <VRMode />];
+  const items = [<FullScreen />, <VoiceChat />, <SystemSound />, <VRMode />];
   const springs = useSprings(
     items.length,
     items.map((_, index) => ({
@@ -206,13 +211,13 @@ const IconMenuItems = ({ open }: IconMenuItemsProps) => {
         await next({
           width: `${items.length * 52 + 64}px`,
           opacity: 1,
-          config: { duration: items.length * 100 },
+          config: { duration: items.length * 50 },
         });
       } else {
         await next({
           width: `0px`,
           opacity: 0,
-          config: { duration: items.length * 125 },
+          config: { duration: items.length * 150 },
         });
       }
     },
@@ -346,7 +351,51 @@ const VRMode = () => {
         <BsHeadsetVr style={{ display: "inline", verticalAlign: "middle" }} />
       )}
       {!isVRMode && (
-        <BsHeadset style={{ display: "inline", verticalAlign: "middle" }} />
+        <BsCameraVideo style={{ display: "inline", verticalAlign: "middle" }} />
+      )}
+    </div>
+  );
+};
+
+/**
+ * 全画面表示
+ */
+const FullScreen = () => {
+  const [zoom, setZoom] = React.useState(false); // [TODO] 仮置き
+
+  const windowZoom = (value: boolean) => {
+    // valueがtrueの場合は全画面表示
+    if (value) {
+      // 全画面表示
+      document.body.requestFullscreen();
+    } else {
+      // 通常表示
+      document.exitFullscreen();
+    }
+    setZoom(value);
+  };
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: "1rem",
+        right: "1rem",
+        fontSize: "1.8rem",
+        color: "#fff",
+        borderRadius: "5px",
+        cursor: "pointer",
+        pointerEvents: "auto",
+      }}
+      onClick={() => {
+        windowZoom(!zoom);
+      }}
+    >
+      {zoom && (
+        <FaCompress style={{ display: "inline", verticalAlign: "middle" }} />
+      )}
+      {!zoom && (
+        <FaExpand style={{ display: "inline", verticalAlign: "middle" }} />
       )}
     </div>
   );

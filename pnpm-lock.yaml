@@ -68,8 +68,8 @@ dependencies:
 
 devDependencies:
   '@ninjagl/api':
-    specifier: ^1.0.2
-    version: 1.0.2
+    specifier: ^1.0.4
+    version: 1.0.4
   '@react-three/test-renderer':
     specifier: ^8.2.0
     version: 8.2.0(@react-three/fiber@8.15.11)(react@18.2.0)(three@0.157.0)
@@ -2020,8 +2020,8 @@ packages:
       tar-fs: 2.1.1
     dev: true
 
-  /@ninjagl/api@1.0.2:
-    resolution: {integrity: sha512-yArtDg1IaBZaUx6F5yRahHN6Uj4ru3VcUDpnDaZzM2PIU7iGDKTe0XOmWvouHqfpOfhi+/uAdxrDQI4xe6/h4Q==}
+  /@ninjagl/api@1.0.4:
+    resolution: {integrity: sha512-rErhG/2qr/NowQGONZJS2BSzWbe+k2Pjsb8+WoxflLZ6oMdzO0efyShiEmV1Zo7u+dFrvkRVrMN7pePwdINQNQ==}
     dependencies:
       '@skyway-sdk/token': 1.4.5
       axios: 1.6.2

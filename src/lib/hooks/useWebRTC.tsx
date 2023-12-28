@@ -11,10 +11,10 @@ import {
   IPublishData,
   useSkyway,
   ECallStatus,
-  MessageProps,
 } from "./useSkyway";
 import { ICallRole, MyPrivateCall } from "./SkywayHelper/PrivateCall";
 import { LocalP2PRoomMember } from "@skyway-sdk/room";
+import { MessageProps, PlayerInfoProps } from "../utils";
 
 type WebRTCContextType = {
   audioStream: MutableRefObject<MediaStream | null>;
@@ -23,7 +23,7 @@ type WebRTCContextType = {
   turnOffAudio: () => void;
   turnOnVideo: (select?: "value" | "min" | "max") => Promise<boolean>;
   turnOffVideo: () => void;
-  publishData?: (pdata: IPublishData) => void;
+  publishData?: (pdata: IPublishData, playerInfo?: PlayerInfoProps) => void;
   roomName: string;
   me: MutableRefObject<LocalP2PRoomMember | null>;
   membersData: MutableRefObject<IPublishData[]>;

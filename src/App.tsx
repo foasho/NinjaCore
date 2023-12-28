@@ -29,13 +29,15 @@ export const App = () => {
     };
   }, []);
 
-  const apiURL = process.env.VITE_API_ENDPOINT || "";
+  const apiEndpoint = process.env.VITE_API_ENDPOINT || "";
 
   return (
     <div style={{ position: "absolute", height: "100dvh", width: "100dvw" }}>
       {ready && (
         <div style={{ height: "100%" }}>
-          {njcFile && <NinjaGL apiURL={apiURL} njc={njcFile}></NinjaGL>}
+          {njcFile && (
+            <NinjaGL apiEndpoint={apiEndpoint} njc={njcFile}></NinjaGL>
+          )}
         </div>
       )}
       <div

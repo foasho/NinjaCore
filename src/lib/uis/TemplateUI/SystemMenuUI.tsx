@@ -15,7 +15,7 @@ import {
   FaMicrophone,
   FaMicrophoneSlash,
 } from "react-icons/fa";
-import { BsCameraVideo, BsHeadset, BsHeadsetVr } from "react-icons/bs";
+import { BsCameraVideo, BsHeadset, BsHeadsetVr, BsXLg } from "react-icons/bs";
 
 const animationConfig = {
   mass: 1,
@@ -47,6 +47,7 @@ export const SystemMenuUI = React.memo(() => {
         position: "absolute",
         top: "32px",
         right: "32px",
+        zIndex: 1,
       }}
     >
       {/** Iconのバックグラウンド */}
@@ -57,14 +58,11 @@ export const SystemMenuUI = React.memo(() => {
           borderRadius: "50%",
           backgroundColor: "#fff",
           padding: "6px",
+          position: "relative",
+          zIndex: 2,
         }}
       >
-        <HamburgerMenu
-          open={open}
-          toggle={setOpen}
-          api={api}
-          styles={styles}
-        ></HamburgerMenu>
+        <HamburgerMenu open={open} toggle={setOpen} api={api} styles={styles} />
       </div>
       {/** メニュー */}
       <IconMenuItems open={open} />
@@ -138,7 +136,7 @@ const HamburgerMenu = ({ open, toggle, api, styles }: HamburgerMenuProps) => {
     toggle((prev) => !prev);
   };
 
-  const menuStyle = {
+  const menuStyle: React.CSSProperties = {
     height: "3px",
     backgroundColor: "#43D9D9",
     borderRadius: "2px",
@@ -192,14 +190,24 @@ type IconMenuItemsProps = {
 };
 
 const IconMenuItems = ({ open }: IconMenuItemsProps) => {
-  const items = [<FullScreen />, <VoiceChat />, <SystemSound />, <VRMode />];
+  const items = [
+    <FullScreen />,
+    <VoiceChat />,
+    <SystemSound />,
+    <FirstThridCamera />,
+  ];
   const springs = useSprings(
     items.length,
     items.map((_, index) => ({
-      from: { opacity: 0, transform: "translateX(-50%)" },
+      from: {
+        opacity: 0,
+        transform: "translateX(-50%)",
+        right: `${index * 52 + 52}px`,
+      },
       to: {
         opacity: open ? 1 : 0,
         transform: open ? "translateX(0%)" : "translateX(-50%)",
+        right: open ? `${index * 52 + 52}px` : `0px`,
       },
       delay: open ? index * 100 : (items.length - index - 1) * 100,
     }))
@@ -232,8 +240,8 @@ const IconMenuItems = ({ open }: IconMenuItemsProps) => {
             ...props,
             position: "absolute",
             top: -12,
-            right: `${index * 52 + 52}px`,
             pointerEvents: "auto",
+            zIndex: 1,
           }}
         >
           {items[index]}
@@ -245,11 +253,12 @@ const IconMenuItems = ({ open }: IconMenuItemsProps) => {
           position: "absolute",
           top: "0px",
           right: 0,
-          zIndex: -1,
+          zIndex: 0,
           height: "52px",
           backgroundColor: "#43D9D9",
           pointerEvents: "none",
           borderRadius: "26px",
+          boxShadow: "0px 0px 10px rgba(255, 255, 255, 0.8)",
           ...animationWidth,
         }}
       />
@@ -325,6 +334,33 @@ const SystemSound = () => {
 };
 
 /**
+ * FirstPerson / ThirdPerson切り替え
+ */
+const FirstThridCamera = () => {
+  const { playerInfo } = useNinjaEngine();
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: "1rem",
+        right: "1rem",
+        fontSize: "1.8rem",
+        color: "#fff",
+        borderRadius: "5px",
+        cursor: "pointer",
+        pointerEvents: "auto",
+      }}
+      onClick={() => {
+        playerInfo.current.cameraMode =
+          playerInfo.current.cameraMode === "first" ? "third" : "first";
+      }}
+    >
+      <BsCameraVideo style={{ display: "inline", verticalAlign: "middle" }} />
+    </div>
+  );
+};
+
+/**
  * VRモード
  */
 const VRMode = () => {
@@ -347,11 +383,34 @@ const VRMode = () => {
         setIsVRMode(!isVRMode);
       }}
     >
-      {isVRMode && (
+      {!isVRMode && (
         <BsHeadsetVr style={{ display: "inline", verticalAlign: "middle" }} />
       )}
-      {!isVRMode && (
-        <BsCameraVideo style={{ display: "inline", verticalAlign: "middle" }} />
+      {isVRMode && (
+        <div
+          style={{ position: "relative", display: "inline", height: "40px" }}
+        >
+          <BsXLg
+            style={{
+              position: "absolute",
+              top: "0%",
+              left: "25%",
+              transform: "translate(-75%, 25%)",
+              display: "inline",
+              scale: "1.25",
+            }}
+          />
+          <BsHeadsetVr
+            style={{
+              position: "absolute",
+              top: "0%",
+              left: "25%",
+              transform: "translate(-110%, 35%)",
+              display: "inline",
+              scale: "0.85",
+            }}
+          />
+        </div>
       )}
     </div>
   );

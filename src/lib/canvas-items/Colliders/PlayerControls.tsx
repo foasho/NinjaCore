@@ -76,6 +76,7 @@ export const PlayerControl = ({
     shareGrp,
     getOMById,
     playerIsOnGround,
+    playerInfo,
   } = useNinjaEngine();
   const { input } = useMultiInputControl();
   const orbitTouchMove = useRef<{ flag: boolean; angleAxis: [number, number] }>(
@@ -558,38 +559,39 @@ export const PlayerControl = ({
       camera.position.add(player.current.position);
 
       // CameraからPlayerに向けてRaycastを行い、障害物があればカメラを障害物の位置に移動
-      const objectPosition = player.current.position
-        .clone()
-        .add(new Vector3(0, height / 2, 0));
-      const direction = objectPosition
-        .clone()
-        .sub(camera.position.clone())
-        .normalize();
-      const distance = camera.position.distanceTo(objectPosition);
-      raycaster.set(camera.position, direction); // Raycast起源点をカメラに
-      raycaster.far = distance - height / 2;
-      raycaster.near = 0.01;
-      raycaster.firstHitOnly = true;
-      const intersects = raycaster.intersectObject(collider.current!, true); // 全てのオブジェクトを対象にRaycast
-      if (intersects.length > 0) {
-        // 複数のオブジェクトに衝突した場合、distanceが最も近いオブジェクトを選択
-        const target = intersects.reduce((prev, current) => {
-          return prev.distance < current.distance ? prev : current;
-        });
-        camera.position.copy(target.point);
-      } else if (forwardAmount !== 0 || rightAmount !== 0) {
-        // 障害物との交差がない場合はプレイヤーから一定の距離を保つ
-        const directionFromPlayerToCamera = camera.position
+      if (playerInfo.current.cameraMode === "third") {
+        const objectPosition = player.current.position
           .clone()
-          .sub(objectPosition)
+          .add(new Vector3(0, height / 2, 0));
+        const direction = objectPosition
+          .clone()
+          .sub(camera.position.clone())
           .normalize();
-        // カメラの位置をプレイヤーから一定の距離を保つように調整※カメラのカクツキを防ぐためにLerpを使用
-        camera.position.lerp(
-          objectPosition
+        const distance = camera.position.distanceTo(objectPosition);
+        raycaster.set(camera.position, direction); // Raycast起源点をカメラに
+        raycaster.far = distance - height / 2;
+        raycaster.near = 0.01;
+        const intersects = raycaster.intersectObject(collider.current!, true); // 全てのオブジェクトを対象にRaycast
+        if (intersects.length > 0) {
+          // 複数のオブジェクトに衝突した場合、distanceが最も近いオブジェクトを選択
+          const target = intersects.reduce((prev, current) => {
+            return prev.distance < current.distance ? prev : current;
+          });
+          camera.position.copy(target.point);
+        } else if (forwardAmount !== 0 || rightAmount !== 0) {
+          // 障害物との交差がない場合はプレイヤーから一定の距離を保つ
+          const directionFromPlayerToCamera = camera.position
             .clone()
-            .add(directionFromPlayerToCamera.multiplyScalar(desiredDistance)),
-          0.1
-        );
+            .sub(objectPosition)
+            .normalize();
+          // カメラの位置をプレイヤーから一定の距離を保つように調整※カメラのカクツキを防ぐためにLerpを使用
+          camera.position.lerp(
+            objectPosition
+              .clone()
+              .add(directionFromPlayerToCamera.multiplyScalar(desiredDistance)),
+            0.1
+          );
+        }
       }
 
       // デッドゾーンまで落ちたらリセット
@@ -623,21 +625,27 @@ export const PlayerControl = ({
       playerIsOnGround.current = false;
     }
     // OrbitsContolsの設定
-    if (firstPerson) {
-      controls.current!.maxPolarAngle = Math.PI;
-      controls.current!.minDistance = 1e-4;
-      controls.current!.maxDistance = 1e-4;
+    if (controls.current && playerInfo.current.cameraMode === "first") {
+      controls.current.maxPolarAngle = Math.PI;
+      controls.current.minDistance = 1e-4;
+      controls.current.maxDistance = 1e-4;
+      if (object.current && object.current.visible) {
+        object.current.visible = false;
+      }
     } else if (controls.current) {
       // ThirdPerson
-      // controls.current.maxPolarAngle = Math.PI / (2 / 3);
       controls.current.minDistance = 1;
       controls.current.maxDistance = desiredDistance;
+      if (object.current && !object.current.visible) {
+        object.current.visible = true;
+      }
     }
     if (collider.current) {
       for (let i = 0; i < physicsSteps; i++) {
         updatePlayer(timeDelta / physicsSteps);
       }
     }
+    // カメラの移動
     if (controls.current) {
       let axisX = 0;
       let axisY = 0;

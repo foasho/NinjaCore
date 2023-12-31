@@ -54,6 +54,9 @@ export interface IObjectManagement {
     | "text"
     | "text3d"
     | "audio"
+    | "image"
+    | "video"
+    | "water"
     | "sky"
     | "light"
     | "fog"
@@ -173,4 +176,5 @@ export type PlayerInfoProps = {
   name: string;
   avatar: string;
   objectURL?: string;
+  cameraMode: "first" | "third";
 };

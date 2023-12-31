@@ -16,8 +16,6 @@ import {
   MessageProps,
   PlayerInfoProps,
 } from "../utils";
-import { MdMusicNote, MdMusicOff } from "react-icons/md";
-import { BsHeadsetVr } from "react-icons/bs";
 import {
   Box3,
   Group,
@@ -29,11 +27,7 @@ import {
   Vector3,
 } from "three";
 import { Canvas as NCanvas, useFrame as useNFrame } from "@react-three/fiber";
-import {
-  InputControlProvider,
-  useInputControl,
-  useMultiInputControl,
-} from "./useInputControl";
+import { InputControlProvider, useMultiInputControl } from "./useInputControl";
 import { Loading3D, Loading2D } from "../loaders";
 import {
   OMEffects,
@@ -45,15 +39,16 @@ import {
   OMAudios,
   AiNPCs,
   MultiPlayer,
+  OMWaters,
 } from "../canvas-items";
 import { NinjaWorkerProvider, useNinjaWorker } from "./useNinjaWorker";
-import { MemoSplashScreen } from "../commons";
+import { DebugComponent, MemoSplashScreen } from "../commons";
 import { Moveable } from "../canvas-items/Moveables";
 import { MeshBVH } from "three-mesh-bvh";
 import { Capsule } from "three-stdlib";
 import { UIItems } from "../uis";
 import { NinjaKVSProvider } from "./useKVS";
-import { MemoWebRTCProvider, WebRTCProvider } from "./useWebRTC";
+import { MemoWebRTCProvider } from "./useWebRTC";
 
 export enum EDeviceType {
   Unknown = 0,
@@ -74,10 +69,7 @@ type NinjaEngineProp = {
   status: React.MutableRefObject<ENinjaStatus>;
   isPhysics: boolean;
   player: React.MutableRefObject<Mesh | null>;
-  playerInfo: React.MutableRefObject<{
-    name: string;
-    avatar: string;
-  }>;
+  playerInfo: React.MutableRefObject<PlayerInfoProps>;
   playerIsOnGround: React.MutableRefObject<boolean>;
   curMessage: React.MutableRefObject<string>;
   npcChatHistory: React.MutableRefObject<MessageProps[]>;
@@ -112,10 +104,7 @@ export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
   status: React.createRef<ENinjaStatus>(),
   isPhysics: true,
   player: React.createRef<Mesh>(),
-  playerInfo: React.createRef<{
-    name: string;
-    avatar: string;
-  }>(),
+  playerInfo: React.createRef<PlayerInfoProps>(),
   playerIsOnGround: React.createRef<boolean>(),
   curMessage: React.createRef<string>(),
   npcChatHistory: React.createRef<MessageProps[]>(),
@@ -185,6 +174,7 @@ export interface INinjaGL {
   noCanvas?: boolean;
   isSplashScreen?: boolean;
   apiEndpoint?: string;
+  initPlayerInfo?: PlayerInfoProps;
   children?: React.ReactNode;
 }
 export const ThreeJSVer = "0.157.0";
@@ -194,6 +184,12 @@ const _NinjaGL = ({
   noCanvas = false,
   isSplashScreen = true,
   apiEndpoint = "",
+  initPlayerInfo = {
+    name: `Guest`,
+    avatar: DefaultAvatar,
+    objectURL: undefined,
+    cameraMode: "third",
+  },
   children,
 }: INinjaGL) => {
   /**
@@ -227,11 +223,7 @@ const _NinjaGL = ({
   const { config, oms, sms, ums, tms, device, isVertical, token } = Contents;
   // Player情報
   const player = React.useRef<Mesh>(null);
-  const playerInfo = useRef<PlayerInfoProps>({
-    name: `Guest`,
-    avatar: DefaultAvatar, // base64型か、URL
-    objectURL: undefined,
-  });
+  const playerInfo = useRef<PlayerInfoProps>(initPlayerInfo);
   const playerIsOnGround = useRef(false);
   const curMessage = React.useRef<string>("");
   // NPC用Chat履歴
@@ -242,8 +234,6 @@ const _NinjaGL = ({
   const moveGrp = React.useRef<Group>(null); // 移動用コライダー
   const shareGrp = React.useRef<Group>(null); // MultiPlayer共有用コライダー
   const boundsTree = React.useRef<MeshBVH>(null); // BVH-boundsTree
-  // TODO: Debugツリー
-  const debugTree = React.useRef<any>(null);
 
   React.useEffect(() => {
     const fetchToken = async () => {
@@ -707,6 +697,7 @@ const _NinjaGL = ({
                       }}
                     >
                       <UIItems />
+                      {config.isDebug && <DebugComponent />}
                     </div>
                   </>
                 )}
@@ -750,6 +741,9 @@ export const NinjaCanvasItems = () => {
       <OMEffects />
       {/** 環境 */}
       <OMEnvirments />
+      {/** Water */}
+      <OMWaters />
+      {/* <Water position={[0, -0.9, 0]} scale={0.4} /> */}
       {/** カメラ */}
       <Cameras />
       {/** MultiPlayer */}

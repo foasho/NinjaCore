@@ -33,10 +33,5 @@ export default defineConfig({
       watch: true,                 // Recompile shader on change
       root: '/'                    // Directory for root imports
     }
-  )],
-  server: {
-    proxy: {
-      '/api': 'http://localhost:5174'
-    }
-  }
+  )]
 });

@@ -41,40 +41,43 @@ export interface IInputMovement {
 /**
  * Canvas上に表示されるもの
  */
+export type OMType =
+  | "three"
+  | "object"
+  | "lodobject"
+  | "avatar"
+  | "terrain"
+  | "others"
+  | "text"
+  | "text3d"
+  | "audio"
+  | "image"
+  | "video"
+  | "water"
+  | "sky"
+  | "light"
+  | "fog"
+  | "camera"
+  | "effect"
+  | "cloud"
+  | "environment"
+  | "lightformer"
+  | "ai-npc";
+export type OMPhysicsType = "box" | "sphere" | "capsule";
+export type OMVisibleType = "auto" | "force";
 export interface IObjectManagement {
   id: string;
   name?: string;
-  type:
-    | "three"
-    | "object"
-    | "lodobject"
-    | "avatar"
-    | "terrain"
-    | "others"
-    | "text"
-    | "text3d"
-    | "audio"
-    | "image"
-    | "video"
-    | "water"
-    | "sky"
-    | "light"
-    | "fog"
-    | "camera"
-    | "effect"
-    | "cloud"
-    | "environment"
-    | "lightformer"
-    | "ai-npc";
+  type: OMType;
   filePath?: string;
-  visibleType: "auto" | "force";
+  visibleType: OMVisibleType;
   visible: boolean;
   layerNum?: number;
   args: any;
   rules?: any;
   physics: boolean;
   moveable?: boolean; //移動可能かどうか
-  phyType: "box" | "sphere" | "capsule";
+  phyType: OMPhysicsType;
 }
 
 /**

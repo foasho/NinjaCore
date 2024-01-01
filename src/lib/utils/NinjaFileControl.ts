@@ -310,10 +310,11 @@ export const loadNJCFileFromURL = async (
   onProgress?: (itemsLoaded: number, itemsTotal: number) => void
 ): Promise<NJCFile> => {
   const response = await fetch(url);
+  console.log(response);
   const blob = await response.blob();
-  const file = new File([blob], "file.njc", {
-    type: "application/octet-stream",
-  });
+  console.log(blob);
+  // blobはZipファイルなのでFileに変換
+  const file = new File([blob], "njc.zip", { type: "application/zip" });
   return await loadNJCFile(file, onProgress);
 };
 

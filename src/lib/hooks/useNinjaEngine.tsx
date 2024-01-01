@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { Suspense, useEffect, useRef } from "react";
 import {
   IConfigParams,
   IObjectManagement,
@@ -49,6 +49,7 @@ import { Capsule } from "three-stdlib";
 import { UIItems } from "../uis";
 import { NinjaKVSProvider } from "./useKVS";
 import { MemoWebRTCProvider } from "./useWebRTC";
+import { Perf } from "r3f-perf";
 
 export enum EDeviceType {
   Unknown = 0,
@@ -236,6 +237,23 @@ const _NinjaGL = ({
   const boundsTree = React.useRef<MeshBVH>(null); // BVH-boundsTree
 
   React.useEffect(() => {
+    const loadNjc = async () => {
+      // njcPathが指定されていれば読み込み
+      if (njcPath && !njcFile) {
+        const _njcFile = await loadNJCFileFromPath(njcPath);
+        setNjcFile(_njcFile);
+        return;
+      }
+    };
+    // njcが指定されていれば読み込み
+    if (njc && !njcFile) {
+      setNjcFile(njc);
+    } else {
+      loadNjc();
+    }
+  }, [njcPath, njc]);
+
+  React.useEffect(() => {
     const fetchToken = async () => {
       const res = await fetch(apiEndpoint + "/api/skyway/token");
       const response = await res.json();
@@ -244,17 +262,7 @@ const _NinjaGL = ({
       }
       return undefined;
     };
-    const loadNjc = async () => {
-      // njcが指定されていればそのままセット
-      if (njc && !njcFile) {
-        setNjcFile(njc);
-      }
-      // njcPathが指定されていれば読み込み
-      if (njcPath && !njcFile) {
-        const _njcFile = await loadNJCFileFromPath(njcPath);
-        setNjcFile(_njcFile);
-        return;
-      }
+    const setup = async () => {
       // njcFileが設定済みなら初期設定を行う
       if (njcFile) {
         let _token = undefined;
@@ -280,7 +288,9 @@ const _NinjaGL = ({
         setInit(true);
       }
     };
-    loadNjc();
+    if (njcFile) {
+      setup();
+    }
     document.addEventListener(
       "contextmenu",
       function (event) {
@@ -297,7 +307,9 @@ const _NinjaGL = ({
         false
       );
     };
-  }, [njcFile, njc, njcPath]);
+  }, [njcFile, njc]);
+
+  console.info("NinjaGL Redeendered");
 
   React.useEffect(() => {
     if (init) {
@@ -752,11 +764,13 @@ export const NinjaCanvasItems = () => {
       <ColliderField />
       {/** Moveable */}
       <Moveable />
-      {/** NonCollider */}
-      <NonColliderTunnel.Out />
-      <group>
-        <SystemFrame />
-      </group>
+      <Suspense fallback={<Loading3D position={[0, 0, 3]} />}>
+        <group renderOrder={1}>
+          {/** NonCollider */}
+          <NonColliderTunnel.Out />
+          <SystemFrame />
+        </group>
+      </Suspense>
     </>
   );
 };
@@ -765,7 +779,7 @@ export const NinjaCanvasItems = () => {
  * システムフレーム(時間をすすめる)
  */
 const SystemFrame = () => {
-  const { init, status, sms } = useNinjaEngine();
+  const { init, status, sms, config } = useNinjaEngine();
   const { input } = useMultiInputControl();
   const { runFrameLoop, runInitialize, loadUserScript } = useNinjaWorker();
 
@@ -793,5 +807,7 @@ const SystemFrame = () => {
     });
   });
 
-  return <></>;
+  return <>
+    {config.isDebug && <Perf minimum />}
+  </>;
 };

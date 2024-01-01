@@ -21,14 +21,16 @@ import {
   SkeletonUtils,
   DRACOLoader,
   KTX2Loader,
+  GLTFExporter,
+  GLTFExporterOptions,
 } from "three-stdlib";
 import JSZip from "jszip";
 import { MeshoptDecoder } from "meshoptimizer";
 import { InitMobileConfipParams } from "./NinjaInit";
-import {
-  GLTFExporter,
-  GLTFExporterOptions,
-} from "three/examples/jsm/exporters/GLTFExporter";
+// import {
+//   GLTFExporter,
+//   GLTFExporterOptions,
+// } from "three-stdlib";
 
 const MANAGER = new LoadingManager();
 const THREE_PATH = `https://unpkg.com/three@0.157.0`;
@@ -130,45 +132,43 @@ export const saveNJCBlob = async (njcFile: NJCFile): Promise<Blob> => {
 
   // GLBモデルをobjectsディレクトリに追加
   const exportOMs: IObjectManagement[] = [];
-  (async () => {
-    for (const _om of njcFile.oms) {
-      const om = { ..._om }; // 元のデータを変更しないようにコピー
-      if (om.args.url) {
-        // Object / Avatar / Terrainの場合はGLBモデルを生成
-        if (
-          om.type === "object" ||
-          om.type === "avatar" ||
-          om.type === "terrain"
-        ) {
-          let clone: Object3D;
-          const scene = await loadGLTF(om.args.url);
-          clone = SkeletonUtils.clone(scene);
-          const glbData = await exportGLTF(clone);
-          objectsDir!.file(`${om.id}.glb`, glbData);
-          om.filePath = `assets/${om.id}.glb`;
-        }
-        // audioの場合はファイルを追加
-        if (om.type === "audio") {
-          const audioFile = await fetch(om.args.url);
-          const blob = await audioFile.blob();
-          // 拡張子は合わせる
-          const ext = om.args.url.split(".").pop();
-          objectsDir!.file(`${om.id}.${ext}`, blob);
-          om.args.url = `assets/${om.id}.${ext}`;
-        }
-        // videoの場合はファイルを追加
-        if (om.type === "video") {
-          const videoFile = await fetch(om.args.url);
-          const blob = await videoFile.blob();
-          // 拡張子は合わせる
-          const ext = om.args.url.split(".").pop();
-          objectsDir!.file(`${om.id}.${ext}`, blob);
-          om.filePath = `assets/${om.id}.${ext}`;
-        }
+  for (const _om of njcFile.oms) {
+    const om = { ..._om }; // 元のデータを変更しないようにコピー
+    if (om.args.url && objectsDir) {
+      // Object / Avatar / Terrainの場合はGLBモデルを生成
+      if (
+        om.type === "object" ||
+        om.type === "avatar" ||
+        om.type === "terrain"
+      ) {
+        let clone: Object3D;
+        const scene = await loadGLTF(om.args.url);
+        clone = SkeletonUtils.clone(scene);
+        const glbData = await exportGLTF(clone);
+        objectsDir.file(`${om.id}.glb`, glbData);
+        om.filePath = `assets/${om.id}.glb`;
       }
-      exportOMs.push(om);
+      // audioの場合はファイルを追加
+      if (om.type === "audio") {
+        const audioFile = await fetch(om.args.url);
+        const blob = await audioFile.blob();
+        // 拡張子は合わせる
+        const ext = om.args.url.split(".").pop();
+        objectsDir.file(`${om.id}.${ext}`, blob);
+        om.args.url = `assets/${om.id}.${ext}`;
+      }
+      // videoの場合はファイルを追加
+      if (om.type === "video") {
+        const videoFile = await fetch(om.args.url);
+        const blob = await videoFile.blob();
+        // 拡張子は合わせる
+        const ext = om.args.url.split(".").pop();
+        objectsDir.file(`${om.id}.${ext}`, blob);
+        om.filePath = `assets/${om.id}.${ext}`;
+      }
     }
-  })();
+    exportOMs.push(om);
+  }
 
   // JSONファイルを追加
   zip.file("config.json", JSON.stringify(njcFile.config));
@@ -222,7 +222,7 @@ export const loadNJCFile = async (
   // 4. smsを設定
   njcFile.setSMs(smsJson);
   // 5. omとGLBモデルを読み込み
-  const objectsDir = loadedZip.folder("objects");
+  const objectsDir = loadedZip.folder("assets");
   if (objectsDir) {
     for (const om of omsJson) {
       const glbFile = objectsDir.file(`${om.id}.glb`);
@@ -300,6 +300,16 @@ export const loadNJCFile = async (
   return njcFile;
 };
 
+const fetchZipAsBlob = async (url: string): Promise<Blob> => {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return blob;
+};
+
+const convertBlobToFile = (blob: Blob, fileName: string): File => {
+  return new File([blob], fileName, { type: blob.type });
+};
+
 /**
  * NJCファイルPathから読み込む
  * @param file Path
@@ -309,12 +319,11 @@ export const loadNJCFileFromURL = async (
   url: string,
   onProgress?: (itemsLoaded: number, itemsTotal: number) => void
 ): Promise<NJCFile> => {
-  const response = await fetch(url);
-  console.log(response);
-  const blob = await response.blob();
+  const blob = await fetchZipAsBlob(url);
   console.log(blob);
   // blobはZipファイルなのでFileに変換
-  const file = new File([blob], "njc.zip", { type: "application/zip" });
+  const file = convertBlobToFile(blob, "njc.zip");
+  console.log(file);
   return await loadNJCFile(file, onProgress);
 };
 

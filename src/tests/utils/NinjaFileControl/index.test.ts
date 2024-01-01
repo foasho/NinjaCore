@@ -8,7 +8,7 @@ import { ThirdPersonTemplate } from "../../../lib/settings/tpTemplate";
 
 
 it("Import NJC File", async () => {
-  // const url = "https://ninja-core.vercel.app/njcs/Sample.zip";
+  // const url = "/njcs/Sample.njc";
   // const file = await loadNJCFileFromURL(url);
   // expect(file).not.toBeUndefined();
   // expect(fetch).toHaveBeenCalledWith(url); // fetchが呼ばれたことを確認

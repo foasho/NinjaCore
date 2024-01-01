@@ -203,7 +203,6 @@ export const initTpOMs = (): IObjectManagement[] => {
         content: "Welcome to \nNinjaGL!",
         rotation: new Euler(0, -Math.PI, 0),
         color: "#4785FF",
-        intensity: 10,
         position: new Vector3(4, 7, 9),
       },
       physics: false,

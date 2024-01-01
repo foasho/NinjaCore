@@ -125,21 +125,46 @@ export const saveNJCFile = async (njcFile: NJCFile, fileName: string) => {
 export const saveNJCBlob = async (njcFile: NJCFile): Promise<Blob> => {
   const zip = new JSZip();
 
-  // objectsディレクトリを作成
-  const objectsDir = zip.folder("objects");
+  // assetsディレクトリを作成
+  const objectsDir = zip.folder("assets");
 
   // GLBモデルをobjectsディレクトリに追加
   const exportOMs: IObjectManagement[] = [];
   (async () => {
-    for (const om of njcFile.oms) {
+    for (const _om of njcFile.oms) {
+      const om = { ..._om }; // 元のデータを変更しないようにコピー
       if (om.args.url) {
-        let clone;
-        // const scene = await loadGLTFFromData(om.args.url);
-        const scene = await loadGLTF(om.args.url);
-        clone = SkeletonUtils.clone(scene);
-        const glbData = await exportGLTF(clone);
-        objectsDir!.file(`${om.id}.glb`, glbData);
-        om.filePath = `objects/${om.id}.glb`;
+        // Object / Avatar / Terrainの場合はGLBモデルを生成
+        if (
+          om.type === "object" ||
+          om.type === "avatar" ||
+          om.type === "terrain"
+        ) {
+          let clone: Object3D;
+          const scene = await loadGLTF(om.args.url);
+          clone = SkeletonUtils.clone(scene);
+          const glbData = await exportGLTF(clone);
+          objectsDir!.file(`${om.id}.glb`, glbData);
+          om.filePath = `assets/${om.id}.glb`;
+        }
+        // audioの場合はファイルを追加
+        if (om.type === "audio") {
+          const audioFile = await fetch(om.args.url);
+          const blob = await audioFile.blob();
+          // 拡張子は合わせる
+          const ext = om.args.url.split(".").pop();
+          objectsDir!.file(`${om.id}.${ext}`, blob);
+          om.args.url = `assets/${om.id}.${ext}`;
+        }
+        // videoの場合はファイルを追加
+        if (om.type === "video") {
+          const videoFile = await fetch(om.args.url);
+          const blob = await videoFile.blob();
+          // 拡張子は合わせる
+          const ext = om.args.url.split(".").pop();
+          objectsDir!.file(`${om.id}.${ext}`, blob);
+          om.filePath = `assets/${om.id}.${ext}`;
+        }
       }
       exportOMs.push(om);
     }
@@ -151,7 +176,7 @@ export const saveNJCBlob = async (njcFile: NJCFile): Promise<Blob> => {
   zip.file("tms.json", JSON.stringify(njcFile.tms));
   // zip.file('addons.json', JSON.stringify({})); // Addonは未対応
   zip.file("sms.json", JSON.stringify(njcFile.sms));
-  zip.file("oms.json", JSON.stringify(njcFile.oms));
+  zip.file("oms.json", JSON.stringify(exportOMs));
 
   // ZIPファイルを生成
   const zipData = await zip.generateAsync({ type: "blob" });
@@ -336,6 +361,7 @@ export const loadGLTF = async (url: string): Promise<Object3D> => {
         // console.log("progressing...");
       },
       (error) => {
+        console.error("EXCEPTION: loadGLTF");
         reject(error);
       }
     );

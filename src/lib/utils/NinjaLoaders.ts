@@ -24,7 +24,6 @@ import { NJCFile, loadNJCFileFromURL } from "./NinjaFileControl";
 /**
  * 基本的な3Dオブジェクトのロード
  */
-
 export interface IAutoGLTFLoaderProps {
   filePath: string; // ファイルパス
   height?: number; // 変更したい高さ

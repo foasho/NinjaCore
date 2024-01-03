@@ -503,7 +503,7 @@ export interface IGLTFLoadProps {
  * @param props
  * @returns
  */
-export const TerrainLoader = async (
+export const LandScapeLoader = async (
   props: IGLTFLoadProps
 ): Promise<{ gltf: GLTF }> => {
   const key = MathUtils.generateUUID();

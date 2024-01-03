@@ -35,15 +35,15 @@ export const OMObject = ({ om }: { om: IObjectManagement }) => {
   return (
     <>
       {/** 地形データ */}
-      {om.type === "terrain" && (
+      {om.type === "landscape" && (
         <>
           {om.physics && !om.moveable ? (
             <ColliderTunnel.In>
-              <Terrain om={om} />
+              <LandScape om={om} />
             </ColliderTunnel.In>
           ) : (
             <NonColliderTunnel.In>
-              <Terrain om={om} />
+              <LandScape om={om} />
             </NonColliderTunnel.In>
           )}
         </>
@@ -78,10 +78,10 @@ export const OMObject = ({ om }: { om: IObjectManagement }) => {
 
 /**
  * --------------------
- * Terrainコンポネント
+ * LandScapeコンポネント
  * --------------------
  */
-const Terrain = ({ om }: { om: IObjectManagement }) => {
+const LandScape = ({ om }: { om: IObjectManagement }) => {
   const ref = React.useRef<Group>(null);
   const { scene } = useGLTF(om.args.url) as GLTF;
 

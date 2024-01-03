@@ -135,11 +135,11 @@ export const saveNJCBlob = async (njcFile: NJCFile): Promise<Blob> => {
   for (const _om of njcFile.oms) {
     const om = { ..._om }; // 元のデータを変更しないようにコピー
     if (om.args.url && objectsDir) {
-      // Object / Avatar / Terrainの場合はGLBモデルを生成
+      // Object / Avatar / LandScapeの場合はGLBモデルを生成
       if (
         om.type === "object" ||
         om.type === "avatar" ||
-        om.type === "terrain"
+        om.type === "landscape"
       ) {
         let clone: Object3D;
         const scene = await loadGLTF(om.args.url);

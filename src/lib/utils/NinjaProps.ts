@@ -46,7 +46,7 @@ export type OMType =
   | "object"
   | "lodobject"
   | "avatar"
-  | "terrain"
+  | "landscape"
   | "others"
   | "text"
   | "text3d"

@@ -13,7 +13,24 @@ import Blend from "./Blend";
 import { usePlanarReflections } from "./usePlanarReflections";
 import { defaultUniforms } from "./WaterParams";
 
-export const Water = (props: GroupProps) => {
+type WaterProps = {
+  hasReflection?: boolean;
+  width?: number;
+  height?: number;
+  widthSegments?: number;
+  heightSegments?: number;
+  doubleSide?: boolean;
+  props?: GroupProps;
+};
+export const Water = ({
+  hasReflection = true,
+  width = 5,
+  height = 5,
+  widthSegments = 12,
+  heightSegments = 12,
+  doubleSide = false,
+  ...props
+}: WaterProps) => {
   const waterRef = React.useRef<THREE.Mesh>(null!);
   const size = useThree((state) => state.size);
   const viewport = useThree((state) => state.viewport);
@@ -34,16 +51,6 @@ export const Water = (props: GroupProps) => {
     depthFBO.stencilBuffer = false;
     return depthFBO;
   }, []);
-
-  // const { hasReflection } = useControls({
-  //   Reflection: folder({
-  //     hasReflection: {
-  //       label: "Enabled",
-  //       value: false,
-  //     },
-  //   }),
-  // });
-  const hasReflection = true;
 
   const vertexShader = React.useMemo(
     () => /* glsl */ `
@@ -427,7 +434,7 @@ export const Water = (props: GroupProps) => {
       uWaveCrestColor: { value: new THREE.Color("#ffffff") },
 
       ...planarReflections.uniforms,
-      uReflectionFresnelPower: { value: 0.7 },
+      uReflectionFresnelPower: { value: 0.1 },
       uReflectionStrength: { value: 1.0 },
       uReflectionMix: { value: 1.0 },
     }),
@@ -467,11 +474,12 @@ export const Water = (props: GroupProps) => {
     <group {...props}>
       <mesh
         receiveShadow
-        position-y={2.2}
+        position-x={-0.2}
+        position-y={-0.2}
         rotation-x={-Math.PI / 2}
         ref={waterRef}
       >
-        <planeGeometry args={[100, 100, 128, 128]} />
+        <planeGeometry args={[width, height, widthSegments, heightSegments]} />
         <CSM
           baseMaterial={THREE.MeshStandardMaterial}
           key={vertexShader + fragmentShader} //
@@ -487,9 +495,9 @@ export const Water = (props: GroupProps) => {
           }}
           transparent
           roughness={0}
-          side={THREE.DoubleSide}
+          side={doubleSide ? THREE.DoubleSide : THREE.FrontSide}
         />
       </mesh>
     </group>
   );
-}
+};

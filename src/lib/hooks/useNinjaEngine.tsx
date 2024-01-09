@@ -50,6 +50,7 @@ import { UIItems } from "../uis";
 import { NinjaKVSProvider } from "./useKVS";
 import { MemoWebRTCProvider } from "./useWebRTC";
 import { Perf } from "r3f-perf";
+import { Water } from "../canvas-items/Water";
 
 export enum EDeviceType {
   Unknown = 0,
@@ -753,9 +754,8 @@ export const NinjaCanvasItems = () => {
       <OMEffects />
       {/** 環境 */}
       <OMEnvirments />
-      {/** Water */}
+      {/* * Water */}
       <OMWaters />
-      {/* <Water position={[0, -0.9, 0]} scale={0.4} /> */}
       {/** カメラ */}
       <Cameras />
       {/** MultiPlayer */}
@@ -807,7 +807,15 @@ const SystemFrame = () => {
     });
   });
 
-  return <>
-    {config.isDebug && <Perf minimum />}
-  </>;
+  return (
+    <>
+      {config.isDebug && (
+        <Perf
+          position="bottom-left"
+          style={{ position: "absolute" }}
+          minimal={true}
+        />
+      )}
+    </>
+  );
 };

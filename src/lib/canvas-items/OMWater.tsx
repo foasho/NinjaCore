@@ -11,16 +11,13 @@ export const OMWaters = () => {
   return (
     <>
       {omWaters.map((omWater) => (
-        <OMWater key={omWater.id} om={omWater} />
+        <OMWater key={omWater.id} {...omWater} />
       ))}
     </>
   );
 };
 
-type OMWaterProps = {
-  om: IObjectManagement;
-};
-const OMWater = ({ om }: OMWaterProps) => {
+const OMWater = ({ ...om }: IObjectManagement) => {
   const ref = React.useRef<Group>(null);
   const { onOMIdChanged, offOMIdChanged } = useNinjaEngine();
 

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import * as React from "react";
 import { useTexture } from "@react-three/drei";
-import { GroupProps, useFrame, useThree } from "@react-three/fiber";
+import { GroupProps, ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 
 import CSM from "three-custom-shader-material";
 import HSVLerp from "./HSVLerp";
@@ -21,7 +21,8 @@ type WaterProps = {
   widthSegments?: number;
   heightSegments?: number;
   doubleSide?: boolean;
-  onClick?: () => void;
+  onClick?: (event: ThreeEvent<MouseEvent>) => void;
+  onPointerMissed?: (event: MouseEvent) => void;
   props?: GroupProps;
 };
 const _Water = ({
@@ -32,6 +33,7 @@ const _Water = ({
   widthSegments = 12,
   heightSegments = 12,
   onClick = () => {},
+  onPointerMissed = () => {},
   doubleSide = false,
   ...props
 }: WaterProps) => {
@@ -475,7 +477,7 @@ const _Water = ({
   });
 
   return (
-    <group ref={ref} {...props} onClick={onClick}>
+    <group ref={ref} {...props} onClick={onClick} onPointerMissed={onPointerMissed}>
       <mesh
         receiveShadow
         position-x={-0.2}

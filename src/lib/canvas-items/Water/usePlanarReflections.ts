@@ -1,28 +1,41 @@
-import * as THREE from "three";
-import * as React from "react";
+import {
+  DepthFormat,
+  DepthTexture,
+  HalfFloatType,
+  LinearFilter,
+  Matrix4,
+  Mesh,
+  PerspectiveCamera,
+  Plane,
+  UnsignedShortType,
+  Vector3,
+  Vector4,
+  WebGLRenderTarget,
+} from "three";
+import React from "react";
 import { RootState, useThree } from "@react-three/fiber";
 
 const resolution = 512,
   reflectorOffset = 0;
 
 export function usePlanarReflections(
-  waterRef: React.MutableRefObject<THREE.Mesh>,
+  waterRef: React.MutableRefObject<Mesh>,
   hasReflection: boolean
 ) {
   const gl = useThree(({ gl }) => gl);
   const camera = useThree(({ camera }) => camera);
-  const [reflectorPlane] = React.useState(() => new THREE.Plane());
-  const [normal] = React.useState(() => new THREE.Vector3());
-  const [reflectorWorldPosition] = React.useState(() => new THREE.Vector3());
-  const [cameraWorldPosition] = React.useState(() => new THREE.Vector3());
-  const [rotationMatrix] = React.useState(() => new THREE.Matrix4());
-  const [lookAtPosition] = React.useState(() => new THREE.Vector3(0, 0, -1));
-  const [clipPlane] = React.useState(() => new THREE.Vector4());
-  const [view] = React.useState(() => new THREE.Vector3());
-  const [target] = React.useState(() => new THREE.Vector3());
-  const [q] = React.useState(() => new THREE.Vector4());
-  const [textureMatrix] = React.useState(() => new THREE.Matrix4());
-  const [virtualCamera] = React.useState(() => new THREE.PerspectiveCamera());
+  const [reflectorPlane] = React.useState(() => new Plane());
+  const [normal] = React.useState(() => new Vector3());
+  const [reflectorWorldPosition] = React.useState(() => new Vector3());
+  const [cameraWorldPosition] = React.useState(() => new Vector3());
+  const [rotationMatrix] = React.useState(() => new Matrix4());
+  const [lookAtPosition] = React.useState(() => new Vector3(0, 0, -1));
+  const [clipPlane] = React.useState(() => new Vector4());
+  const [view] = React.useState(() => new Vector3());
+  const [target] = React.useState(() => new Vector3());
+  const [q] = React.useState(() => new Vector4());
+  const [textureMatrix] = React.useState(() => new Matrix4());
+  const [virtualCamera] = React.useState(() => new PerspectiveCamera());
 
   const beforeRender = React.useCallback(() => {
     // TODO: As of R3f 7-8 this should be __r3f.parent
@@ -110,19 +123,15 @@ export function usePlanarReflections(
 
   const fbo1 = React.useMemo(() => {
     const parameters = {
-      minFilter: THREE.LinearFilter,
-      magFilter: THREE.LinearFilter,
-      type: THREE.HalfFloatType,
+      minFilter: LinearFilter,
+      magFilter: LinearFilter,
+      type: HalfFloatType,
     };
-    const fbo1 = new THREE.WebGLRenderTarget(
-      resolution,
-      resolution,
-      parameters
-    );
+    const fbo1 = new WebGLRenderTarget(resolution, resolution, parameters);
     fbo1.depthBuffer = true;
-    fbo1.depthTexture = new THREE.DepthTexture(resolution, resolution);
-    fbo1.depthTexture.format = THREE.DepthFormat;
-    fbo1.depthTexture.type = THREE.UnsignedShortType;
+    fbo1.depthTexture = new DepthTexture(resolution, resolution);
+    fbo1.depthTexture.format = DepthFormat;
+    fbo1.depthTexture.type = UnsignedShortType;
     return fbo1;
   }, [gl, textureMatrix, resolution]);
 

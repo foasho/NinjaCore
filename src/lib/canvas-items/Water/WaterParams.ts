@@ -29,5 +29,5 @@ export const defaultUniforms = {
   uWaveSteepness: 0.25,
   uWaveLength: 4.06,
   uWaveSpeed: 0.12,
-  uWaveDirection: [10.0, 20, 30]
+  uWaveDirection: [10.0, 20, 30],
 };

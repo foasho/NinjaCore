@@ -27,7 +27,7 @@ import { usePlanarReflections } from "./usePlanarReflections";
 import { defaultUniforms } from "./WaterParams";
 
 interface WaterProps extends GroupProps {
-  grp?: React.MutableRefObject<Group|null>;
+  grp?: React.MutableRefObject<Group | null>;
   hasReflection?: boolean;
   width?: number;
   height?: number;
@@ -36,7 +36,7 @@ interface WaterProps extends GroupProps {
   doubleSide?: boolean;
   onClick?: (event: ThreeEvent<MouseEvent>) => void;
   onPointerMissed?: (event: MouseEvent) => void;
-};
+}
 const _Water = ({
   grp,
   hasReflection = true,
@@ -416,50 +416,49 @@ const _Water = ({
 
       // Opts
       uWaterDepth: { value: 3.0 },
-      uWaterShallowColor: { value: new Color("#ff0000") },
-      uWaterShallowColorAlpha: { value: 1 },
-      uWaterDeepColor: { value: new Color("#00ff00") },
-      uWaterDeepColorAlpha: { value: 1 },
+      uWaterShallowColor: { value: new Color("#56aacb") },
+      uWaterShallowColorAlpha: { value: 0.38 },
+      uWaterDeepColor: { value: new Color("#00252e") },
+      uWaterDeepColorAlpha: { value: 0.94 },
 
-      uHorizonColor: { value: new Color("#0000ff") },
+      uHorizonColor: { value: new Color("#abeaff") },
       uHorizonDistance: { value: 1.0 },
 
       uRefractionScale: { value: 0.02 },
-      uRefractionSpeed: { value: 0.01 },
+      uRefractionSpeed: { value: 0.34 },
       uRefractionStrength: { value: 0.01 },
 
-      uFoamAngle: { value: 0 },
-      uFoamSpeed: { value: 1 },
-      uFoamTiling: { value: 1 },
-      uFoamDistortion: { value: 1 },
+      uFoamAngle: { value: 0.11 },
+      uFoamSpeed: { value: 0.1 },
+      uFoamTiling: { value: 4.63 },
+      uFoamDistortion: { value: 1.41 },
       uFoamTexture: { value: foamTexture },
-      uFoamColor: { value: new Color("#ffffff") },
-      uFoamAlpha: { value: 1 },
-      uFoamBlend: { value: 1 },
-      uFoamIntersectionFade: { value: 1 },
-      uFoamIntersectionCutoff: { value: 1 },
+      uFoamColor: { value: new Color("#c1e6ff") },
+      uFoamAlpha: { value: 445 },
+      uFoamBlend: { value: 0.63 },
+      uFoamIntersectionFade: { value: 0.75 },
+      uFoamIntersectionCutoff: { value: 0.29 },
 
       uNormalsTexture: { value: normalsTexture },
-      uNormalsScale: { value: 1 },
-      uNormalsSpeed: { value: 1 },
-      uNormalsStrength: { value: 1 },
+      uNormalsScale: { value: 0.63 },
+      uNormalsSpeed: { value: 0.1 },
+      uNormalsStrength: { value: 1.05 },
 
       uWaveSteepness: { value: 0.8 },
       uWaveLength: { value: 0.8 },
       uWaveSpeed: { value: 0.8 },
       uWaveDirection: { value: new Vector3() },
       uWaveFalloff: { value: 0.8 },
-      uWaveCrestColor: { value: new Color("#ffffff") },
+      uWaveCrestColor: { value: new Color("#10667c") },
 
       ...planarReflections.uniforms,
-      uReflectionFresnelPower: { value: 0.1 },
-      uReflectionStrength: { value: 1.0 },
-      uReflectionMix: { value: 1.0 },
+      uReflectionFresnelPower: { value: 3.59 },
+      uReflectionStrength: { value: 2.06 },
+      uReflectionMix: { value: 0.5 },
+      // ...defaultUniforms
     }),
     []
   );
-
-  // const uniforms = {...defaultUniforms};
 
   useFrame((state) => {
     const { scene, gl, camera, size, viewport, clock } = state;
@@ -489,7 +488,12 @@ const _Water = ({
   });
 
   return (
-    <group {...props} ref={grp} onClick={onClick} onPointerMissed={onPointerMissed}>
+    <group
+      {...props}
+      ref={grp}
+      onClick={onClick}
+      onPointerMissed={onPointerMissed}
+    >
       <mesh
         receiveShadow
         position-x={-0.2}

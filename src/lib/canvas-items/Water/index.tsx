@@ -14,22 +14,24 @@ import { usePlanarReflections } from "./usePlanarReflections";
 import { defaultUniforms } from "./WaterParams";
 
 type WaterProps = {
-  ref: React.MutableRefObject<THREE.Group|null>;
+  ref: React.MutableRefObject<THREE.Group | null>;
   hasReflection?: boolean;
   width?: number;
   height?: number;
   widthSegments?: number;
   heightSegments?: number;
   doubleSide?: boolean;
+  onClick?: () => void;
   props?: GroupProps;
 };
-export const Water = ({
+const _Water = ({
   ref,
   hasReflection = true,
   width = 5,
   height = 5,
   widthSegments = 12,
   heightSegments = 12,
+  onClick = () => {},
   doubleSide = false,
   ...props
 }: WaterProps) => {
@@ -473,7 +475,7 @@ export const Water = ({
   });
 
   return (
-    <group ref={ref} {...props}>
+    <group ref={ref} {...props} onClick={onClick}>
       <mesh
         receiveShadow
         position-x={-0.2}
@@ -503,3 +505,13 @@ export const Water = ({
     </group>
   );
 };
+
+// メモ化:width / height / widthSegments / heightSegmentsが変わったら再レンダリング
+export const Water = React.memo(_Water, (prev, next) => {
+  return (
+    prev.width === next.width &&
+    prev.height === next.height &&
+    prev.widthSegments === next.widthSegments &&
+    prev.heightSegments === next.heightSegments
+  );
+});

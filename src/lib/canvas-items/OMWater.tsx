@@ -38,12 +38,5 @@ const OMWater = ({ om }: OMWaterProps) => {
     };
   }, []);
 
-  return (
-    <Water
-      ref={ref}
-      position={om.args.position || [0, 0, 0]}
-      rotation={om.args.rotation || [0, 0, 0]}
-      scale={om.args.scale || 1}
-    />
-  );
+  return <Water ref={ref} />;
 };

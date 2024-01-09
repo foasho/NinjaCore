@@ -34,26 +34,28 @@ export const App = () => {
   return (
     <div style={{ position: "absolute", height: "100dvh", width: "100dvw" }}>
       {ready && (
-        <div style={{ height: "100%" }}>
+        <div style={{ height: "100%", paddingTop: "64px" }}>
           {njcFile && (
             <NinjaGL apiEndpoint={apiEndpoint} njc={njcFile}></NinjaGL>
           )}
         </div>
       )}
-      <div
-        style={{
-          position: "absolute",
-          top: "10px",
-          left: "10px",
-          fontSize: "30px",
-          cursor: "pointer",
-          zIndex: 100,
-        }}
-        onClick={() => {
-          setReady(!ready);
-        }}
-      >
-        {ready ? <HiEye /> : <HiEyeSlash />}
+      <div>
+        <div
+          style={{
+            position: "absolute",
+            top: "10px",
+            left: "10px",
+            fontSize: "30px",
+            cursor: "pointer",
+            zIndex: 100,
+          }}
+          onClick={() => {
+            setReady(!ready);
+          }}
+        >
+          {ready ? <HiEye /> : <HiEyeSlash />}
+        </div>
       </div>
     </div>
   );

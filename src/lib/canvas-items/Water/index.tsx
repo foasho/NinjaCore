@@ -14,6 +14,7 @@ import { usePlanarReflections } from "./usePlanarReflections";
 import { defaultUniforms } from "./WaterParams";
 
 type WaterProps = {
+  ref: React.MutableRefObject<THREE.Group|null>;
   hasReflection?: boolean;
   width?: number;
   height?: number;
@@ -23,6 +24,7 @@ type WaterProps = {
   props?: GroupProps;
 };
 export const Water = ({
+  ref,
   hasReflection = true,
   width = 5,
   height = 5,
@@ -471,7 +473,7 @@ export const Water = ({
   });
 
   return (
-    <group {...props}>
+    <group ref={ref} {...props}>
       <mesh
         receiveShadow
         position-x={-0.2}

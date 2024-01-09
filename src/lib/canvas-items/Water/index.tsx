@@ -1,5 +1,18 @@
-import * as THREE from "three";
-import * as React from "react";
+import {
+  Mesh,
+  Group,
+  FrontSide,
+  DoubleSide,
+  MeshStandardMaterial,
+  Color,
+  Vector2,
+  Vector3,
+  WebGLRenderTarget,
+  DepthTexture,
+  NearestFilter,
+  FloatType,
+} from "three";
+import React from "react";
 import { useTexture } from "@react-three/drei";
 import { GroupProps, ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 
@@ -13,8 +26,8 @@ import Blend from "./Blend";
 import { usePlanarReflections } from "./usePlanarReflections";
 import { defaultUniforms } from "./WaterParams";
 
-type WaterProps = {
-  ref: React.MutableRefObject<THREE.Group | null>;
+interface WaterProps extends GroupProps {
+  grp?: React.MutableRefObject<Group|null>;
   hasReflection?: boolean;
   width?: number;
   height?: number;
@@ -23,10 +36,9 @@ type WaterProps = {
   doubleSide?: boolean;
   onClick?: (event: ThreeEvent<MouseEvent>) => void;
   onPointerMissed?: (event: MouseEvent) => void;
-  props?: GroupProps;
 };
 const _Water = ({
-  ref,
+  grp,
   hasReflection = true,
   width = 5,
   height = 5,
@@ -37,22 +49,22 @@ const _Water = ({
   doubleSide = false,
   ...props
 }: WaterProps) => {
-  const waterRef = React.useRef<THREE.Mesh>(null!);
+  const waterRef = React.useRef<Mesh>(null!);
   const size = useThree((state) => state.size);
   const viewport = useThree((state) => state.viewport);
 
   const depthFBO = React.useMemo(() => {
     const w = size.width * viewport.dpr;
     const h = size.height * viewport.dpr;
-    const depthFBO = new THREE.WebGLRenderTarget(w, h);
-    depthFBO.depthTexture = new THREE.DepthTexture(w, h);
-    depthFBO.depthTexture.type = THREE.FloatType;
-    depthFBO.depthTexture.minFilter = THREE.NearestFilter;
-    depthFBO.depthTexture.magFilter = THREE.NearestFilter;
+    const depthFBO = new WebGLRenderTarget(w, h);
+    depthFBO.depthTexture = new DepthTexture(w, h);
+    depthFBO.depthTexture.type = FloatType;
+    depthFBO.depthTexture.minFilter = NearestFilter;
+    depthFBO.depthTexture.magFilter = NearestFilter;
     depthFBO.depthTexture.generateMipmaps = false;
 
-    depthFBO.texture.minFilter = THREE.NearestFilter;
-    depthFBO.texture.magFilter = THREE.NearestFilter;
+    depthFBO.texture.minFilter = NearestFilter;
+    depthFBO.texture.magFilter = NearestFilter;
     depthFBO.texture.generateMipmaps = false;
     depthFBO.stencilBuffer = false;
     return depthFBO;
@@ -398,18 +410,18 @@ const _Water = ({
     () => ({
       uDepthTexture: { value: depthFBO.depthTexture },
       uColorTexture: { value: depthFBO.texture },
-      uCameraNearFar: { value: new THREE.Vector2() },
-      uResolution: { value: new THREE.Vector2() },
+      uCameraNearFar: { value: new Vector2() },
+      uResolution: { value: new Vector2() },
       uTime: { value: 0 },
 
       // Opts
       uWaterDepth: { value: 3.0 },
-      uWaterShallowColor: { value: new THREE.Color("#ff0000") },
+      uWaterShallowColor: { value: new Color("#ff0000") },
       uWaterShallowColorAlpha: { value: 1 },
-      uWaterDeepColor: { value: new THREE.Color("#00ff00") },
+      uWaterDeepColor: { value: new Color("#00ff00") },
       uWaterDeepColorAlpha: { value: 1 },
 
-      uHorizonColor: { value: new THREE.Color("#0000ff") },
+      uHorizonColor: { value: new Color("#0000ff") },
       uHorizonDistance: { value: 1.0 },
 
       uRefractionScale: { value: 0.02 },
@@ -421,7 +433,7 @@ const _Water = ({
       uFoamTiling: { value: 1 },
       uFoamDistortion: { value: 1 },
       uFoamTexture: { value: foamTexture },
-      uFoamColor: { value: new THREE.Color("#ffffff") },
+      uFoamColor: { value: new Color("#ffffff") },
       uFoamAlpha: { value: 1 },
       uFoamBlend: { value: 1 },
       uFoamIntersectionFade: { value: 1 },
@@ -435,9 +447,9 @@ const _Water = ({
       uWaveSteepness: { value: 0.8 },
       uWaveLength: { value: 0.8 },
       uWaveSpeed: { value: 0.8 },
-      uWaveDirection: { value: new THREE.Vector3() },
+      uWaveDirection: { value: new Vector3() },
       uWaveFalloff: { value: 0.8 },
-      uWaveCrestColor: { value: new THREE.Color("#ffffff") },
+      uWaveCrestColor: { value: new Color("#ffffff") },
 
       ...planarReflections.uniforms,
       uReflectionFresnelPower: { value: 0.1 },
@@ -477,7 +489,7 @@ const _Water = ({
   });
 
   return (
-    <group ref={ref} {...props} onClick={onClick} onPointerMissed={onPointerMissed}>
+    <group {...props} ref={grp} onClick={onClick} onPointerMissed={onPointerMissed}>
       <mesh
         receiveShadow
         position-x={-0.2}
@@ -487,7 +499,7 @@ const _Water = ({
       >
         <planeGeometry args={[width, height, widthSegments, heightSegments]} />
         <CSM
-          baseMaterial={THREE.MeshStandardMaterial}
+          baseMaterial={MeshStandardMaterial}
           key={vertexShader + fragmentShader} //
           uniforms={uniforms}
           vertexShader={patchShaders(vertexShader)}
@@ -501,7 +513,7 @@ const _Water = ({
           }}
           transparent
           roughness={0}
-          side={doubleSide ? THREE.DoubleSide : THREE.FrontSide}
+          side={doubleSide ? DoubleSide : FrontSide}
         />
       </mesh>
     </group>

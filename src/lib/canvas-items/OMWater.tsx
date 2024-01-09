@@ -32,11 +32,12 @@ const OMWater = ({ om }: OMWaterProps) => {
         if (om.args.scale) ref.current.scale.copy(om.args.scale);
       }
     };
+    update();
     onOMIdChanged(om.id, update);
     return () => {
       offOMIdChanged(om.id, update);
     };
   }, []);
 
-  return <Water ref={ref} />;
+  return <Water grp={ref} />;
 };

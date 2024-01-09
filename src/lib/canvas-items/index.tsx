@@ -8,3 +8,4 @@ export { OMAudios } from "./Audios";
 export { AiNPCs } from "./AiNPCs";
 export { MultiPlayer } from "./MultiPlayer";
 export { OMWaters } from "./OMWater";
+export { Water } from "./Water";

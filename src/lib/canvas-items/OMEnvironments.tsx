@@ -55,6 +55,7 @@ const LightFormer = ({ om }: { om: IObjectManagement }) => {
       color={om.args.color}
       position={om.args.position}
       rotation={om.args.rotation}
+      // @ts-ignore
       scale={om.args.scale}
       onUpdate={(self) => {
         if (om.args.lookAt) {

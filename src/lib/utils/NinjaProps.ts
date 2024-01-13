@@ -101,6 +101,8 @@ export type OMArgsProps = {
   mass?: number;
   cameraDirection?: Vector3;
   offset?: Vector3;
+  src?: string;
+  [key: string]: any;
 };
 export interface IObjectManagement {
   id: string;

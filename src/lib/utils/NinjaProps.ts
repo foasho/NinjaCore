@@ -5,6 +5,7 @@ import {
   AnimationMixer,
   Audio,
   Vector3,
+  Euler,
 } from "three";
 import { NinjaIconType } from "../uis/NinjaIcons";
 
@@ -65,6 +66,42 @@ export type OMType =
   | "ai-npc";
 export type OMPhysicsType = "box" | "sphere" | "capsule";
 export type OMVisibleType = "auto" | "force";
+export type OMArgsProps = {
+  type?: string;
+  position?: Vector3;
+  rotation?: Euler;
+  scale?: Vector3;
+  url?: string;
+  materialData?: {
+    type: "standard" | "lambert" | "phong" | "basic" | "physical";
+    value: string | number;
+  };
+  castShadow?: boolean;
+  receiveShadow?: boolean;
+  distance?: number;
+  intensity?: number;
+  color?: string;
+  fov?: number;
+  near?: number;
+  far?: number;
+  width?: number;
+  height?: number;
+  depth?: number;
+  widthSegments?: number;
+  heightSegments?: number;
+  depthSegments?: number;
+  texture?: string;
+  lookAt?: Vector3;
+  radius?: number;
+  angle?: number;
+  volume?: number;
+  loop?: boolean;
+  animationLoop?: boolean;
+  velocity?: Vector3;
+  mass?: number;
+  cameraDirection?: Vector3;
+  offset?: Vector3;
+};
 export interface IObjectManagement {
   id: string;
   name?: string;
@@ -73,7 +110,7 @@ export interface IObjectManagement {
   visibleType: OMVisibleType;
   visible: boolean;
   layerNum?: number;
-  args: any;
+  args: OMArgsProps;
   rules?: any;
   physics: boolean;
   moveable?: boolean; //移動可能かどうか

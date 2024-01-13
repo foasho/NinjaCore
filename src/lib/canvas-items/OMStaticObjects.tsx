@@ -41,7 +41,7 @@ export const StaticObjects = () => {
 };
 
 const StaticObject = ({ om }: { om: IObjectManagement }) => {
-  const { scene, animations } = useGLTF(om.args.url) as GLTF;
+  const { scene, animations } = useGLTF(om.args.url as string) as GLTF;
   const [clone, setClone] = React.useState<Object3D>();
   const ref = React.useRef<Group>(null);
 

@@ -21,7 +21,7 @@ export const OMAudios = () => {
             <OMAudio
               key={om.id}
               url={om.args.url}
-              position={om.args.position}
+              position={om.args.position || new Vector3()}
               distance={om.args.distance}
               maxVolume={om.args.volume}
             />

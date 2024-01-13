@@ -83,7 +83,7 @@ export const OMObject = ({ om }: { om: IObjectManagement }) => {
  */
 const LandScape = ({ om }: { om: IObjectManagement }) => {
   const ref = React.useRef<Group>(null);
-  const { scene } = useGLTF(om.args.url) as GLTF;
+  const { scene } = useGLTF(om.args.url as string) as GLTF;
 
   React.useEffect(() => {
     if (ref.current) {
@@ -96,7 +96,7 @@ const LandScape = ({ om }: { om: IObjectManagement }) => {
   if (scene && om.args.castShadow) {
     scene.traverse((child) => {
       if (child instanceof Mesh) {
-        child.castShadow = om.args.castShadow;
+        child.castShadow = om.args.castShadow? true : false;
       }
     });
   }
@@ -104,7 +104,7 @@ const LandScape = ({ om }: { om: IObjectManagement }) => {
   if (scene && om.args.receiveShadow) {
     scene.traverse((child) => {
       if (child instanceof Mesh) {
-        child.receiveShadow = om.args.receiveShadow;
+        child.receiveShadow = om.args.receiveShadow? true : false;
       }
     });
   }

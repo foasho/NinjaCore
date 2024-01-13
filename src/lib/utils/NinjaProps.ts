@@ -73,7 +73,7 @@ export type OMArgsProps = {
   scale?: Vector3;
   url?: string;
   materialData?: {
-    type: "standard" | "lambert" | "phong" | "basic" | "physical";
+    type: "standard" | "lambert" | "phong" | "basic" | "physical" | "reflection" | "shader" | "toon";
     value: string | number;
   };
   castShadow?: boolean;

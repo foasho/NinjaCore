@@ -56,7 +56,7 @@ export const OMPlayer = ({ grp }: IOMPlayerProps) => {
       {player && (
         <Player
           grp={grp}
-          objectURL={player.args.url}
+          objectURL={player.args.url as string}
           initPosition={player.args.position}
           initRotation={player.args.rotation}
           offsetY={player.args.offsetY}

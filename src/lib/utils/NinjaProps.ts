@@ -66,16 +66,17 @@ export type OMType =
   | "ai-npc";
 export type OMPhysicsType = "box" | "sphere" | "capsule";
 export type OMVisibleType = "auto" | "force";
+export type MaterialDataProps = {
+  type: "standard" | "phong" | "toon" | "shader" | "reflection";
+  value: string;
+};
 export type OMArgsProps = {
   type?: string;
   position?: Vector3;
   rotation?: Euler;
   scale?: Vector3;
   url?: string;
-  materialData?: {
-    type: "standard" | "lambert" | "phong" | "basic" | "physical" | "reflection" | "shader" | "toon";
-    value: string | number;
-  };
+  materialData?: MaterialDataProps;
   castShadow?: boolean;
   receiveShadow?: boolean;
   distance?: number;

@@ -1,12 +1,4 @@
-import {
-  Object3D,
-  Vector2,
-  AnimationClip,
-  AnimationMixer,
-  Audio,
-  Vector3,
-  Euler,
-} from "three";
+import type { Vector2, AnimationClip, Audio, Vector3, Euler } from "three";
 import { NinjaIconType } from "../uis/NinjaIcons";
 
 /**
@@ -97,6 +89,8 @@ export type OMArgsProps = {
   angle?: number;
   volume?: number;
   loop?: boolean;
+  animations?: AnimationClip[];
+  defaultAnim?: string;
   animationLoop?: boolean;
   velocity?: Vector3;
   mass?: number;

@@ -15,6 +15,7 @@ import { SkeletonUtils } from "three-stdlib";
 import { AnimationHelper } from "../helpers";
 import { IObjectManagement } from "../utils";
 import { DisntanceVisible } from "../helpers";
+import { GLTFResult } from "../types";
 
 export const AiNPCs = () => {
   const { oms } = useNinjaEngine();
@@ -92,7 +93,7 @@ export const AiNPC = ({
 }: AiNPCProps) => {
   const target = useRef<Group | null>(null);
   const mesHtmlRef = useRef<any>(null);
-  const { scene, animations, nodes } = useGLTF(objectURL) as any;
+  const { scene, animations, nodes } = useGLTF(objectURL) as GLTFResult;
   const [localMessage, setLocalMessage] = useState<string>("");
   const { player, curMessage, config, apiEndpoint, npcChatHistory } = useNinjaEngine();
   const { publishData } = useWebRTC();

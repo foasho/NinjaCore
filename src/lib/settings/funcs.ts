@@ -16,7 +16,7 @@ export const ExportNjcFile = (
   config: IConfigParams,
   kvs: kvsProps
 ): NJCFile => {
-  const newConfig = { ...config, dpr: undefined };
+  const newConfig = { ...config };
   // Configパラメータを設定する
   const _config: IConfigParams = {
     ...newConfig,

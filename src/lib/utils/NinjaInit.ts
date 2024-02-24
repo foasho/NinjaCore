@@ -8,7 +8,6 @@ import {
 export const InitMobileConfipParams: IConfigParams = {
   projectName: "NinjaGL",
   physics: true,
-  dpr: 1,
   multi: true,
   isApi: true,
   isDebug: false,
@@ -17,18 +16,14 @@ export const InitMobileConfipParams: IConfigParams = {
 export const InitTabletConfipParams: IConfigParams = {
   projectName: "NinjaGL",
   physics: true,
-  dpr: [1, 1.5],
   multi: true,
   isApi: true,
   isDebug: false,
 };
 
-const isBrowser = typeof window !== "undefined";
-const dpr = isBrowser ? window.devicePixelRatio : 1;
 export const InitDesktopConfipParams: IConfigParams = {
   projectName: "NinjaGL",
   physics: true,
-  dpr: dpr,
   multi: true,
   isApi: true,
   isDebug: false,

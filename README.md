@@ -48,3 +48,14 @@ npm publish
 ```
 pnpm vitest
 ```
+
+## その他
+
+### Playerオブジェクト
+アニメーションのキー名は以下に設定
+
+- 静止: Idle
+- 歩く: Walk
+- 走る: Run
+- ジャンプ: Jump
+

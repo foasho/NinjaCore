@@ -53,11 +53,11 @@ export const SystemMenuUI = React.memo(() => {
       {/** Iconのバックグラウンド */}
       <div
         style={{
-          width: "40px",
-          height: "40px",
+          width: "52px",
+          height: "52px",
           borderRadius: "50%",
           backgroundColor: "#fff",
-          padding: "6px",
+          // padding: "6px",
           position: "relative",
           zIndex: 2,
         }}
@@ -145,12 +145,15 @@ const HamburgerMenu = ({ open, toggle, api, styles }: HamburgerMenuProps) => {
   return (
     <button
       style={{
+        position: "absolute",
+        top: "6px",
+        right: "6px",
         pointerEvents: "auto",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
         alignItems: "flex-end",
-        width: "40px",
+        width: "46px",
         height: "40px",
         padding: "0px",
         border: "none",

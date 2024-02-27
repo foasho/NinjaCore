@@ -27,10 +27,6 @@ import {
 import JSZip from "jszip";
 import { MeshoptDecoder } from "meshoptimizer";
 import { InitMobileConfipParams } from "./NinjaInit";
-// import {
-//   GLTFExporter,
-//   GLTFExporterOptions,
-// } from "three-stdlib";
 
 const MANAGER = new LoadingManager();
 const THREE_PATH = `https://unpkg.com/three@0.157.0`;

@@ -55,15 +55,45 @@ export const Scale2Obj = (scale: any): any => {
   return { x: scale.x, y: scale.y, z: scale.z };
 };
 
+
 /**
  * OMをargsすべてクラスなしのObjectに変換する
  */
-export const OMArgs2Obj = (om: IObjectManagement): IObjectManagement => {
-  const data = { ...om };
-  const args = { ...data.args };
+export const OMArgs2Obj = (om: IObjectManagement, argString: boolean = false): IObjectManagement => {
+  let data = { ...om };
+  let args = { ...data.args };
   if (args.position) args.position = Pos2Obj(args.position);
   if (args.velocity) args.velocity = Pos2Obj(args.velocity);
   if (args.rotation) args.rotation = Rot2Obj(args.rotation);
   if (args.scale) args.scale = Scale2Obj(args.scale);
+  if (argString) {
+    // @ts-ignore
+    args = JSON.stringify(data.args);
+  }
+  data.args = args;
   return data;
+};
+
+/**
+ * OMをargsすべてクラスありのObjectに変換する
+ */
+export const OMArgs2Class = (om: IObjectManagement): IObjectManagement => {
+  const data = { ...om };
+  const args = { ...data.args };
+  if (args.position) args.position = ConvPos(args.position);
+  if (args.velocity) args.velocity = ConvPos(args.velocity);
+  if (args.rotation) args.rotation = ConvRot(args.rotation);
+  if (args.scale) args.scale = ConvScale(args.scale);
+  data.args = args;
+  return data;
+};
+
+/**
+ * OMのDeepCopy
+ */
+export const DeepCopyOM = (om: IObjectManagement): IObjectManagement => {
+  // return JSON.parse(JSON.stringify(om));
+  const omonj = JSON.stringify(om);
+  const omclass = OMArgs2Class(JSON.parse(omonj));
+  return omclass;
 };

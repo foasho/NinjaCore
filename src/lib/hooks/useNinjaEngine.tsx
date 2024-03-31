@@ -16,6 +16,7 @@ import {
   MessageProps,
   PlayerInfoProps,
 } from "../utils";
+import "@khmyznikov/pwa-install";
 import {
   Box3,
   Group,
@@ -50,7 +51,7 @@ import { UIItems } from "../uis";
 import { NinjaKVSProvider } from "./useKVS";
 import { MemoWebRTCProvider } from "./useWebRTC";
 import { Perf } from "r3f-perf";
-import { Water } from "../canvas-items/Water";
+import { AppInfoProps, PWAInstallProps, PWAInstallProvider } from "./usePWA";
 
 export enum EDeviceType {
   Unknown = 0,
@@ -177,6 +178,7 @@ export interface INinjaGL {
   isSplashScreen?: boolean;
   apiEndpoint?: string;
   initPlayerInfo?: PlayerInfoProps;
+  appInfo?: AppInfoProps;
   children?: React.ReactNode;
 }
 export const ThreeJSVer = "0.157.0";
@@ -191,6 +193,14 @@ const _NinjaGL = ({
     avatar: DefaultAvatar,
     objectURL: undefined,
     cameraMode: "third",
+  },
+  appInfo = {
+    manifestUrl: "/manifest.json",
+    icon: "/logo.svg",
+    name: "NinjaGL",
+    description: "これはNinjaGLのデモアプリです。",
+    installDescription:
+      "インストールする際の説明文をここに記載することができます。",
   },
   children,
 }: INinjaGL) => {
@@ -655,70 +665,72 @@ const _NinjaGL = ({
           userSelect: "none",
         }}
       >
-        <InputControlProvider>
-          <MemoWebRTCProvider
-            enable={init}
-            token={token}
-            roomName={config.projectName}
-          >
-            <NinjaWorkerProvider ThreeJSVer={ThreeJSVer}>
-              <NinjaKVSProvider>
-                {
-                  /** スプラッシュスクリーン */ isSplashScreen && (
-                    <MemoSplashScreen />
-                  )
-                }
-                {init && njcFile && (
-                  <>
-                    {/** Canvasレンダリング */}
-                    {!noCanvas ? (
-                      <NCanvas
+        <PWAInstallProvider {...appInfo}>
+          <InputControlProvider>
+            <MemoWebRTCProvider
+              enable={init}
+              token={token}
+              roomName={config.projectName}
+            >
+              <NinjaWorkerProvider ThreeJSVer={ThreeJSVer}>
+                <NinjaKVSProvider>
+                  {
+                    /** スプラッシュスクリーン */ isSplashScreen && (
+                      <MemoSplashScreen />
+                    )
+                  }
+                  {init && njcFile && (
+                    <>
+                      {/** Canvasレンダリング */}
+                      {!noCanvas ? (
+                        <NCanvas
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            zIndex: 1,
+                            background: "#d2d2d2",
+                          }}
+                        >
+                          <React.Suspense
+                            fallback={
+                              <Loading3D isLighting position={[0, 0, 3]} />
+                            }
+                          >
+                            <NinjaCanvasItems />
+                            {children}
+                          </React.Suspense>
+                        </NCanvas>
+                      ) : (
+                        <>{children}</>
+                      )}
+                      {/** UIレンダリング */}
+                      <div
+                        id="domContainer"
                         style={{
-                          width: "100%",
-                          height: "100%",
                           position: "absolute",
                           top: 0,
                           left: 0,
-                          zIndex: 1,
-                          background: "#d2d2d2",
+                          width: "100%",
+                          height: "100%",
+                          zIndex: 2,
+                          overflow: "hidden",
+                          pointerEvents: "none",
                         }}
                       >
-                        <React.Suspense
-                          fallback={
-                            <Loading3D isLighting position={[0, 0, 3]} />
-                          }
-                        >
-                          <NinjaCanvasItems />
-                          {children}
-                        </React.Suspense>
-                      </NCanvas>
-                    ) : (
-                      <>{children}</>
-                    )}
-                    {/** UIレンダリング */}
-                    <div
-                      id="domContainer"
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        width: "100%",
-                        height: "100%",
-                        zIndex: 2,
-                        overflow: "hidden",
-                        pointerEvents: "none",
-                      }}
-                    >
-                      <UIItems />
-                      {config.isDebug && <DebugComponent />}
-                    </div>
-                  </>
-                )}
-                {!init && !noCanvas && <Loading2D />}
-              </NinjaKVSProvider>
-            </NinjaWorkerProvider>
-          </MemoWebRTCProvider>
-        </InputControlProvider>
+                        <UIItems />
+                        {config.isDebug && <DebugComponent />}
+                      </div>
+                    </>
+                  )}
+                  {!init && !noCanvas && <Loading2D />}
+                </NinjaKVSProvider>
+              </NinjaWorkerProvider>
+            </MemoWebRTCProvider>
+          </InputControlProvider>
+        </PWAInstallProvider>
       </div>
     </NinjaEngineContext.Provider>
   );

@@ -49,6 +49,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@khmyznikov/pwa-install": "^0.3.6",
     "@minchat/react-chat-ui": "^0.13.4",
     "@react-spring/web": "^9.7.3",
     "@react-three/drei": "^9.88.7",

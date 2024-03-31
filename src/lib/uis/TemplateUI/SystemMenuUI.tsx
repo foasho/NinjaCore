@@ -1,5 +1,5 @@
 import React from "react";
-import { useNinjaEngine } from "../../hooks";
+import { EDeviceType, useNinjaEngine } from "../../hooks";
 import {
   useSpring,
   useSprings,
@@ -8,7 +8,7 @@ import {
   AsyncResult,
   SpringRef,
 } from "@react-spring/web";
-import { MdMusicNote, MdMusicOff } from "react-icons/md";
+import { MdMusicNote, MdMusicOff, MdInstallMobile, MdInstallDesktop } from "react-icons/md";
 import {
   FaCompress,
   FaExpand,
@@ -16,6 +16,7 @@ import {
   FaMicrophoneSlash,
 } from "react-icons/fa";
 import { BsCameraVideo, BsHeadset, BsHeadsetVr, BsXLg } from "react-icons/bs";
+import { usePWAInstall } from "../../hooks/usePWA";
 
 const animationConfig = {
   mass: 1,
@@ -197,6 +198,7 @@ const IconMenuItems = ({ open }: IconMenuItemsProps) => {
     <FullScreen />,
     <VoiceChat />,
     <SystemSound />,
+    <PWAInstallIntro />,
     <FirstThridCamera />,
   ];
   const springs = useSprings(
@@ -334,6 +336,38 @@ const SystemSound = () => {
       )}
     </div>
   );
+};
+
+/**
+ * PWAインストールの案内
+ */
+const PWAInstallIntro = () => {
+  const { device } = useNinjaEngine();
+  const { showDialog } = usePWAInstall();
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: "1rem",
+        right: "1rem",
+        fontSize: "1.8rem",
+        color: "#fff",
+        borderRadius: "5px",
+        cursor: "pointer",
+        pointerEvents: "auto",
+      }}
+      onClick={() => {
+        showDialog();
+      }}
+    >
+      {device === EDeviceType.Mobile || device === EDeviceType.Tablet &&
+        <MdInstallMobile style={{ display: "inline", verticalAlign: "middle" }} />
+      }
+      {device === EDeviceType.Desktop &&
+        <MdInstallDesktop style={{ display: "inline", verticalAlign: "middle" }} />
+      }
+    </div>
+  )
 };
 
 /**

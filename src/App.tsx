@@ -34,7 +34,7 @@ export const App = () => {
   return (
     <div style={{ position: "absolute", height: "100dvh", width: "100dvw" }}>
       {ready && (
-        <div style={{ height: "100%", paddingTop: "64px" }}>
+        <div style={{ height: "100%" }}>
           {njcFile && (
             <NinjaGL apiEndpoint={apiEndpoint} njc={njcFile}></NinjaGL>
           )}

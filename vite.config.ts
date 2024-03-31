@@ -5,7 +5,12 @@ import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   plugins: [
-    VitePWA(),
+    VitePWA({
+      registerType: "autoUpdate",
+      devOptions: {
+        enabled: true,
+      },
+    }),
     react(),
     glsl({
       include: [
@@ -28,8 +33,6 @@ export default defineConfig({
     "process.env": process.env,
   },
   server: {
-    proxy: {
-      "/api": "http://localhost:5174",
-    },
-  },
+    host: true
+  }
 });

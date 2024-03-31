@@ -214,3 +214,11 @@ export type PlayerInfoProps = {
   objectURL?: string;
   cameraMode: "first" | "third";
 };
+
+export type AppInfoProps = {
+  manifestUrl: string;
+  icon: string;
+  name: string;
+  description: string;
+  installDescription: string;
+};

@@ -36,17 +36,9 @@ export const OMObject = ({ om }: { om: IObjectManagement }) => {
     <>
       {/** 地形データ */}
       {om.type === "landscape" && (
-        <>
-          {om.physics && !om.moveable ? (
-            <ColliderTunnel.In>
-              <LandScape om={om} />
-            </ColliderTunnel.In>
-          ) : (
-            <NonColliderTunnel.In>
-              <LandScape om={om} />
-            </NonColliderTunnel.In>
-          )}
-        </>
+        <ColliderTunnel.In>
+          <LandScape om={om} />
+        </ColliderTunnel.In>
       )}
       {/** ライティング */}
       {om.type === "light" && <Light om={om} />}

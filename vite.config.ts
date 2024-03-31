@@ -10,6 +10,37 @@ export default defineConfig({
       devOptions: {
         enabled: true,
       },
+      injectRegister: 'auto',
+      manifest: {
+        name: 'PWA Sample Apps',
+        short_name: 'PWAApps', 
+        description: 'PWAサンプルアプリ',
+        theme_color: '#ffffff',
+        icons: [
+          {
+            src: 'icons/icon-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'icons/icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          },
+          {
+            src: 'icons/icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'icons/icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          }
+        ]
+      }
     }),
     react(),
     glsl({
@@ -33,6 +64,8 @@ export default defineConfig({
     "process.env": process.env,
   },
   server: {
-    host: true
+    hmr: {
+      overlay: false,
+    }
   }
 });

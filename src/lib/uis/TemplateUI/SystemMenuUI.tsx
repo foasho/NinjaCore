@@ -8,7 +8,12 @@ import {
   AsyncResult,
   SpringRef,
 } from "@react-spring/web";
-import { MdMusicNote, MdMusicOff, MdInstallMobile, MdInstallDesktop } from "react-icons/md";
+import {
+  MdMusicNote,
+  MdMusicOff,
+  MdInstallMobile,
+  MdInstallDesktop,
+} from "react-icons/md";
 import {
   FaCompress,
   FaExpand,
@@ -360,14 +365,17 @@ const PWAInstallIntro = () => {
         showDialog();
       }}
     >
-      {device === EDeviceType.Mobile || device === EDeviceType.Tablet &&
-        <MdInstallMobile style={{ display: "inline", verticalAlign: "middle" }} />
-      }
-      {device === EDeviceType.Desktop &&
-        <MdInstallDesktop style={{ display: "inline", verticalAlign: "middle" }} />
-      }
+      {device === EDeviceType.Desktop ? (
+        <MdInstallDesktop
+          style={{ display: "inline", verticalAlign: "middle" }}
+        />
+      ) : (
+        <MdInstallMobile
+          style={{ display: "inline", verticalAlign: "middle" }}
+        />
+      )}
     </div>
-  )
+  );
 };
 
 /**

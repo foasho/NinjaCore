@@ -3,6 +3,7 @@ import { useRef, useEffect, createContext, useContext } from "react";
 
 // @ts-ignore
 import PWAInstall from "@khmyznikov/pwa-install/dist/pwa-install.react.js";
+import { AppInfoProps } from "../utils";
 
 
 type PWAInstallEventProps = {
@@ -13,13 +14,6 @@ type PWAInstallEventProps = {
   onInstallHowTo: (event: any) => void;
   onInstallGallery: (event: any) => void;
   showDialog: () => void;
-};
-export type AppInfoProps = {
-  manifestUrl: string;
-  icon: string;
-  name: string;
-  description: string;
-  installDescription: string;
 };
 export type PWAInstallProps = AppInfoProps & {
   children: React.ReactNode;

@@ -15,6 +15,7 @@ import {
   loadNJCFileFromPath,
   MessageProps,
   PlayerInfoProps,
+  AppInfoProps,
 } from "../utils";
 import "@khmyznikov/pwa-install";
 import {
@@ -51,7 +52,7 @@ import { UIItems } from "../uis";
 import { NinjaKVSProvider } from "./useKVS";
 import { MemoWebRTCProvider } from "./useWebRTC";
 import { Perf } from "r3f-perf";
-import { AppInfoProps, PWAInstallProps, PWAInstallProvider } from "./usePWA";
+import { PWAInstallProvider } from "./usePWA";
 
 export enum EDeviceType {
   Unknown = 0,

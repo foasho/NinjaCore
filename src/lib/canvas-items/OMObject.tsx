@@ -83,7 +83,7 @@ const LandScape = ({ om }: { om: IObjectManagement }) => {
       if (om.args.rotation) ref.current.rotation.copy(om.args.rotation);
       if (om.args.scale) ref.current.scale.copy(om.args.scale);
     }
-  }, [scene]);
+  }, []);
 
   if (scene && om.args.castShadow) {
     scene.traverse((child) => {

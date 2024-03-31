@@ -64,8 +64,9 @@ export const PWAInstallProvider = ({
   const showDialog = () => {
     // @ts-ignore
     pwaInstallRef.current?.showDialog(true);
-  } ;
+  };
 
+  // @ts-ignore
   useEffect(() => {
     const currentElement = pwaInstallRef.current;
 

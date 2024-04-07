@@ -80,9 +80,15 @@ const OMObject = React.memo(_OMObject,
  * LandScapeコンポネント
  * --------------------
  */
+type LandScaleGLTFResult = GLTF & {
+  nodes: {
+    Plane: Mesh;
+  };
+  materials: {};
+};
 const _LandScape = ({ om }: { om: IObjectManagement }) => {
   const ref = React.useRef<Group>(null);
-  const { nodes } = useGLTF(om.args.url as string);
+  const { nodes } = useGLTF(om.args.url as string) as LandScapeGLTFResult;
 
   React.useEffect(() => {
     if (ref.current) {

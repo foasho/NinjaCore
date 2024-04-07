@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, Suspense } from "react";
 import { IObjectManagement, MoveableColliderTunnel } from "../utils";
 import { Color, Object3D, Group, Mesh } from "three";
 import { GLTF } from "three-stdlib";

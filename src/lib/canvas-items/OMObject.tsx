@@ -82,7 +82,7 @@ const OMObject = React.memo(_OMObject,
  */
 const _LandScape = ({ om }: { om: IObjectManagement }) => {
   const ref = React.useRef<Group>(null);
-  const { nodes } = useGLTF(om.args.url as string) as GLTF;
+  const { nodes } = useGLTF(om.args.url as string) as GLTF && { nodes: any };
 
   React.useEffect(() => {
     if (ref.current) {

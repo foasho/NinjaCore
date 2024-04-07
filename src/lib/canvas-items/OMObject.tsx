@@ -73,7 +73,7 @@ export const OMObject = ({ om }: { om: IObjectManagement }) => {
  * LandScapeコンポネント
  * --------------------
  */
-const LandScape = ({ om }: { om: IObjectManagement }) => {
+const _LandScape = ({ om }: { om: IObjectManagement }) => {
   const ref = React.useRef<Group>(null);
   const { scene } = useGLTF(om.args.url as string) as GLTF;
 
@@ -110,12 +110,14 @@ const LandScape = ({ om }: { om: IObjectManagement }) => {
   );
 };
 
+const LandScape = React.memo(_LandScape);
+
 /**
  * --------------------
  * Ligitingコンポネント
  * --------------------
  */
-const Light = ({ om }: { om: IObjectManagement }) => {
+const _Light = ({ om }: { om: IObjectManagement }) => {
   const ref = React.useRef<any>();
   let light: any = undefined;
   let color: string = om.args.color ? om.args.color : "#fadcb9";
@@ -186,13 +188,14 @@ const Light = ({ om }: { om: IObjectManagement }) => {
     </DisntanceVisible>
   );
 };
+const Light = React.memo(_Light);
 
 /**
  * --------------------
  * Threeコンポネント
  * --------------------
  */
-const ThreeObject = ({ om }: { om: IObjectManagement }) => {
+const _ThreeObject = ({ om }: { om: IObjectManagement }) => {
   const ref = React.useRef<any>();
   const { onOMIdChanged, offOMIdChanged } = useNinjaEngine();
   const { worker } = useNinjaWorker();
@@ -302,12 +305,13 @@ const ThreeObject = ({ om }: { om: IObjectManagement }) => {
     </>
   );
 };
+const ThreeObject = React.memo(_ThreeObject);
 
 /** ----
  * Text
  * -----
  */
-const OMText = ({ om }: { om: IObjectManagement }) => {
+const _OMText = ({ om }: { om: IObjectManagement }) => {
   const ref = React.useRef<any>();
   React.useEffect(() => {
     if (ref.current) {
@@ -330,13 +334,14 @@ const OMText = ({ om }: { om: IObjectManagement }) => {
     </DisntanceVisible>
   );
 };
+const OMText = React.memo(_OMText);
 
 /**
  * ------
  * Text3D
  * ------
  */
-const OMText3D = ({ om }: { om: IObjectManagement }) => {
+const _OMText3D = ({ om }: { om: IObjectManagement }) => {
   const font = useFont("/fonts/MPLUS.json");
   const ref = React.useRef<any>();
   React.useEffect(() => {
@@ -364,6 +369,7 @@ const OMText3D = ({ om }: { om: IObjectManagement }) => {
     </DisntanceVisible>
   );
 };
+const OMText3D = React.memo(_OMText3D);
 
 /**
  * ----
@@ -371,7 +377,7 @@ const OMText3D = ({ om }: { om: IObjectManagement }) => {
  * ----
  */
 
-const SkyComponent = ({ om: sky }: { om: IObjectManagement }) => {
+const _SkyComponent = ({ om: sky }: { om: IObjectManagement }) => {
   return (
     <>
       <Sky
@@ -383,13 +389,14 @@ const SkyComponent = ({ om: sky }: { om: IObjectManagement }) => {
     </>
   );
 };
+const SkyComponent = React.memo(_SkyComponent);
 
 /**
  * ------
  * Cloud
  * ------
  */
-const CloudComponent = ({ om: cloud }: { om: IObjectManagement }) => {
+const _CloudComponent = ({ om: cloud }: { om: IObjectManagement }) => {
   return (
     <Cloud
       opacity={cloud.args.opacity ? cloud.args.opacity : 0.5}
@@ -400,3 +407,4 @@ const CloudComponent = ({ om: cloud }: { om: IObjectManagement }) => {
     />
   );
 };
+const CloudComponent = React.memo(_CloudComponent);

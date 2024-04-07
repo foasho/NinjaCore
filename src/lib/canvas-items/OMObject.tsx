@@ -82,7 +82,7 @@ const OMObject = React.memo(_OMObject,
  */
 const _LandScape = ({ om }: { om: IObjectManagement }) => {
   const ref = React.useRef<Group>(null);
-  const { scene } = useGLTF(om.args.url as string) as GLTF;
+  const { nodes } = useGLTF(om.args.url as string) as GLTF;
 
   React.useEffect(() => {
     if (ref.current) {
@@ -92,28 +92,14 @@ const _LandScape = ({ om }: { om: IObjectManagement }) => {
     }
   }, []);
 
-  if (scene && om.args.castShadow) {
-    scene.traverse((child) => {
-      if (child instanceof Mesh) {
-        child.castShadow = om.args.castShadow? true : false;
-      }
-    });
-  }
-
-  if (scene && om.args.receiveShadow) {
-    scene.traverse((child) => {
-      if (child instanceof Mesh) {
-        child.receiveShadow = om.args.receiveShadow? true : false;
-      }
-    });
-  }
-
   return (
-    <DisntanceVisible distance={om.args.dinstance}>
-      <group ref={ref} renderOrder={0}>
-        <primitive object={scene} />
-      </group>
-    </DisntanceVisible>
+    <mesh
+      geometry={nodes.Plane.geometry}
+      material={nodes.Plane.material}
+      rotation={[-Math.PI / 2, 0, 0]}
+      receiveShadow
+      castShadow
+    />
   );
 };
 

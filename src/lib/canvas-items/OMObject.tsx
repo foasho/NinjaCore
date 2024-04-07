@@ -80,7 +80,7 @@ const OMObject = React.memo(_OMObject,
  * LandScapeコンポネント
  * --------------------
  */
-type LandScaleGLTFResult = GLTF & {
+type LandScapeGLTFResult = GLTF & {
   nodes: {
     Plane: Mesh;
   };

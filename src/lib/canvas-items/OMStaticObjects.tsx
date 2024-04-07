@@ -89,6 +89,7 @@ const StaticObject = ({ om }: { om: IObjectManagement }) => {
       setClone(clone);
     }
   }, [scene]);
+
   return (
     <DisntanceVisible distance={om.args.distance}>
       <group ref={ref} renderOrder={0}>

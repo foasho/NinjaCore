@@ -28,18 +28,9 @@ import JSZip from "jszip";
 import { MeshoptDecoder } from "meshoptimizer";
 import { InitMobileConfipParams } from "./NinjaInit";
 
-const MANAGER = new LoadingManager();
-const THREE_PATH = `https://unpkg.com/three@0.157.0`;
-export const DRACO_LOADER = new DRACOLoader(MANAGER).setDecoderPath(
-  `${THREE_PATH}/examples/jsm/libs/draco/gltf/`
-);
-export const KTX2_LOADER = new KTX2Loader(MANAGER).setTranscoderPath(
-  `${THREE_PATH}/examples/jsm/libs/basis/`
-);
+
 export const gltfLoader = new GLTFLoader()
   .setCrossOrigin("anonymous")
-  .setDRACOLoader(DRACO_LOADER)
-  .setMeshoptDecoder(MeshoptDecoder);
 
 /**
  * データ構成を定義

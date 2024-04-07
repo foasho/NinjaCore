@@ -182,7 +182,6 @@ export interface INinjaGL {
   appInfo?: AppInfoProps;
   children?: React.ReactNode;
 }
-export const ThreeJSVer = "0.157.0";
 const _NinjaGL = ({
   njc,
   njcPath,
@@ -673,7 +672,7 @@ const _NinjaGL = ({
               token={token}
               roomName={config.projectName}
             >
-              <NinjaWorkerProvider ThreeJSVer={ThreeJSVer}>
+              <NinjaWorkerProvider >
                 <NinjaKVSProvider>
                   {
                     /** スプラッシュスクリーン */ isSplashScreen && (

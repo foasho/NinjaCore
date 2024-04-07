@@ -29,7 +29,6 @@ const SD = {
 };
 
 interface NWorkerProviderProps {
-  ThreeJSVer: string;
   children: React.ReactNode;
 }
 
@@ -53,7 +52,6 @@ export const NinjaWorkerContext = createContext<NWorkerProp>({
 export const useNinjaWorker = (): NWorkerProp => useContext(NinjaWorkerContext);
 
 export const NinjaWorkerProvider = ({
-  ThreeJSVer,
   children,
 }: NWorkerProviderProps) => {
   const engine = useNinjaEngine();
@@ -78,11 +76,7 @@ export const NinjaWorkerProvider = ({
       `
       )
       .join("\n");
-    const threeCDN = `https://unpkg.com/three@${ThreeJSVer}/build/three.min.js`;
     const workerScript = `
-      // Add ThreeJS
-      importScripts("${threeCDN}");
-
       // SCRIPTS_DATAのプロパティに対応する関数を作成する
       ${Object.keys(SD)
         .map(

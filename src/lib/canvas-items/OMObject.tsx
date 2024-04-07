@@ -16,7 +16,7 @@ import { ColliderTunnel, NonColliderTunnel } from "../utils";
 import { DisntanceVisible } from "../helpers";
 import { useNinjaWorker } from "../hooks/useNinjaWorker";
 
-export const OMObjects = () => {
+export const _OMObjects = () => {
   const { oms } = useNinjaEngine();
   return (
     <>
@@ -26,12 +26,13 @@ export const OMObjects = () => {
     </>
   );
 };
+export const OMObjects = React.memo(_OMObjects);
 
 /**
  * RenderOrder
  * [0]
  */
-export const OMObject = ({ om }: { om: IObjectManagement }) => {
+const _OMObject = ({ om }: { om: IObjectManagement }) => {
   return (
     <>
       {/** 地形データ */}
@@ -67,6 +68,12 @@ export const OMObject = ({ om }: { om: IObjectManagement }) => {
     </>
   );
 };
+// IDが同じ場合は再レンダリングしない
+const OMObject = React.memo(_OMObject, 
+  (prevProps, nextProps) => {
+    return prevProps.om.id === nextProps.om.id;
+  }
+);
 
 /**
  * --------------------

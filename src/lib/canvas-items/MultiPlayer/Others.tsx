@@ -8,7 +8,7 @@ import { PlayerAnimationHelper } from "../../commons/PlayerAnimationHelper";
 import { DisntanceVisible } from "../../helpers";
 import { MultiPlayerColliderTunnel } from "../../utils";
 
-export const Others = () => {
+export const _Others = () => {
   const { membersData, me, onMembersChanged, offMembersChanged } = useWebRTC();
   const [othersData, setOthersData] = useState<IPublishData[]>([]);
 
@@ -35,12 +35,13 @@ export const Others = () => {
     </>
   );
 };
+export const Others = React.memo(_Others);
 
 interface IOtherPlayer {
   id: string;
   url?: string;
 }
-const OtherPlayer = ({ id, url = "/models/ybot.glb" }: IOtherPlayer) => {
+const _OtherPlayer = ({ id, url = "/models/ybot.glb" }: IOtherPlayer) => {
   const otherRef = useRef<Group>(null);
   const messageRef = useRef<any>(null);
   const moveableCollisionRef = useRef<Mesh>(null);
@@ -173,3 +174,4 @@ const OtherPlayer = ({ id, url = "/models/ybot.glb" }: IOtherPlayer) => {
     </>
   );
 };
+export const OtherPlayer = React.memo(_OtherPlayer);

@@ -22,25 +22,21 @@ export const StaticObjects = () => {
   return (
     <Suspense fallback={null}>
       {staticObjects.map((om, index) => {
-        return (
-          <>
-            {om.physics ? (
-              <ColliderTunnel.In key={om.id}>
-                <StaticObject om={om} key={index} />
-              </ColliderTunnel.In>
-            ) : (
-              <NonColliderTunnel.In key={om.id}>
-                <StaticObject om={om} key={index} />
-              </NonColliderTunnel.In>
-            )}
-          </>
+        return om.physics ? (
+          <ColliderTunnel.In key={om.id}>
+            <StaticObject om={om} key={index} />
+          </ColliderTunnel.In>
+        ) : (
+          <NonColliderTunnel.In key={om.id}>
+            <StaticObject om={om} key={index} />
+          </NonColliderTunnel.In>
         );
       })}
     </Suspense>
   );
 };
 
-const StaticObject = ({ om }: { om: IObjectManagement }) => {
+const _StaticObject = ({ om }: { om: IObjectManagement }) => {
   const { scene, animations } = useGLTF(om.args.url as string) as GLTF;
   const [clone, setClone] = React.useState<Object3D>();
   const ref = React.useRef<Group>(null);
@@ -98,3 +94,4 @@ const StaticObject = ({ om }: { om: IObjectManagement }) => {
     </DisntanceVisible>
   );
 };
+const StaticObject = React.memo(_StaticObject);

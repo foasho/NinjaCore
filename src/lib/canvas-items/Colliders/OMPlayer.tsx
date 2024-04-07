@@ -25,7 +25,7 @@ import { useFrame } from "@react-three/fiber";
 interface IOMPlayerProps {
   grp: React.RefObject<Group>;
 }
-export const OMPlayer = ({ grp }: IOMPlayerProps) => {
+export const _OMPlayer = ({ grp }: IOMPlayerProps) => {
   const ref = React.useRef<any>();
   const engine = useNinjaEngine();
 
@@ -67,6 +67,7 @@ export const OMPlayer = ({ grp }: IOMPlayerProps) => {
     </>
   );
 };
+export const OMPlayer = React.memo(_OMPlayer);
 
 /**
  * プレイヤー

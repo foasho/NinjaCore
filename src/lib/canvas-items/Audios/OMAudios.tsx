@@ -15,19 +15,17 @@ export const OMAudios = () => {
   }, [oms]);
   return (
     <>
-      {audios.map((om) => (
-        <>
-          {om.args.url && (
-            <OMAudio
-              key={om.id}
-              url={om.args.url}
-              position={om.args.position || new Vector3()}
-              distance={om.args.distance}
-              maxVolume={om.args.volume}
-            />
-          )}
-        </>
-      ))}
+      {audios.map((om) =>
+        om.args.url ? (
+          <OMAudio
+            key={om.id}
+            url={om.args.url}
+            position={om.args.position || new Vector3()}
+            distance={om.args.distance}
+            maxVolume={om.args.volume}
+          />
+        ) : null
+      )}
     </>
   );
 };

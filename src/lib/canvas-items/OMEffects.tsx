@@ -5,7 +5,7 @@ import { Bloom, LUT, SSR, EffectComposer } from "@react-three/postprocessing";
 import { Texture } from "three";
 import { useNinjaEngine } from "../hooks";
 
-export const OMEffects = () => {
+const _OMEffects = () => {
   const { oms } = useNinjaEngine();
   const effects = React.useMemo(() => {
     return oms.filter((om) => om.type === "effect");
@@ -23,13 +23,14 @@ export const OMEffects = () => {
     </>
   );
 };
+export const OMEffects = React.memo(_OMEffects);
 
 /**
  * -------
  * Effect
  * -------
  */
-const MyEffect = ({ om }: { om: IObjectManagement }) => {
+const _MyEffect = ({ om }: { om: IObjectManagement }) => {
   const [texture, setTexture] = React.useState<any>(null);
 
   React.useEffect(() => {
@@ -69,3 +70,4 @@ const MyEffect = ({ om }: { om: IObjectManagement }) => {
 
   return <>{effect}</>;
 };
+const MyEffect = React.memo(_MyEffect);

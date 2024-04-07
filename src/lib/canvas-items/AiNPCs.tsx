@@ -17,7 +17,7 @@ import { IObjectManagement } from "../utils";
 import { DisntanceVisible } from "../helpers";
 import { GLTFResult } from "../types";
 
-export const AiNPCs = () => {
+const _AiNPCs = () => {
   const { oms } = useNinjaEngine();
   const ainpcs = oms.filter((om) => om.type === "ai-npc");
   return (
@@ -42,6 +42,7 @@ export const AiNPCs = () => {
     </>
   );
 };
+export const AiNPCs = React.memo(_AiNPCs);
 
 interface IConversationProps {
   role: "system" | "user" | "assistant";
@@ -72,7 +73,7 @@ export interface AiNPCProps {
   isSpeak?: boolean;
   isRandomMove?: boolean;
 }
-export const AiNPC = ({
+const _AiNPC = ({
   om,
   npcName = "NPC",
   objectURL = "/models/ybot.glb",
@@ -325,3 +326,5 @@ export const AiNPC = ({
     </>
   );
 };
+
+const AiNPC = React.memo(_AiNPC);

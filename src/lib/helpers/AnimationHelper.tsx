@@ -10,7 +10,7 @@ export type AnimationHelperProps = {
   visible?: boolean;
   initSelectAnimation?: string;
 };
-export const AnimationHelper = ({
+const _AnimationHelper = ({
   id,
   object,
   visible = true,
@@ -68,3 +68,5 @@ export const AnimationHelper = ({
 
   return <primitive ref={ref} visible={visible} object={object} />;
 };
+
+export const AnimationHelper = React.memo(_AnimationHelper);

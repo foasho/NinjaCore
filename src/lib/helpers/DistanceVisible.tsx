@@ -10,7 +10,7 @@ type DisntanceVisibleProps = {
  * 距離による表示切り替え
  * @returns 
  */
-export const DisntanceVisible = (
+export const _DisntanceVisible = (
   { distance = 25, children }: DisntanceVisibleProps
 ): JSX.Element => {
   const ref = React.useRef<Group>(null);
@@ -30,3 +30,4 @@ export const DisntanceVisible = (
     </group>
   )
 };
+export const DisntanceVisible = React.memo(_DisntanceVisible);

@@ -27,6 +27,7 @@ export interface IInputMovement {
   prevDrag: Vector2 | null;
   curDrag: Vector2 | null;
   pressedKeys: string[];
+  mouseButtons: number[];
   angleAxis: [number, number];
 }
 

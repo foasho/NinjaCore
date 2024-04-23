@@ -75,6 +75,7 @@ const initialKeyState: IInputMovement = {
   curDrag: null,
   speed: 0,
   pressedKeys: [],
+  mouseButtons: [],
   angleAxis: [0, 0],
 };
 
@@ -90,6 +91,7 @@ export let manualKeyState: IInputMovement = {
   curDrag: null,
   speed: 0,
   pressedKeys: [],
+  mouseButtons: [],
   angleAxis: [0, 0],
 };
 
@@ -192,11 +194,20 @@ export const useInputControl = ({
       movement.current.pressedKeys.splice(index, 1);
     }
   };
-  const handleClickDown = () => {
+  const handleClickDown = (e: MouseEvent) => {
     movement.current.action = true;
+    // MouseのButtonを追加
+    if (!movement.current.mouseButtons.includes(e.button)) {
+      movement.current.mouseButtons.push(e.button);
+    }
   };
   const handleClickUp = () => {
     movement.current.action = false;
+    const index = movement.current.mouseButtons.indexOf(0);
+    // MouseのButtonを削除
+    if (index > -1) {
+      movement.current.mouseButtons.splice(index, 1);
+    }
   };
 
   /**
@@ -392,6 +403,7 @@ export const useInputControl = ({
     curDrag: null,
     speed: 0,
     pressedKeys: [],
+    mouseButtons: [],
     angleAxis: [0, 0],
   });
 

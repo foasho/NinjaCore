@@ -53,6 +53,7 @@ import { NinjaKVSProvider } from "./useKVS";
 import { MemoWebRTCProvider } from "./useWebRTC";
 import { Perf } from "r3f-perf";
 import { PWAInstallProvider } from "./usePWA";
+import { Loader } from "@react-three/drei";
 
 export enum EDeviceType {
   Unknown = 0,
@@ -672,11 +673,12 @@ const _NinjaGL = ({
               token={token}
               roomName={config.projectName}
             >
-              <NinjaWorkerProvider >
+              <NinjaWorkerProvider>
                 <NinjaKVSProvider>
                   {
                     /** スプラッシュスクリーン */ isSplashScreen && (
-                      <MemoSplashScreen />
+                      // <MemoSplashScreen />
+                      <Loader />
                     )
                   }
                   {init && njcFile && (

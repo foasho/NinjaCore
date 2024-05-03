@@ -1,6 +1,7 @@
 import React from "react";
 import { IObjectManagement } from "../utils";
 import { LUTCubeLoader } from "three-stdlib";
+// @threeのverupには注意が必要。https://github.com/pmndrs/react-postprocessing/issues/263
 import { Bloom, LUT, SSR, EffectComposer } from "@react-three/postprocessing";
 import { Texture } from "three";
 import { useNinjaEngine } from "../hooks";
@@ -62,8 +63,7 @@ const _MyEffect = ({ om }: { om: IObjectManagement }) => {
       );
     } else if (om.args.type === "lut" && texture) {
       return <LUT lut={texture as Texture} />;
-    }
-    else {
+    } else {
       return <></>;
     }
   }, [om, texture]);

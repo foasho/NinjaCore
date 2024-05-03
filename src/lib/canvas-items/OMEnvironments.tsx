@@ -20,6 +20,7 @@ export const OMEnvirments = () => {
     <>
       {environment && (
         <>
+          {/** bug: blue not working */}
           <Environment
             resolution={512}
             preset={environment.args.preset}

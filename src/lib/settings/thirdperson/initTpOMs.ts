@@ -149,9 +149,9 @@ export const initTpOMs = (): IObjectManagement[] => {
       name: "Environment",
       type: "environment",
       args: {
-        preset: "sunset",
+        preset: "night",
         blur: 0.7,
-        background: true,
+        background: false,
       },
       physics: false,
       phyType: "box",

@@ -1,7 +1,7 @@
 import React, { useMemo, Suspense } from "react";
 import { IObjectManagement, MoveableColliderTunnel } from "../utils";
 import { Color, Object3D, Group, Mesh } from "three";
-import { GLTF } from "three-stdlib";
+import { GLTF, GLTFLoader } from "three-stdlib";
 import {
   Cloud,
   MeshReflectorMaterial,
@@ -69,11 +69,9 @@ const _OMObject = ({ om }: { om: IObjectManagement }) => {
   );
 };
 // IDが同じ場合は再レンダリングしない
-const OMObject = React.memo(_OMObject, 
-  (prevProps, nextProps) => {
-    return prevProps.om.id === nextProps.om.id;
-  }
-);
+const OMObject = React.memo(_OMObject, (prevProps, nextProps) => {
+  return prevProps.om.id === nextProps.om.id;
+});
 
 /**
  * --------------------
@@ -87,35 +85,32 @@ type LandScapeGLTFResult = GLTF & {
   materials: {};
 };
 const _LandScape = ({ om }: { om: IObjectManagement }) => {
-  // const ref = React.useRef<Group>(null);
-  const { scene } = useGLTF(om.args.url as string) as LandScapeGLTFResult;
+  const ref = React.useRef<Group>(null);
+  const [scene, setScene] = React.useState<Object3D>();
 
-  // // React.useEffect(() => {
-  // //   if (ref.current) {
-  // //     if (om.args.position) ref.current.position.copy(om.args.position);
-  // //     if (om.args.rotation) ref.current.rotation.copy(om.args.rotation);
-  // //     if (om.args.scale) ref.current.scale.copy(om.args.scale);
-  // //   }
-  // // }, []);
+  React.useEffect(() => {
+    if (ref.current) {
+      if (om.args.position) ref.current.position.copy(om.args.position);
+      if (om.args.rotation) ref.current.rotation.copy(om.args.rotation);
+      if (om.args.scale) ref.current.scale.copy(om.args.scale);
+    }
+    if (!scene && om.args.url) {
+      const loader = new GLTFLoader();
+      loader.load(om.args.url, (gltf) => {
+        setScene(gltf.scene);
+      });
+    }
+  }, []);
 
-  console.log("LandScape");
-
-  // return (
-  //   <Suspense fallback={null}>
-  //     <mesh
-  //       geometry={nodes.Plane.geometry}
-  //       material={nodes.Plane.material}
-  //       rotation={[-Math.PI / 2, 0, 0]}
-  //       receiveShadow
-  //       castShadow
-  //     />
-  //   </Suspense>
-  // );
   return (
-    <mesh receiveShadow renderOrder={1}>
-      <primitive object={scene} />
-    </mesh>
-  )
+    <>
+      {scene && (
+        <group ref={ref}>
+          <primitive object={scene} />
+        </group>
+      )}
+    </>
+  );
 };
 
 const LandScape = React.memo(_LandScape);
@@ -229,7 +224,11 @@ const _ThreeObject = ({ om }: { om: IObjectManagement }) => {
         : new Color(0xffffff);
     if (materialData.type == "standard") {
       material = (
-        <meshStandardMaterial color={color} opacity={om.args.opacity || 1.0} transparent={om.args.opacity} />
+        <meshStandardMaterial
+          color={color}
+          opacity={om.args.opacity || 1.0}
+          transparent={om.args.opacity}
+        />
       );
     } else if (materialData.type == "phong") {
       material = <meshPhongMaterial color={color} />;

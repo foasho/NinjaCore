@@ -88,7 +88,7 @@ type LandScapeGLTFResult = GLTF & {
 };
 const _LandScape = ({ om }: { om: IObjectManagement }) => {
   // const ref = React.useRef<Group>(null);
-  // const { nodes } = useGLTF(om.args.url as string) as LandScapeGLTFResult;
+  const { nodes } = useGLTF(om.args.url as string) as LandScapeGLTFResult;
 
   // // React.useEffect(() => {
   // //   if (ref.current) {
@@ -98,7 +98,7 @@ const _LandScape = ({ om }: { om: IObjectManagement }) => {
   // //   }
   // // }, []);
 
-  // console.log("LandScape");
+  console.log("LandScape");
 
   // return (
   //   <Suspense fallback={null}>

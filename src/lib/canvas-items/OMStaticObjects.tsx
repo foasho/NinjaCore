@@ -14,7 +14,7 @@ export const StaticObjects = () => {
   const staticObjects = React.useMemo(() => {
     if (!engine) return [];
     const staticObjects = engine.oms.filter(
-      (o: IObjectManagement) => o.type === "object"
+      (o: IObjectManagement) => o.type === "object" || o.type === "landscape"
     );
     return staticObjects ? staticObjects : [];
   }, [engine]);
@@ -22,7 +22,7 @@ export const StaticObjects = () => {
   return (
     <Suspense fallback={null}>
       {staticObjects.map((om, index) => {
-        return om.physics ? (
+        return om.physics || om.type == "landscape" ? (
           <ColliderTunnel.In key={om.id}>
             <StaticObject om={om} key={index} />
           </ColliderTunnel.In>

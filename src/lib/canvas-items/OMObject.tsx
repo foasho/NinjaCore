@@ -36,11 +36,11 @@ const _OMObject = ({ om }: { om: IObjectManagement }) => {
   return (
     <>
       {/** 地形データ */}
-      {/* {om.type === "landscape" && (
+      {om.type === "landscape" && (
         <ColliderTunnel.In>
           <LandScape om={om} />
         </ColliderTunnel.In>
-      )} */}
+      )}
       {/** ライティング */}
       {om.type === "light" && <Light om={om} />}
       {/** Threeメッシュ */}
@@ -112,7 +112,7 @@ const _LandScape = ({ om }: { om: IObjectManagement }) => {
   //   </Suspense>
   // );
   return (
-    <mesh receiveShadow>
+    <mesh receiveShadow renderOrder={1}>
       <primitive object={scene} />
     </mesh>
   )

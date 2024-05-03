@@ -88,7 +88,7 @@ type LandScapeGLTFResult = GLTF & {
 };
 const _LandScape = ({ om }: { om: IObjectManagement }) => {
   // const ref = React.useRef<Group>(null);
-  const { nodes } = useGLTF(om.args.url as string) as LandScapeGLTFResult;
+  const { scene } = useGLTF(om.args.url as string) as LandScapeGLTFResult;
 
   // // React.useEffect(() => {
   // //   if (ref.current) {
@@ -111,7 +111,11 @@ const _LandScape = ({ om }: { om: IObjectManagement }) => {
   //     />
   //   </Suspense>
   // );
-  return null;
+  return (
+    <mesh receiveShadow>
+      <primitive object={scene} />
+    </mesh>
+  )
 };
 
 const LandScape = React.memo(_LandScape);

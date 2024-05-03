@@ -15,7 +15,7 @@ const _OMEffects = () => {
   return (
     <>
       {effects.length > 0 && (
-        <EffectComposer disableNormalPass>
+        <EffectComposer>
           {effects.map((om: IObjectManagement) => {
             return <MyEffect om={om} key={om.id} />;
           })}

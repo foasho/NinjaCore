@@ -94,9 +94,11 @@ const _AiNPC = ({
 }: AiNPCProps) => {
   const target = useRef<Group | null>(null);
   const mesHtmlRef = useRef<any>(null);
+  // @ts-ignore
   const { scene, animations, nodes } = useGLTF(objectURL) as GLTFResult;
   const [localMessage, setLocalMessage] = useState<string>("");
-  const { player, curMessage, config, apiEndpoint, npcChatHistory } = useNinjaEngine();
+  const { player, curMessage, config, apiEndpoint, npcChatHistory } =
+    useNinjaEngine();
   const { publishData } = useWebRTC();
   const [conversations, setConversations] = useState<IConversationProps[]>([]);
   const [lastAssistantMessage, setLastAssistantMessage] =
@@ -136,16 +138,14 @@ const _AiNPC = ({
       };
     }
     // NPCメッセージに追記する
-    npcChatHistory.current.push(
-      {
-        id: om.id,
-        username: npcName,
-        message: json.data.content as string,
-        messagedAt: new Date(),
-      }
-    );
+    npcChatHistory.current.push({
+      id: om.id,
+      username: npcName,
+      message: json.data.content as string,
+      messagedAt: new Date(),
+    });
     // webRTCを使用していれば、publishする
-    if (config.multi){
+    if (config.multi) {
       if (publishData) {
         publishData({
           id: om.id,
@@ -237,7 +237,7 @@ const _AiNPC = ({
       if (dinstance < conversationDistance) {
         // 現在メッセージがLocalと異なれば更新
         if (curMessage.current && curMessage.current !== "") {
-          if (localMessage !== curMessage.current){
+          if (localMessage !== curMessage.current) {
             setLocalMessage(curMessage.current);
           }
         }

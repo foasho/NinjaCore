@@ -87,28 +87,31 @@ type LandScapeGLTFResult = GLTF & {
   materials: {};
 };
 const _LandScape = ({ om }: { om: IObjectManagement }) => {
-  const ref = React.useRef<Group>(null);
-  const { nodes } = useGLTF(om.args.url as string) as LandScapeGLTFResult;
+  // const ref = React.useRef<Group>(null);
+  // const { nodes } = useGLTF(om.args.url as string) as LandScapeGLTFResult;
 
-  // React.useEffect(() => {
-  //   if (ref.current) {
-  //     if (om.args.position) ref.current.position.copy(om.args.position);
-  //     if (om.args.rotation) ref.current.rotation.copy(om.args.rotation);
-  //     if (om.args.scale) ref.current.scale.copy(om.args.scale);
-  //   }
-  // }, []);
+  // // React.useEffect(() => {
+  // //   if (ref.current) {
+  // //     if (om.args.position) ref.current.position.copy(om.args.position);
+  // //     if (om.args.rotation) ref.current.rotation.copy(om.args.rotation);
+  // //     if (om.args.scale) ref.current.scale.copy(om.args.scale);
+  // //   }
+  // // }, []);
 
-  return (
-    <Suspense fallback={null}>
-      <mesh
-        geometry={nodes.Plane.geometry}
-        material={nodes.Plane.material}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-        castShadow
-      />
-    </Suspense>
-  );
+  // console.log("LandScape");
+
+  // return (
+  //   <Suspense fallback={null}>
+  //     <mesh
+  //       geometry={nodes.Plane.geometry}
+  //       material={nodes.Plane.material}
+  //       rotation={[-Math.PI / 2, 0, 0]}
+  //       receiveShadow
+  //       castShadow
+  //     />
+  //   </Suspense>
+  // );
+  return null;
 };
 
 const LandScape = React.memo(_LandScape);

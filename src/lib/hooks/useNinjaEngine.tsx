@@ -16,14 +16,17 @@ import {
   MessageProps,
   PlayerInfoProps,
   AppInfoProps,
+  updateStableCollisions,
 } from "../utils";
 import "@khmyznikov/pwa-install";
 import {
   Box3,
+  BufferGeometry,
   Group,
   Line3,
   Matrix4,
   Mesh,
+  MeshBasicMaterial,
   Object3D,
   Sphere,
   Vector3,
@@ -81,10 +84,11 @@ type NinjaEngineProp = {
   isSound: boolean;
   setIsSound: (isSound: boolean) => void;
   bvhGrp: React.MutableRefObject<Group | null>;
-  bvhCollider: React.MutableRefObject<Mesh | null>;
+  staticCollider: React.MutableRefObject<Group | null>;
+  changedBvh: React.MutableRefObject<boolean>;
   moveGrp: React.MutableRefObject<Group | null>;
   shareGrp: React.MutableRefObject<Group | null>;
-  boundsTree: React.MutableRefObject<MeshBVH | null>;
+  MergedGeometryWithBoundsTree: React.MutableRefObject<BufferGeometry | null>;
   updateCollisions: (daltaTime: number) => void;
   config: IConfigParams;
   apiEndpoint: string;
@@ -116,10 +120,11 @@ export const NinjaEngineContext = React.createContext<NinjaEngineProp>({
   isSound: false,
   setIsSound: (isSound: boolean) => {},
   bvhGrp: React.createRef<Group>(),
-  bvhCollider: React.createRef<Mesh>(),
+  staticCollider: React.createRef<Mesh>(),
+  changedBvh: React.createRef<boolean>(),
   moveGrp: React.createRef<Group>(),
   shareGrp: React.createRef<Group>(),
-  boundsTree: React.createRef<Object3D>(),
+  MergedGeometryWithBoundsTree: React.createRef<BufferGeometry>(),
   updateCollisions: (daltaTime: number) => {},
   config: InitMobileConfipParams,
   apiEndpoint: "",
@@ -242,11 +247,12 @@ const _NinjaGL = ({
   // NPC用Chat履歴
   const npcChatHistory = React.useRef<MessageProps[]>([]);
   // 物理エンジン用
+  const changedBvh = React.useRef<boolean>(false);
   const bvhGrp = React.useRef<Group>(null); // BVH用コライダー
-  const bvhCollider = React.useRef<Mesh>(null); // BVH用コライダー
+  const staticCollider = React.useRef<Group>(null); // BVH用コライダー
   const moveGrp = React.useRef<Group>(null); // 移動用コライダー
   const shareGrp = React.useRef<Group>(null); // MultiPlayer共有用コライダー
-  const boundsTree = React.useRef<MeshBVH>(null); // BVH-boundsTree
+  const MergedGeometryWithBoundsTree = React.useRef<BufferGeometry>(null); // BVH-boundsTree
 
   React.useEffect(() => {
     const loadNjc = async () => {
@@ -372,7 +378,10 @@ const _NinjaGL = ({
         } else {
           om.args[key] = arg;
         }
-        if (!offListenser) notifyOMIdChanged(id);
+        if (!offListenser) {
+          notifyOMIdChanged(id);
+          if (!changedBvh.current) changedBvh.current = true;
+        }
       }
     }
   };
@@ -443,9 +452,9 @@ const _NinjaGL = ({
   const deltaVec = new Vector3();
   const colliders = [];
   const updateCollisions = (deltaTime: number) => {
-    if (!bvhCollider.current) return;
+    if (!staticCollider.current) return;
     if (!moveGrp.current) return;
-    if (!boundsTree.current) return;
+    if (!MergedGeometryWithBoundsTree.current) return;
     // 衝突判定
     for (const object of moveGrp.current.children) {
       // TODO: ここで、移動可能なオブジェクトの衝突判定を行う
@@ -483,7 +492,7 @@ const _NinjaGL = ({
         collider.center.addScaledVector(om.args.velocity, deltaTime);
       } else if (om.phyType === "capsule") {
         tempBox.makeEmpty();
-        tempMat.copy(bvhCollider.current.matrixWorld).invert();
+        tempMat.copy(staticCollider.current.matrixWorld).invert();
         const sizeBox = new Box3().setFromObject(object);
         const height = sizeBox.max.y - sizeBox.min.y;
         radius = Math.max(sizeBox.max.x, sizeBox.max.z);
@@ -511,7 +520,8 @@ const _NinjaGL = ({
       // if ( sphereCollider.center.y < - 80 ) {}
 
       let collided = false;
-      boundsTree.current.shapecast({
+      if (!MergedGeometryWithBoundsTree.current.boundsTree) return;
+      MergedGeometryWithBoundsTree.current.boundsTree.shapecast({
         intersectsBounds: (box) => {
           if (om.phyType === "box") {
             return box.intersectsBox(tempBox);
@@ -634,11 +644,12 @@ const _NinjaGL = ({
         npcChatHistory,
         isSound,
         setIsSound,
+        changedBvh,
         bvhGrp,
-        bvhCollider,
+        staticCollider,
         moveGrp,
         shareGrp,
-        boundsTree,
+        MergedGeometryWithBoundsTree,
         updateCollisions,
         config,
         apiEndpoint,
@@ -793,7 +804,16 @@ export const NinjaCanvasItems = () => {
  * システムフレーム(時間をすすめる)
  */
 const SystemFrame = () => {
-  const { init, status, sms, config } = useNinjaEngine();
+  const {
+    init,
+    status,
+    sms,
+    config,
+    staticCollider,
+    bvhGrp,
+    changedBvh,
+    MergedGeometryWithBoundsTree,
+  } = useNinjaEngine();
   const { input } = useMultiInputControl();
   const { runFrameLoop, runInitialize, loadUserScript } = useNinjaWorker();
 
@@ -809,7 +829,13 @@ const SystemFrame = () => {
     startScript();
   }, [init, sms]);
 
-  // フレームの更新
+  /**
+   * システムフレーム
+   * @tip1: ユーザースクリプトの実行
+   * @tip2: bvhMeshの再生成
+   * @tip3: debugモードのとき、表示する
+   * @tip4: bvhの更新フラグがONなら、フラグを閉じる
+   */
   useNFrame((state, delta) => {
     if (status.current === ENinjaStatus.Pause) {
       return;
@@ -819,17 +845,58 @@ const SystemFrame = () => {
     sms.forEach((sm) => {
       runFrameLoop(sm.id, state, delta, input);
     });
+
+    // @tip2: bvhMeshの再生成
+    if (bvhGrp.current && staticCollider.current && changedBvh) {
+      const { mergedGeometry } = updateStableCollisions(
+        bvhGrp.current,
+        changedBvh.current,
+        delta
+      );
+      MergedGeometryWithBoundsTree.current = mergedGeometry;
+    }
+
+    // @tip3:
+    if (bvhGrp.current && changedBvh.current) {
+      const staticCollisions = state.scene.getObjectByName("static-collisions");
+      if (staticCollisions && MergedGeometryWithBoundsTree.current) {
+        // childrenに何もなければ、追加する
+        // あれば、更新する
+        if (staticCollisions.children.length === 0) {
+          const mesh = new Mesh(
+            MergedGeometryWithBoundsTree.current,
+            new MeshBasicMaterial({ wireframe: true, color: 0x00ffff })
+          );
+          staticCollisions.add(mesh);
+        } else {
+          const mesh = staticCollisions.children[0] as Mesh;
+          mesh.geometry = MergedGeometryWithBoundsTree.current;
+        }
+      }
+    }
+
+    // @tip4: bvhの更新フラグがONなら、フラグを閉じる
+    if (changedBvh.current) {
+      changedBvh.current = false;
+    }
   });
 
   return (
     <>
       {config.isDebug && (
-        <Perf
-          position="bottom-left"
-          style={{ position: "absolute" }}
-          minimal={true}
-        />
+        <>
+          <Perf
+            position="bottom-left"
+            style={{ position: "absolute" }}
+            minimal={true}
+          />
+        </>
       )}
+      <group
+        name="static-collisions"
+        visible={config.isDebug}
+        ref={staticCollider}
+      ></group>
     </>
   );
 };

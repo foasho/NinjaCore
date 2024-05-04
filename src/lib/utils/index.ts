@@ -39,3 +39,5 @@ export {
   MoveableColliderTunnel,
   MultiPlayerColliderTunnel,
 } from "./tunnel";
+export { updateMoveableCollisions, updateStableCollisions } from "./colliders";
+export * from "./player";

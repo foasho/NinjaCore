@@ -32,11 +32,11 @@ import {
 import {
   IInputMovement,
   CapsuleInfoProps,
-  detectAABBCapsuleCollision,
-  // checkSphereCapsuleIntersect,
-  getInitCollision,
-  detectCapsuleCapsuleCollision,
+  updatePlayerMovement,
+  detectCollisionCapsuleBVHTrees,
+  updatePlayerObstacle,
 } from "../../utils";
+import { regenerateBvhMesh } from "../../utils/colliders";
 
 /**
  * プレイヤー操作
@@ -70,8 +70,8 @@ export const PlayerControl = ({
   const {
     config,
     status,
-    boundsTree,
-    bvhCollider: collider,
+    MergedGeometryWithBoundsTree,
+    staticCollider: collider,
     moveGrp,
     shareGrp,
     getOMById,
@@ -91,7 +91,6 @@ export const PlayerControl = ({
     segment: new Line3(new Vector3(), new Vector3(0, -1.0, 0.0)),
   };
   const [grpMeshesNum, setGrpMeshesNum] = useState<number>(0);
-  const p = useRef<Mesh>(null);
   const controls = useRef<OrbitControlsImpl>(null);
   // --- ジャンプ/物理判定に関連する変数 ---
   const playerVelocity = useRef(new Vector3(0, 0, 0));
@@ -115,23 +114,15 @@ export const PlayerControl = ({
   const { camera, gl } = useThree();
   const raycaster = new Raycaster();
   raycaster.firstHitOnly = true;
-  const [mergeGeometry, setMergeGeometry] = useState<BufferGeometry>();
 
   useEffect(() => {
     if (player.current) {
       player.current.position.copy(resetPosition.clone());
     }
     if (grpMeshesNum > 0 && grp.current) {
-      // grpをマージして衝突を行うオブジェクトを作成する
-      const staticGenerator = new StaticGeometryGenerator(grp.current);
-      staticGenerator.attributes = ["position"];
-      // @ts-ignore
-      if (staticGenerator.meshes && staticGenerator.meshes.length > 0) {
-        const mergedGeometry = staticGenerator.generate();
-        // @ts-ignore
-        mergedGeometry.boundsTree = new MeshBVH(mergedGeometry);
-        boundsTree.current = mergedGeometry.boundsTree;
-        setMergeGeometry(mergedGeometry);
+      const { mergedGeometry } = regenerateBvhMesh(grp.current);
+      if (mergedGeometry && mergedGeometry.boundsTree) {
+        MergedGeometryWithBoundsTree.current = mergedGeometry;
       }
     }
   }, [grpMeshesNum]);
@@ -310,7 +301,7 @@ export const PlayerControl = ({
       player.current &&
       controls.current &&
       collider.current &&
-      mergeGeometry
+      MergedGeometryWithBoundsTree.current
     ) {
       /**
        * 処理順序
@@ -321,194 +312,36 @@ export const PlayerControl = ({
        * Step5. 衝突微調整を加算
        * Step6. オブジェクト/カメラの位置を同期
        */
-      if (playerIsOnGround.current) {
-        playerVelocity.current.y = delta * gravity;
-      } else {
-        playerVelocity.current.y += delta * gravity;
-      }
-      player.current.position.addScaledVector(playerVelocity.current, delta);
 
       /**
        * @step1 入力データ(input)からの単純な移動
        */
-      let speed = baseSpeed * input.speed;
-      if (input.dash) {
-        speed *= dashRatio;
-      }
       const angle = controls.current.getAzimuthalAngle();
-      // console.log("input2: " ,input.forward)
-      let forwardAmount = input.forward - input.backward;
-      let movementVector = new Vector3(0, 0, 0);
-      // 前後方向の移動
-      if (forwardAmount !== 0) {
-        tempVector
-          .set(0, 0, -1 * forwardAmount)
-          .applyAxisAngle(upVector, angle);
-        movementVector.add(tempVector);
-      }
-      // 左右方向の移動
-      let rightAmount = input.right - input.left;
-      if (rightAmount !== 0) {
-        tempVector.set(rightAmount, 0, 0).applyAxisAngle(upVector, angle);
-        movementVector.add(tempVector);
-      }
-
-      // 移動量があれば、その移動方向に応じてObjectのY軸を回転させる
-      if (forwardAmount !== 0 || rightAmount !== 0) {
-        const targetRotation = Math.atan2(movementVector.x, movementVector.z);
-        object.current!.rotation.y = targetRotation;
-        // ここで移動量をセット
-        player.current.position.addScaledVector(movementVector, speed * delta);
-      }
-      player.current.updateMatrixWorld();
+      const { targetRotationY, forwardAmount, rightAmount } =
+        updatePlayerMovement(
+          player.current,
+          playerIsOnGround.current,
+          input,
+          playerVelocity.current,
+          delta,
+          angle
+        );
+      if (object.current) object.current.rotation.y = targetRotationY;
 
       /**
-       * 衝突検出を行い、その方向に移動量を調整
+       * @step2 衝突検出を行い、その方向に移動量を調整
        */
-      if (collider.current && capsuleInfo.current) {
-        tempBox.makeEmpty();
-        tempMat.copy(collider.current.matrixWorld).invert();
-        tempSegment.copy(capsuleInfo.current.segment);
-
-        // ローカル空間内のユーザーの位置を取得
-        tempSegment.start
-          .applyMatrix4(player.current.matrixWorld)
-          .applyMatrix4(tempMat);
-        tempSegment.end
-          .applyMatrix4(player.current.matrixWorld)
-          .applyMatrix4(tempMat);
-        // 軸が整列した境界ボックスを取得
-        tempBox.expandByPoint(tempSegment.start);
-        tempBox.expandByPoint(tempSegment.end);
-
-        tempBox.min.addScalar(-capsuleInfo.current.radius);
-        tempBox.max.addScalar(capsuleInfo.current.radius);
-
-        // 衝突を検出
-        if (!collider.current.geometry.boundsTree) return;
-        collider.current.geometry.boundsTree.shapecast({
-          intersectsBounds: (_box: Box3) => {
-            return _box.intersectsBox(tempBox);
-          },
-          intersectsTriangle: (tri: ExtendedTriangle) => {
-            const triPoint = tempVector;
-            // const capsulePoint = tempVector2;
-            const distance = tri.closestPointToSegment(
-              tempSegment,
-              triPoint,
-              capsulePoint
-            );
-            if (distance < capsuleInfo.current!.radius) {
-              const depth = capsuleInfo.current!.radius - distance;
-              const direction = capsulePoint.sub(triPoint).normalize();
-              // tempSegmentは衝突で移動すべき遷移座標
-              tempSegment.start.addScaledVector(direction, depth);
-              tempSegment.end.addScaledVector(direction, depth);
-            }
-          },
-        });
-      }
+      const { tempSegment, intersectPoint } = detectCollisionCapsuleBVHTrees(
+        player.current,
+        MergedGeometryWithBoundsTree.current.boundsTree,
+        collider.current,
+        capsuleInfo.current!
+      );
 
       /**
-       * @step3 動作オブジェクト(moveable)との衝突検出を行い、同様にその方向に移動量を調整
-       */
-      let collided = getInitCollision();
-      if (moveGrp.current && capsuleInfo.current && p.current) {
-        // First Intersect Only
-        for (const object of moveGrp.current.children) {
-          const om = getOMById(object.userData.omId);
-          if (!om) continue;
-          if (om.phyType == "box") {
-            collided = detectAABBCapsuleCollision(
-              object as Mesh,
-              player.current
-            );
-            const {
-              intersect,
-              distance,
-              castDirection,
-              recieveDirection,
-              point,
-            } = collided;
-            if (intersect) {
-              // 衝突していれば、player.current.hitsに衝突したオブジェクトを追加
-              player.current.userData.hits.push(om.id);
-              if (p.current) p.current.position.copy(point);
-              // TODO: direction方向がYの場合は、heightで比較する
-              const depth =
-                Math.abs(castDirection.y) > 0
-                  ? height - capsuleInfo.current.radius - distance
-                  : capsuleInfo.current.radius - distance;
-              if (depth > 0) {
-                const movement = castDirection.addScalar(depth);
-                tempSegment.start.addScaledVector(movement, depth);
-                tempSegment.end.addScaledVector(movement, depth);
-                break;
-              }
-            }
-          }
-        }
-      }
-
-      /**
+       * [廃止] shaderObjectsは、StaticColliderに統合されたため、不要
        * @step4 シェアオブジェクト(share)との衝突検出を行い、同様にその方向に移動量を調整
        */
-      if (shareGrp.current && capsuleInfo.current && p.current) {
-        // First Intersect Only
-        for (const object of shareGrp.current.children) {
-          if (object.userData.phyType == "box") {
-            collided = detectAABBCapsuleCollision(
-              object as Mesh,
-              player.current
-            );
-            const {
-              intersect,
-              distance,
-              castDirection,
-              recieveDirection,
-              point,
-            } = collided;
-            if (intersect) {
-              // 衝突していれば、player.current.hitsに衝突したオブジェクトを追加
-              player.current.userData.hits.push(object.userData.shareId);
-              if (p.current) p.current.position.copy(point);
-              const depth =
-                Math.abs(castDirection.y) > 0
-                  ? height - capsuleInfo.current.radius - distance
-                  : capsuleInfo.current.radius - distance;
-              if (depth > 0) {
-                const movement = castDirection.addScalar(depth);
-                tempSegment.start.addScaledVector(movement, depth);
-                tempSegment.end.addScaledVector(movement, depth);
-                break;
-              }
-            }
-          } else if (object.userData.phyType == "capsule") {
-            collided = detectCapsuleCapsuleCollision(
-              object as Mesh,
-              player.current
-            );
-            const {
-              intersect,
-              distance,
-              castDirection,
-              recieveDirection,
-              point,
-            } = collided;
-            // console.log("intersect: ", intersect)
-            if (p.current) {
-              p.current.position.copy(point);
-            }
-          }
-        }
-      }
-
-      if (!collided.intersect) {
-        // 衝突していなければ、player.current.hitsを初期化
-        if (player.current.userData.hits) {
-          player.current.userData.hits = [];
-        }
-      }
 
       /**
        * @step5 衝突微調整を加算
@@ -526,7 +359,6 @@ export const PlayerControl = ({
 
       const offset = Math.max(0.0, deltaVector.length() - 1e-5);
       deltaVector.normalize().multiplyScalar(offset);
-
       player.current.position.add(deltaVector);
 
       /**
@@ -540,59 +372,20 @@ export const PlayerControl = ({
             .add(new Vector3(0, -(height - capsuleInfo.current!.radius), 0))
         );
       }
-      // 接地処理
-      if (!playerIsOnGround.current) {
-        // 接地していない場合は、player速度にdeltaVector方向*重力分の移動ベクトルを追加
-        deltaVector.normalize();
-        playerVelocity.current.addScaledVector(
-          deltaVector,
-          -deltaVector.dot(playerVelocity.current)
-        );
-      } else {
-        // 接地している場合は、速度を０にして静止する
-        playerVelocity.current.set(0, 0, 0);
-      }
-
-      // カメラとの距離を調整
-      camera.position.sub(controls.current.target);
-      controls.current.target.copy(player.current.position);
-      camera.position.add(player.current.position);
-
-      // CameraからPlayerに向けてRaycastを行い、障害物があればカメラを障害物の位置に移動
-      if (playerInfo.current.cameraMode === "third") {
-        const objectPosition = player.current.position
-          .clone()
-          .add(new Vector3(0, height / 2, 0));
-        const direction = objectPosition
-          .clone()
-          .sub(camera.position.clone())
-          .normalize();
-        const distance = camera.position.distanceTo(objectPosition);
-        raycaster.set(camera.position, direction); // Raycast起源点をカメラに
-        raycaster.far = distance - height / 2;
-        raycaster.near = 0.01;
-        const intersects = raycaster.intersectObject(collider.current!, true); // 全てのオブジェクトを対象にRaycast
-        if (intersects.length > 0) {
-          // 複数のオブジェクトに衝突した場合、distanceが最も近いオブジェクトを選択
-          const target = intersects.reduce((prev, current) => {
-            return prev.distance < current.distance ? prev : current;
-          });
-          camera.position.copy(target.point);
-        } else if (forwardAmount !== 0 || rightAmount !== 0) {
-          // 障害物との交差がない場合はプレイヤーから一定の距離を保つ
-          const directionFromPlayerToCamera = camera.position
-            .clone()
-            .sub(objectPosition)
-            .normalize();
-          // カメラの位置をプレイヤーから一定の距離を保つように調整※カメラのカクツキを防ぐためにLerpを使用
-          camera.position.lerp(
-            objectPosition
-              .clone()
-              .add(directionFromPlayerToCamera.multiplyScalar(desiredDistance)),
-            0.1
-          );
-        }
-      }
+      /**
+       * @step4 Playerとカメラの間の障害物の位置を調整
+       * ※ ThirdPersonの場合のみ実行
+       */
+      updatePlayerObstacle(
+        player.current,
+        height,
+        playerIsOnGround.current,
+        camera,
+        controls.current,
+        collider.current,
+        playerInfo.current.cameraMode,
+        desiredDistance
+      );
 
       // デッドゾーンまで落ちたらリセット
       if (player.current.position.y < deadZone) {
@@ -711,16 +504,6 @@ export const PlayerControl = ({
         />
         <meshBasicMaterial wireframe color={0xffff00} side={DoubleSide} />
       </mesh>
-      <mesh ref={p} visible={config.isDebug}>
-        <boxGeometry args={[0.1, 0.1, 0.1]} />
-        <meshBasicMaterial wireframe color={0xff0000} side={DoubleSide} />
-      </mesh>
-      {mergeGeometry && (
-        <mesh ref={collider} visible={config.isDebug} name="collider">
-          <primitive object={mergeGeometry} />
-          <meshBasicMaterial wireframe color={0x00ff00} />
-        </mesh>
-      )}
     </>
   );
 };

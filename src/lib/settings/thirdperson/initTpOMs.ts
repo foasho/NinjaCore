@@ -23,7 +23,7 @@ export const initTpOMs = (): IObjectManagement[] => {
     },
     {
       id: MathUtils.generateUUID(),
-      name: "movebox",
+      name: "scriptbox",
       type: "three",
       args: {
         type: "box",
@@ -40,7 +40,7 @@ export const initTpOMs = (): IObjectManagement[] => {
       phyType: "box",
       visibleType: "auto",
       visible: true,
-      moveable: true,
+      moveable: false,
     },
     {
       id: MathUtils.generateUUID(),

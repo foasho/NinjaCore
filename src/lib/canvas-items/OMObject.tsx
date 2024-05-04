@@ -175,13 +175,40 @@ const _Light = ({ om }: { om: IObjectManagement }) => {
       if (om.args.position) ref.current.position.copy(om.args.position);
       if (om.args.rotation) ref.current.rotation.copy(om.args.rotation);
       if (om.args.scale) ref.current.scale.copy(om.args.scale);
-      if (om.args.castShadow) ref.current.castShadow = om.args.castShadow;
-      if (om.args.receiveShadow)
-        ref.current.receiveShadow = om.args.receiveShadow;
       if (om.args.intensity) ref.current.intensity = om.args.intensity;
       if (om.args.distance) ref.current.distance = om.args.distance;
       if (om.args.angle) ref.current.angle = om.args.angle;
       if (om.args.penumbra) ref.current.penumbra = om.args.penumbra;
+      // 追加
+      if (om.args.color) {
+        ref.current.color.copy(new Color(om.args.color));
+        ref.current.needsUpdate = true;
+      }
+      if (om.args.mapSizeWidth && om.args.type === "directional") {
+        ref.current.shadow.mapSize.width = om.args.mapSizeWidth;
+      }
+      if (om.args.mapSizeHeight && om.args.type === "directional") {
+        ref.current.shadow.mapSize.height = om.args.mapSizeHeight;
+      }
+      if (om.args.intensity) {
+        ref.current.intensity = om.args.intensity;
+      }
+      if (om.args.bias) {
+        ref.current.shadow.mapSize.bias = om.args.bias;
+      }
+      if (om.args.normalBias) {
+        ref.current.shadow.mapSize.normalBias = om.args.normalBias;
+      }
+      if (om.args.shadowCameraSize) {
+        ref.current.shadow.camera.left = -om.args.shadowCameraSize / 2;
+        ref.current.shadow.camera.right = om.args.shadowCameraSize / 2;
+        ref.current.shadow.camera.top = om.args.shadowCameraSize / 2;
+        ref.current.shadow.camera.bottom = -om.args.shadowCameraSize / 2;
+      }
+      ref.current.castShadow = !!om.args.castShadow;
+      // update light
+      ref.current.shadow.map = null; // 既存のシャドウマップを破棄
+      ref.current.shadow.needsUpdate = true;
     }
   }, [light]);
 

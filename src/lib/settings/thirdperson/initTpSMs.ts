@@ -12,7 +12,7 @@ export const initTpSMs = (): IScriptManagement[] => {
       }
       
       async function frameLoop(state, delta, input) {
-        const om = await getOMByName({name: "movebox"});
+        const om = await getOMByName({name: "scriptbox"});
         const pos = om.args.position? om.args.position : {x: 0, y: 0, z: 0};
         if (pos.x + 0.01 < 10){
           await setPosition({id: om.id, position: [pos.x+0.01, pos.y, pos.z]});
@@ -29,7 +29,7 @@ export const initTpSMs = (): IScriptManagement[] => {
     //   }
       
     //   async function frameLoop(state, delta, input) {
-    //     const om = await getOMByName({name: "movebox"});
+    //     const om = await getOMByName({name: "scriptbox"});
     //     const rot = om.args.rotation? om.args.rotation : {x: 0, y: 0, z: 0};
     //     const time = state.elapsedTime;
     //     // Y軸を時間で回転
@@ -46,7 +46,7 @@ export const initTpSMs = (): IScriptManagement[] => {
       }
       
       async function frameLoop(state, delta, input) {
-        const om = await getOMByName({name: "movebox"});
+        const om = await getOMByName({name: "scriptbox"});
         const time = state.elapsedTime;
         // 0.5 ~ 1.5 倍の拡縮
         const s = 0.5 * Math.sin(time)
@@ -63,7 +63,7 @@ export const initTpSMs = (): IScriptManagement[] => {
         setArg({ id: id, key: "materialData", value: { type: "standard", "value": "#F1D353" } })
       }
       async function initialize() {
-        const om = await getOMByName({name: "movebox"});
+        const om = await getOMByName({name: "scriptbox"});
         useClickEvent(om.id, () => onMyClick(om.id))
       }
       
@@ -80,7 +80,7 @@ export const initTpSMs = (): IScriptManagement[] => {
           setArg({ id: id, key: "materialData", value: { type: "reflection", "value": "#43D9D9" } })
         }
         async function initialize() {
-          const om = await getOMByName({name: "movebox"});
+          const om = await getOMByName({name: "scriptbox"});
           useDblclickEvent(om.id, () => onMyDblclick(om.id))
         }
         

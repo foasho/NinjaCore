@@ -24,7 +24,6 @@ import { patchShaders } from "gl-noise/build/glNoise.m";
 import DistortUv from "./DistortUv";
 import Blend from "./Blend";
 import { usePlanarReflections } from "./usePlanarReflections";
-import { defaultUniforms } from "./WaterParams";
 
 interface WaterProps extends GroupProps {
   grp?: React.MutableRefObject<Group | null>;

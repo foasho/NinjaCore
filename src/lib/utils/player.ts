@@ -2,7 +2,6 @@ import { Box3, Euler, Group, Line3, Matrix4, Mesh, Raycaster, Vector3 } from "th
 import { IInputMovement } from "./NinjaProps";
 import { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { ExtendedTriangle, MeshBVH } from "three-mesh-bvh";
-import { GridProps } from "@react-three/drei";
 import { CapsuleInfoProps } from "./IntersectsDetector";
 import { Camera } from "@react-three/fiber";
 
